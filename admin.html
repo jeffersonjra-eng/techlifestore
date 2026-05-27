@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Tech Life Store</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --verde: #16a085;
+      --verde-claro: #1abc9c;
+      --verde-escuro: #0e6655;
+      --vermelho: #c0392b;
+      --escuro: #0d1f1b;
+      --cinza: #f4f6fa;
+      --cinza2: #e5e7eb;
+      --texto: #374151;
+      --branco: #ffffff;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--cinza); color:var(--texto); min-height:100vh; }
+
+    /* LOGIN */
+    #tela-login {
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg, var(--escuro) 0%, var(--verde-escuro) 100%);
+    }
+    .login-box {
+      background:#fff; border-radius:20px; padding:48px 40px;
+      width:100%; max-width:400px; text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-logo { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--escuro); margin-bottom:6px; }
+    .login-logo span { color:var(--verde); }
+    .login-sub { font-size:13px; color:#9ca3af; margin-bottom:32px; }
+    .login-box input {
+      width:100%; padding:12px 16px; border:1.5px solid var(--cinza2);
+      border-radius:10px; font-size:14px; font-family:'DM Sans',sans-serif;
+      margin-bottom:12px; outline:none; transition:border .2s;
+    }
+    .login-box input:focus { border-color:var(--verde); }
+    .btn-login {
+      width:100%; background:var(--verde); color:#fff; border:none;
+      padding:13px; border-radius:10px; font-size:15px; font-weight:600;
+      font-family:'Syne',sans-serif; cursor:pointer; transition:background .2s;
+    }
+    .btn-login:hover { background:var(--verde-claro); }
+    .login-erro { color:var(--vermelho); font-size:13px; margin-top:10px; display:none; }
+
+    /* ADMIN */
+    #tela-admin { display:none; }
+
+    .topbar {
+      background:var(--escuro); color:#fff;
+      padding:0 24px; height:60px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+    }
+    .topbar-logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; }
+    .topbar-logo span { color:var(--verde); }
+    .topbar-right { display:flex; align-items:center; gap:16px; }
+    .topbar-user { font-size:13px; color:rgba(255,255,255,0.6); }
+    .btn-sair {
+      background:rgba(255,255,255,0.1); color:#fff; border:none;
+      padding:7px 14px; border-radius:8px; font-size:13px; cursor:pointer;
+    }
+    .btn-sair:hover { background:rgba(255,255,255,0.2); }
+
+    .admin-wrap { max-width:1100px; margin:0 auto; padding:32px 20px; }
+
+    .admin-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:28px; flex-wrap:wrap; gap:12px;
+    }
+    .admin-header h1 { font-family:'Syne',sans-serif; font-size:24px; font-weight:700; }
+
+    .btn-novo {
+      background:var(--verde); color:#fff; border:none;
+      padding:11px 22px; border-radius:10px; font-size:14px;
+      font-weight:600; font-family:'Syne',sans-serif; cursor:pointer;
+      display:flex; align-items:center; gap:6px; transition:background .2s;
+    }
+    .btn-novo:hover { background:var(--verde-claro); }
+
+    /* STATS */
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:28px; }
+    .stat-card {
+      background:#fff; border-radius:14px; padding:18px 20px;
+      border:1px solid var(--cinza2);
+    }
+    .stat-label { font-size:12px; color:#9ca3af; margin-bottom:4px; }
+    .stat-valor { font-family:'Syne',sans-serif; font-size:24px; font-weight:700; color:var(--escuro); }
+
+    /* FORM MODAL */
+    .modal-bg {
+      position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      display:none; align-items:center; justify-content:center;
+      z-index:200; padding:20px;
+    }
+    .modal-bg.aberto { display:flex; }
+    .modal {
+      background:#fff; border-radius:20px; padding:32px;
+      width:100%; max-width:560px; max-height:90vh; overflow-y:auto;
+    }
+    .modal h2 { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; margin-bottom:24px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-grupo { display:flex; flex-direction:column; gap:6px; }
+    .form-grupo.full { grid-column:1/-1; }
+    .form-grupo label { font-size:12px; font-weight:600; color:var(--texto); text-transform:uppercase; letter-spacing:.05em; }
+    .form-grupo input, .form-grupo select, .form-grupo textarea {
+      padding:10px 14px; border:1.5px solid var(--cinza2);
+      border-radius:8px; font-size:14px; font-family:'DM Sans',sans-serif;
+      outline:none; transition:border .2s; width:100%;
+    }
+    .form-grupo input:focus, .form-grupo select:focus, .form-grupo textarea:focus { border-color:var(--verde); }
+    .form-grupo textarea { resize:vertical; min-height:80px; }
+    .form-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+    .btn-cancelar {
+      background:var(--cinza); color:var(--texto); border:none;
+      padding:11px 22px; border-radius:8px; font-size:14px; cursor:pointer;
+    }
+    .btn-salvar {
+      background:var(--verde); color:#fff; border:none;
+      padding:11px 22px; border-radius:8px; font-size:14px;
+      font-weight:600; font-family:'Syne',sans-serif; cursor:pointer;
+    }
+    .btn-salvar:hover { background:var(--verde-claro); }
+
+    /* TABELA */
+    .tabela-wrap { background:#fff; border-radius:16px; border:1px solid var(--cinza2); overflow:hidden; }
+    .tabela-header {
+      padding:16px 20px; border-bottom:1px solid var(--cinza2);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .tabela-header h3 { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; }
+    .busca-admin {
+      padding:8px 14px; border:1.5px solid var(--cinza2);
+      border-radius:8px; font-size:13px; font-family:'DM Sans',sans-serif;
+      outline:none; width:220px;
+    }
+    .busca-admin:focus { border-color:var(--verde); }
+
+    table { width:100%; border-collapse:collapse; }
+    th { padding:12px 16px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#9ca3af; background:#fafafa; border-bottom:1px solid var(--cinza2); }
+    td { padding:14px 16px; font-size:13px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafafa; }
+
+    .prod-foto { width:44px; height:44px; border-radius:8px; background:var(--cinza); object-fit:cover; display:flex; align-items:center; justify-content:center; font-size:20px; }
+    .prod-nome { font-weight:500; color:var(--escuro); }
+    .prod-cat { font-size:11px; color:#9ca3af; margin-top:2px; }
+    .badge-ativo { background:#d1fae5; color:#065f46; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; }
+    .badge-inativo { background:#fee2e2; color:#991b1b; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; }
+    .preco-val { font-family:'Syne',sans-serif; font-weight:700; color:var(--escuro); }
+    .acoes { display:flex; gap:8px; }
+    .btn-editar { background:#eff6ff; color:#2563eb; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+    .btn-excluir { background:#fef2f2; color:var(--vermelho); border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+
+    .loading { text-align:center; padding:40px; color:#9ca3af; font-size:14px; }
+    .vazio { text-align:center; padding:60px 20px; }
+    .vazio p { color:#9ca3af; font-size:15px; margin-top:8px; }
+
+    .toast {
+      position:fixed; bottom:24px; right:24px;
+      background:var(--escuro); color:#fff;
+      padding:12px 20px; border-radius:10px;
+      font-size:13px; font-weight:500;
+      transform:translateY(80px); opacity:0;
+      transition:all .3s; z-index:300;
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.verde { background:var(--verde); }
+    .toast.vermelho { background:var(--vermelho); }
+
+    /* ABAS */
+    .abas { display:flex; gap:4px; margin-bottom:24px; background:#fff; border-radius:12px; padding:6px; border:1px solid var(--cinza2); width:fit-content; }
+    .aba { padding:8px 20px; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; border:none; background:transparent; color:var(--cinza-texto); transition:all .2s; }
+    .aba.ativa { background:var(--verde); color:#fff; }
+
+    /* AVALIAÇÕES */
+    .aval-card { background:#fff; border:1px solid var(--cinza2); border-radius:12px; padding:16px; margin-bottom:12px; }
+    .aval-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+    .aval-nome { font-weight:600; font-size:14px; color:var(--escuro); }
+    .aval-prod { font-size:12px; color:#9ca3af; margin-top:2px; }
+    .aval-stars { color:#f59e0b; font-size:14px; }
+    .aval-texto { font-size:13px; color:var(--texto); line-height:1.5; }
+
+    @media (max-width:600px) {
+      .form-grid { grid-template-columns:1fr; }
+      table { font-size:12px; }
+      th, td { padding:10px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TELA LOGIN -->
+<div id="tela-login">
+  <div class="login-box">
+    <div class="login-logo">Tech<span>Life</span> Store</div>
+    <p class="login-sub">Painel Administrativo</p>
+    <input type="password" id="senha-input" placeholder="Digite a senha de acesso" onkeydown="if(event.key==='Enter')entrar()">
+    <button class="btn-login" onclick="entrar()">Entrar</button>
+    <p class="login-erro" id="login-erro">Senha incorreta. Tente novamente.</p>
+  </div>
+</div>
+
+<!-- TELA ADMIN -->
+<div id="tela-admin">
+  <div class="topbar">
+    <div class="topbar-logo">Tech<span>Life</span> <span style="font-weight:400;opacity:.5">Admin</span></div>
+    <div class="topbar-right">
+      <span class="topbar-user">Olá, Jefferson!</span>
+      <button class="btn-sair" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="admin-wrap">
+    <div class="abas">
+      <button class="aba ativa" onclick="mudarAba('produtos')">📦 Produtos</button>
+      <button class="aba" onclick="mudarAba('avaliacoes')">⭐ Avaliações</button>
+    </div>
+
+    <!-- ABA PRODUTOS -->
+    <div id="aba-produtos">
+      <div class="admin-header">
+        <h1>Gerenciar Produtos</h1>
+        <button class="btn-novo" onclick="abrirModal()">+ Novo Produto</button>
+      </div>
+      <div class="stats" id="stats">
+        <div class="stat-card"><div class="stat-label">Total de produtos</div><div class="stat-valor" id="stat-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Produtos ativos</div><div class="stat-valor" id="stat-ativos">—</div></div>
+        <div class="stat-card"><div class="stat-label">Categorias</div><div class="stat-valor" id="stat-cats">—</div></div>
+      </div>
+      <div class="tabela-wrap">
+        <div class="tabela-header">
+          <h3>Todos os produtos</h3>
+          <input class="busca-admin" type="text" placeholder="Buscar produto..." oninput="filtrar(this.value)">
+        </div>
+        <div id="tabela-corpo">
+          <div class="loading">Carregando produtos...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA AVALIAÇÕES -->
+    <div id="aba-avaliacoes" style="display:none">
+      <div class="admin-header">
+        <h1>Gerenciar Avaliações</h1>
+        <button class="btn-novo" onclick="abrirModalAval()">+ Nova Avaliação</button>
+      </div>
+      <div id="lista-avaliacoes">
+        <div class="loading">Carregando avaliações...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUTO -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2 id="modal-titulo">Novo Produto</h2>
+    <div class="form-grid">
+      <div class="form-grupo full">
+        <label>Nome do produto</label>
+        <input type="text" id="f-nome" placeholder="Ex: Cafeteira Smart Pro 12 xícaras">
+      </div>
+      <div class="form-grupo full">
+        <label>Descrição</label>
+        <textarea id="f-desc" placeholder="Descreva o produto..."></textarea>
+      </div>
+      <div class="form-grupo">
+        <label>Preço (R$)</label>
+        <input type="number" id="f-preco" placeholder="249.90" step="0.01">
+      </div>
+      <div class="form-grupo">
+        <label>Preço antigo (R$)</label>
+        <input type="number" id="f-preco-ant" placeholder="349.90" step="0.01">
+      </div>
+      <div class="form-grupo">
+        <label>Desconto (%)</label>
+        <input type="number" id="f-desconto" placeholder="28" min="0" max="100">
+      </div>
+      <div class="form-grupo">
+        <label>Categoria</label>
+        <select id="f-cat">
+          <option value="">Selecione...</option>
+          <option value="Cafeteiras">Cafeteiras</option>
+          <option value="Higiene">Higiene</option>
+          <option value="Cozinha">Cozinha</option>
+          <option value="Casa inteligente">Casa inteligente</option>
+          <option value="Eletrônicos">Eletrônicos</option>
+          <option value="Limpeza">Limpeza</option>
+          <option value="Climatização">Climatização</option>
+          <option value="Entretenimento">Entretenimento</option>
+        </select>
+      </div>
+      <div class="form-grupo full">
+        <label>Fotos do produto (até 7)</label>
+        <div id="fotos-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px"></div>
+        <button type="button" onclick="adicionarSlotFoto()" style="width:100%;padding:10px;border:1.5px dashed #e5e7eb;border-radius:8px;background:#f4f6fa;color:#9ca3af;font-size:13px;cursor:pointer">+ Adicionar foto</button>
+        <input type="hidden" id="f-foto">
+      </div>
+      <div class="form-grupo">
+        <label>Status</label>
+        <select id="f-ativo">
+          <option value="true">Ativo (visível na loja)</option>
+          <option value="false">Inativo (oculto)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-btns">
+      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-salvar" onclick="salvarProduto()">Salvar produto</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL AVALIAÇÃO -->
+<div class="modal-bg" id="modal-aval">
+  <div class="modal">
+    <h2 id="modal-aval-titulo">Nova Avaliação</h2>
+    <div class="form-grid">
+      <div class="form-grupo full">
+        <label>Nome do cliente</label>
+        <input type="text" id="av-nome" placeholder="Ex: Maria S.">
+      </div>
+      <div class="form-grupo full">
+        <label>Nome do produto (como aparece na Shopee)</label>
+        <input type="text" id="av-prod" placeholder="Ex: Cafeteira Smart Pro">
+      </div>
+      <div class="form-grupo">
+        <label>Estrelas</label>
+        <select id="av-estrelas">
+          <option value="5">★★★★★ (5 estrelas)</option>
+          <option value="4">★★★★☆ (4 estrelas)</option>
+          <option value="3">★★★☆☆ (3 estrelas)</option>
+        </select>
+      </div>
+      <div class="form-grupo">
+        <label>Status</label>
+        <select id="av-ativo">
+          <option value="true">Ativo (visível na loja)</option>
+          <option value="false">Inativo (oculto)</option>
+        </select>
+      </div>
+      <div class="form-grupo full">
+        <label>Texto da avaliação</label>
+        <textarea id="av-texto" placeholder="Cole aqui o texto da avaliação da Shopee..." style="min-height:100px"></textarea>
+      </div>
+    </div>
+    <div class="form-btns">
+      <button class="btn-cancelar" onclick="fecharModalAval()">Cancelar</button>
+      <button class="btn-salvar" onclick="salvarAval()">Salvar avaliação</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── CONFIG ──
+  const SUPABASE_URL = 'https://dprloosfnttdhibsihfk.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwcmxvb3NmbnR0ZGhpYnNpaGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTc1MTQsImV4cCI6MjA5MjYzMzUxNH0.l6orZE8J77wTU0hKbDV2F7FvYbLB1DOEKqKDpnFlQ2k';
+  const SUPABASE_REST = 'https://dprloosfnttdhibsihfk.supabase.co/rest/v1';
+  const SENHA_ADMIN  = 'techlife2025'; // Troque por uma senha sua!
+
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let produtos = [];
+  let editandoId = null;
+
+  // ── LOGIN ──
+  function entrar() {
+    const s = document.getElementById('senha-input').value;
+    if (s === SENHA_ADMIN) {
+      document.getElementById('tela-login').style.display = 'none';
+      document.getElementById('tela-admin').style.display = 'block';
+      carregarProdutos();
+    } else {
+      document.getElementById('login-erro').style.display = 'block';
+    }
+  }
+
+  function sair() {
+    document.getElementById('tela-login').style.display = 'flex';
+    document.getElementById('tela-admin').style.display = 'none';
+    document.getElementById('senha-input').value = '';
+  }
+
+  // ── PRODUTOS ──
+  async function carregarProdutos() {
+    document.getElementById('tabela-corpo').innerHTML = '<div class="loading">Carregando produtos...</div>';
+    try {
+      const res = await fetch(`${SUPABASE_REST}/Produtos?select=*&order=id.desc`, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        }
+      });
+      produtos = await res.json();
+      if (!Array.isArray(produtos)) { mostrarToast('Erro ao carregar produtos', 'vermelho'); produtos = []; }
+      renderizarTabela(produtos);
+      atualizarStats();
+    } catch(e) {
+      mostrarToast('Erro ao carregar produtos: ' + e.message, 'vermelho');
+    }
+  }
+
+  function atualizarStats() {
+    document.getElementById('stat-total').textContent = produtos.length;
+    document.getElementById('stat-ativos').textContent = produtos.filter(p => p.Ativo).length;
+    const cats = new Set(produtos.map(p => p.categoria).filter(Boolean));
+    document.getElementById('stat-cats').textContent = cats.size;
+  }
+
+  function renderizarTabela(lista) {
+    if (lista.length === 0) {
+      document.getElementById('tabela-corpo').innerHTML = `
+        <div class="vazio">
+          <div style="font-size:48px">📦</div>
+          <p>Nenhum produto cadastrado ainda.<br>Clique em "Novo Produto" para começar!</p>
+        </div>`;
+      return;
+    }
+    const emojiCat = { 'Cafeteiras':'☕','Higiene':'🪥','Cozinha':'🍳','Casa inteligente':'💡','Eletrônicos':'🔌','Limpeza':'🧹','Climatização':'❄️','Entretenimento':'🎮' };
+    document.getElementById('tabela-corpo').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Preço</th>
+            <th>Desconto</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lista.map(p => `
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div class="prod-foto">${p.foto_url ? `<img src="${p.foto_url}" style="width:44px;height:44px;border-radius:8px;object-fit:cover">` : (emojiCat[p.categoria] || '📦')}</div>
+                  <div>
+                    <div class="prod-nome">${p.Nome || '—'}</div>
+                    <div class="prod-cat">${p.categoria || '—'}</div>
+                  </div>
+                </div>
+              </td>
+              <td><div class="preco-val">R$ ${Number(p.Preço||0).toFixed(2).replace('.',',')}</div>${p['Antigo Preço'] ? `<div style="font-size:11px;color:#9ca3af;text-decoration:line-through">R$ ${Number(p['Antigo Preço']).toFixed(2).replace('.',',')}</div>` : ''}</td>
+              <td>${p.Desconto ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px">-${p.Desconto}%</span>` : '—'}</td>
+              <td><span class="${p.Ativo ? 'badge-ativo' : 'badge-inativo'}">${p.Ativo ? 'Ativo' : 'Inativo'}</span></td>
+              <td>
+                <div class="acoes">
+                  <button class="btn-editar" onclick="editarProduto(${p.id})">Editar</button>
+                  <button class="btn-excluir" onclick="excluirProduto(${p.id})">Excluir</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  function filtrar(q) {
+    const f = produtos.filter(p => (p.Nome||'').toLowerCase().includes(q.toLowerCase()) || (p.categoria||'').toLowerCase().includes(q.toLowerCase()));
+    renderizarTabela(f);
+  }
+
+  // ── MODAL ──
+  function abrirModal(p = null) {
+    editandoId = p ? p.id : null;
+    document.getElementById('modal-titulo').textContent = p ? 'Editar Produto' : 'Novo Produto';
+    document.getElementById('f-nome').value     = p?.Nome || '';
+    document.getElementById('f-desc').value     = p?.Descrição || '';
+    document.getElementById('f-preco').value    = p?.Preço || '';
+    document.getElementById('f-preco-ant').value= p?.['Antigo Preço'] || '';
+    document.getElementById('f-desconto').value = p?.Desconto || '';
+    document.getElementById('f-cat').value      = p?.categoria || '';
+    document.getElementById('f-foto').value     = p?.foto_url || '';
+    document.getElementById('f-ativo').value    = p?.Ativo !== false ? 'true' : 'false';
+    inicializarFotoSlots(p);
+    document.getElementById('modal').classList.add('aberto');
+  }
+
+  function fecharModal() {
+    document.getElementById('modal').classList.remove('aberto');
+    document.getElementById('fotos-grid').innerHTML = '';
+    fotosSlots = [];
+    editandoId = null;
+  }
+
+  function editarProduto(id) {
+    const p = produtos.find(x => x.id === id);
+    if (p) abrirModal(p);
+  }
+
+  async function salvarProduto() {
+    const dados = {
+      Nome:           document.getElementById('f-nome').value.trim(),
+      Descrição:      document.getElementById('f-desc').value.trim(),
+      Preço:          parseFloat(document.getElementById('f-preco').value) || 0,
+      'Antigo Preço': parseFloat(document.getElementById('f-preco-ant').value) || null,
+      Desconto:       parseInt(document.getElementById('f-desconto').value) || null,
+      categoria:      document.getElementById('f-cat').value,
+      foto_url:       document.getElementById('f-foto').value.trim() || null,
+      Ativo:          document.getElementById('f-ativo').value === 'true',
+    };
+    if (!dados.Nome) { mostrarToast('Digite o nome do produto!', 'vermelho'); return; }
+    if (!dados.Preço) { mostrarToast('Digite o preço do produto!', 'vermelho'); return; }
+
+    // Adicionar fotos ao dados
+    fotoFields.forEach((field, idx) => {
+      dados[field] = fotosSlots[idx] || null;
+    });
+
+    let error;
+    if (editandoId) {
+      const res = await fetch(`${SUPABASE_REST}/Produtos?id=eq.${editandoId}`, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(dados)
+      });
+      if (!res.ok) error = await res.json();
+    } else {
+      const res = await fetch(`${SUPABASE_REST}/Produtos`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(dados)
+      });
+      if (!res.ok) error = await res.json();
+    }
+
+    if (error) { mostrarToast('Erro ao salvar: ' + error.message, 'vermelho'); return; }
+    mostrarToast(editandoId ? 'Produto atualizado!' : 'Produto cadastrado!', 'verde');
+    fecharModal();
+    carregarProdutos();
+  }
+
+  async function excluirProduto(id) {
+    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+    const res = await fetch(`${SUPABASE_REST}/Produtos?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) { mostrarToast('Erro ao excluir', 'vermelho'); return; }
+    mostrarToast('Produto excluído!', 'verde');
+    carregarProdutos();
+  }
+
+  // ── TOAST ──
+  function mostrarToast(msg, tipo = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + tipo;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+
+  // ── UPLOAD DE MÚLTIPLAS FOTOS ──
+  const fotoFields = ['foto_url','foto2_url','foto3_url','foto4_url','foto5_url','foto6_url','foto7_url'];
+  let fotosSlots = [];
+
+  function adicionarSlotFoto() {
+    if (fotosSlots.length >= 7) { mostrarToast('Máximo de 7 fotos!', 'vermelho'); return; }
+    const idx = fotosSlots.length;
+    fotosSlots.push(null);
+    const grid = document.getElementById('fotos-grid');
+    const slot = document.createElement('div');
+    slot.id = `slot-${idx}`;
+    slot.style.cssText = 'position:relative;height:80px;background:#f4f6fa;border-radius:8px;border:1.5px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden';
+    slot.innerHTML = `<span style="color:#9ca3af;font-size:11px;text-align:center">Foto ${idx+1}</span><input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="uploadSlot(this, ${idx})">`;
+    grid.appendChild(slot);
+  }
+
+  async function uploadSlot(input, idx) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const slot = document.getElementById(`slot-${idx}`);
+    slot.innerHTML = '<span style="color:#9ca3af;font-size:11px">Enviando...</span>';
+    const ext = file.name.split('.').pop();
+    const fileName = `produto_${Date.now()}_${idx}.${ext}`;
+    const res = await fetch(`${SUPABASE_URL.replace('/rest/v1','')}/storage/v1/object/Produtos/${fileName}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type },
+      body: file
+    });
+    if (!res.ok) { slot.innerHTML = '<span style="color:red;font-size:11px">Erro!</span>'; return; }
+    const url = `${SUPABASE_URL.replace('/rest/v1','')}/storage/v1/object/public/Produtos/${fileName}`;
+    fotosSlots[idx] = url;
+    slot.style.border = '2px solid #16a085';
+    slot.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover"><button onclick="removerSlot(${idx})" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
+    mostrarToast('Foto enviada!', 'verde');
+  }
+
+  function removerSlot(idx) {
+    fotosSlots[idx] = null;
+    const slot = document.getElementById(`slot-${idx}`);
+    slot.style.border = '1.5px dashed #e5e7eb';
+    slot.innerHTML = `<span style="color:#9ca3af;font-size:11px;text-align:center">Foto ${idx+1}</span><input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="uploadSlot(this, ${idx})">`;
+  }
+
+  function inicializarFotoSlots(produto) {
+    fotosSlots = [];
+    document.getElementById('fotos-grid').innerHTML = '';
+    fotoFields.forEach((field, idx) => {
+      if (produto && produto[field]) {
+        fotosSlots.push(produto[field]);
+        const grid = document.getElementById('fotos-grid');
+        const slot = document.createElement('div');
+        slot.id = `slot-${idx}`;
+        slot.style.cssText = 'position:relative;height:80px;background:#f4f6fa;border-radius:8px;border:2px solid #16a085;overflow:hidden';
+        slot.innerHTML = `<img src="${produto[field]}" style="width:100%;height:100%;object-fit:cover"><button onclick="removerSlot(${idx})" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
+        grid.appendChild(slot);
+      }
+    });
+  }
+
+  // ── ABAS ──
+  function mudarAba(aba) {
+    document.getElementById('aba-produtos').style.display = aba === 'produtos' ? 'block' : 'none';
+    document.getElementById('aba-avaliacoes').style.display = aba === 'avaliacoes' ? 'block' : 'none';
+    document.querySelectorAll('.aba').forEach((a,i) => a.classList.toggle('ativa', (i===0&&aba==='produtos')||(i===1&&aba==='avaliacoes')));
+    if (aba === 'avaliacoes') carregarAvaliacoes();
+  }
+
+  // ── AVALIAÇÕES ──
+  let editandoAvalId = null;
+
+  async function carregarAvaliacoes() {
+    document.getElementById('lista-avaliacoes').innerHTML = '<div class="loading">Carregando...</div>';
+    const res = await fetch(`${SUPABASE_REST}/Avaliacoes?select=*&order=id.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const avals = await res.json();
+    if (!Array.isArray(avals) || avals.length === 0) {
+      document.getElementById('lista-avaliacoes').innerHTML = '<div class="vazio"><div style="font-size:48px">⭐</div><p>Nenhuma avaliação cadastrada ainda.</p></div>';
+      return;
+    }
+    const stars = n => '★'.repeat(n) + '☆'.repeat(5-n);
+    document.getElementById('lista-avaliacoes').innerHTML = avals.map(a => `
+      <div class="aval-card">
+        <div class="aval-header">
+          <div>
+            <div class="aval-nome">${a.nome_cliente || '—'}</div>
+            <div class="aval-prod">📦 ${a.produto_nome || '—'}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="${a.ativo ? 'badge-ativo' : 'badge-inativo'}">${a.ativo ? 'Ativo' : 'Inativo'}</span>
+            <button class="btn-editar" onclick="editarAval(${a.id})">Editar</button>
+            <button class="btn-excluir" onclick="excluirAval(${a.id})">Excluir</button>
+          </div>
+        </div>
+        <div class="aval-stars">${stars(a.estrelas||5)}</div>
+        <div class="aval-texto">"${a.texto || ''}"</div>
+      </div>`).join('');
+  }
+
+  function abrirModalAval(a = null) {
+    editandoAvalId = a ? a.id : null;
+    document.getElementById('modal-aval-titulo').textContent = a ? 'Editar Avaliação' : 'Nova Avaliação';
+    document.getElementById('av-nome').value = a?.nome_cliente || '';
+    document.getElementById('av-prod').value = a?.produto_nome || '';
+    document.getElementById('av-estrelas').value = a?.estrelas || '5';
+    document.getElementById('av-texto').value = a?.texto || '';
+    document.getElementById('av-ativo').value = a?.ativo !== false ? 'true' : 'false';
+    document.getElementById('modal-aval').classList.add('aberto');
+  }
+
+  function fecharModalAval() {
+    document.getElementById('modal-aval').classList.remove('aberto');
+    editandoAvalId = null;
+  }
+
+  async function editarAval(id) {
+    const res = await fetch(`${SUPABASE_REST}/Avaliacoes?id=eq.${id}&select=*`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const data = await res.json();
+    if (data && data[0]) abrirModalAval(data[0]);
+  }
+
+  async function salvarAval() {
+    const dados = {
+      nome_cliente: document.getElementById('av-nome').value.trim(),
+      produto_nome: document.getElementById('av-prod').value.trim(),
+      estrelas: parseInt(document.getElementById('av-estrelas').value),
+      texto: document.getElementById('av-texto').value.trim(),
+      ativo: document.getElementById('av-ativo').value === 'true',
+    };
+    if (!dados.nome_cliente) { mostrarToast('Digite o nome do cliente!', 'vermelho'); return; }
+    if (!dados.texto) { mostrarToast('Digite o texto da avaliação!', 'vermelho'); return; }
+
+    let res;
+    if (editandoAvalId) {
+      res = await fetch(`${SUPABASE_REST}/Avaliacoes?id=eq.${editandoAvalId}`, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(dados)
+      });
+    } else {
+      res = await fetch(`${SUPABASE_REST}/Avaliacoes`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(dados)
+      });
+    }
+    if (!res.ok) { mostrarToast('Erro ao salvar avaliação', 'vermelho'); return; }
+    mostrarToast(editandoAvalId ? 'Avaliação atualizada!' : 'Avaliação cadastrada!', 'verde');
+    fecharModalAval();
+    carregarAvaliacoes();
+  }
+
+  async function excluirAval(id) {
+    if (!confirm('Excluir esta avaliação?')) return;
+    await fetch(`${SUPABASE_REST}/Avaliacoes?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    mostrarToast('Avaliação excluída!', 'verde');
+    carregarAvaliacoes();
+  }
+
+  // Fechar modal clicando fora
+  document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) fecharModal(); });
+  document.getElementById('modal-aval').addEventListener('click', e => { if (e.target === document.getElementById('modal-aval')) fecharModalAval(); });
+</script>
+</body>
+</html>

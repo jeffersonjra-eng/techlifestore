@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tech Life Store — Eletrônicos e utilidades para o seu dia a dia. Entrega rápida, Pix com desconto, parcele em 12x.">
+  <title>Tech Life Store | Eletrônicos e Utilidades Domésticas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --verde:#16a085; --verde-claro:#1abc9c; --verde-escuro:#0e6655;
+      --vermelho:#c0392b; --branco:#ffffff; --cinza-claro:#f4f6fa;
+      --cinza-texto:#6b7280; --escuro:#0d1f1b; --amarelo-star:#f59e0b;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { font-family:'DM Sans',sans-serif; background:var(--branco); color:var(--escuro); overflow-x:hidden; }
+    h1,h2,h3,h4 { font-family:'Syne',sans-serif; }
+    img { max-width:100%; display:block; }
+    a { text-decoration:none; color:inherit; }
+
+    .barra-topo { background:var(--verde-escuro); color:#fff; text-align:center; padding:8px 16px; font-size:13px; font-weight:500; }
+    .barra-topo span { color:#a8f0e0; }
+
+    header { background:var(--escuro); position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,0.35); }
+    nav { max-width:1200px; margin:0 auto; padding:0 20px; display:flex; align-items:center; gap:20px; height:68px; }
+    .logo-img { height:44px; width:auto; }
+    .busca { flex:1; display:flex; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); border-radius:8px; overflow:hidden; max-width:460px; }
+    .busca input { flex:1; background:transparent; border:none; padding:10px 16px; color:#fff; font-size:14px; font-family:'DM Sans',sans-serif; outline:none; }
+    .busca input::placeholder { color:rgba(255,255,255,0.35); }
+    .busca button { background:var(--verde); border:none; padding:0 18px; color:#fff; cursor:pointer; font-size:16px; }
+    .nav-links { display:flex; align-items:center; gap:18px; list-style:none; margin-left:auto; }
+    .nav-links a { color:rgba(255,255,255,0.72); font-size:14px; font-weight:500; white-space:nowrap; }
+    .nav-links a:hover { color:#fff; }
+    .nav-carrinho { background:var(--verde) !important; color:#fff !important; padding:8px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; }
+
+    .slider { position:relative; overflow:hidden; background:#000; }
+    .slides { display:flex; transition:transform .5s ease; }
+    .slide { min-width:100%; }
+    .slide img { width:100%; max-height:380px; object-fit:cover; display:block; }
+    .slider-btn { position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.45); color:#fff; border:none; width:40px; height:40px; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .slider-btn.prev { left:12px; }
+    .slider-btn.next { right:12px; }
+    .slider-dots { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:6px; }
+    .dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.5); cursor:pointer; }
+    .dot.ativo { background:#fff; }
+
+    .strip-beneficios { background:var(--verde); padding:12px 20px; }
+    .strip-inner { max-width:1200px; margin:0 auto; display:flex; justify-content:center; gap:32px; flex-wrap:wrap; }
+    .strip-item { display:flex; align-items:center; gap:8px; color:#fff; font-size:13px; font-weight:500; }
+
+    .secao { max-width:1200px; margin:0 auto; padding:48px 20px; }
+    .secao-titulo { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+    .secao-titulo h2 { font-size:22px; font-weight:700; }
+    .secao-titulo a { color:var(--verde); font-size:14px; font-weight:500; }
+
+    .categorias-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:12px; }
+    .categoria-card { background:var(--cinza-claro); border:1.5px solid transparent; border-radius:14px; padding:18px 10px; text-align:center; cursor:pointer; transition:all .2s; }
+    .categoria-card:hover { border-color:var(--verde); background:#e6f7f4; transform:translateY(-2px); }
+    .categoria-card .cat-emoji { font-size:26px; margin-bottom:6px; }
+    .categoria-card p { font-size:12px; font-weight:500; }
+
+    .produtos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:16px; }
+    .produto-card { background:var(--branco); border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; transition:all .2s; cursor:pointer; }
+    .produto-card:hover { border-color:var(--verde); box-shadow:0 8px 24px rgba(22,160,133,0.12); transform:translateY(-3px); }
+    .produto-img { background:var(--cinza-claro); height:130px; display:flex; align-items:center; justify-content:center; font-size:52px; position:relative; }
+    .produto-img img { width:100%; height:100%; object-fit:contain; background:#fff; }
+    .badge-desconto { position:absolute; top:10px; left:10px; background:var(--vermelho); color:#fff; font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; }
+    .produto-info { padding:14px; }
+    .produto-nome { font-size:13px; font-weight:500; margin-bottom:6px; line-height:1.4; }
+    .produto-stars { color:var(--amarelo-star); font-size:12px; margin-bottom:6px; }
+    .produto-stars span { color:var(--cinza-texto); }
+    .produto-preco-old { font-size:12px; color:var(--cinza-texto); text-decoration:line-through; }
+    .produto-preco { font-family:'Syne',sans-serif; font-size:19px; font-weight:700; margin-bottom:2px; }
+    .produto-pix { font-size:12px; color:var(--verde); font-weight:500; margin-bottom:10px; }
+
+    .banner-promo-wrap { max-width:1200px; margin:0 auto 40px; padding:0 20px; }
+    .banner-promo { background:linear-gradient(135deg,var(--verde-escuro) 0%,var(--verde) 100%); border-radius:20px; padding:40px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+    .banner-promo-texto h2 { font-size:26px; font-weight:800; color:#fff; margin-bottom:8px; }
+    .banner-promo-texto h2 span { color:#a8f0e0; }
+    .banner-promo-texto p { color:rgba(255,255,255,0.7); font-size:15px; margin-bottom:20px; }
+    .banner-emojis { font-size:60px; letter-spacing:8px; }
+    .btn-primario { background:var(--branco); color:var(--verde-escuro); border:none; padding:13px 28px; border-radius:10px; font-size:15px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; display:inline-block; }
+    .btn-primario:hover { background:#e6f7f4; }
+
+    .avaliacoes-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; min-height:180px; }
+    .avaliacao-card { background:var(--cinza-claro); border-radius:14px; padding:20px; border-left:3px solid var(--verde); }
+    .avaliacao-stars { color:var(--amarelo-star); font-size:14px; margin-bottom:10px; }
+    .avaliacao-texto { font-size:14px; line-height:1.6; color:#374151; margin-bottom:14px; }
+    .avaliacao-autor { display:flex; align-items:center; gap:10px; }
+    .avaliacao-avatar { width:36px; height:36px; border-radius:50%; background:var(--verde); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:14px; flex-shrink:0; }
+    .avaliacao-nome { font-size:13px; font-weight:600; }
+    .avaliacao-prod { font-size:12px; color:var(--cinza-texto); }
+
+    footer { background:var(--escuro); color:rgba(255,255,255,0.6); padding:48px 20px 24px; margin-top:60px; }
+    .footer-inner { max-width:1200px; margin:0 auto; }
+    .footer-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:32px; margin-bottom:40px; }
+    .footer-col h4 { color:#fff; font-size:14px; font-weight:700; margin-bottom:14px; }
+    .footer-col ul { list-style:none; }
+    .footer-col ul li { margin-bottom:8px; font-size:13px; }
+    .footer-col ul li a:hover { color:#fff; }
+    .footer-logo-img { height:44px; margin-bottom:12px; filter:brightness(0) invert(1); }
+    .footer-desc { font-size:13px; line-height:1.7; max-width:220px; }
+    .footer-bottom { border-top:1px solid rgba(255,255,255,0.1); padding-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:12px; }
+    .pag-badge { background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.8); padding:4px 10px; border-radius:6px; font-size:12px; font-weight:500; }
+
+    .wpp-fixo { position:fixed; bottom:24px; right:24px; background:#25d366; color:#fff; width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:0 4px 20px rgba(37,211,102,0.4); cursor:pointer; transition:transform .2s; z-index:200; }
+    .wpp-fixo:hover { transform:scale(1.1); }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.8); } }
+    .aval-entrada { animation:slideIn .5s ease both; }
+
+    @media (max-width:768px) {
+      .busca { display:none; }
+      .nav-links { gap:10px; }
+      .banner-promo { flex-direction:column; text-align:center; }
+      .banner-emojis { font-size:44px; }
+      .secao { padding:32px 16px; }
+      .slide img { max-height:200px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="barra-topo">
+    🚚 Frete grátis em compras acima de <span>R$ 199</span> — Pix com 5% de desconto!
+  </div>
+
+  <header>
+    <nav>
+      <a href="#"><img src="logo.png" alt="Tech Life Store" class="logo-img"></a>
+      <div class="busca">
+        <input type="text" placeholder="Buscar produtos..." id="busca-input" oninput="buscarProdutos(this.value)">
+        <button>🔍</button>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#categorias">Categorias</a></li>
+        <li><a href="#produtos">Ofertas</a></li>
+        <li><a href="#avaliacoes">Avaliações</a></li>
+        <li><a href="carrinho.html" class="nav-carrinho">🛒 <span id="qtd-carrinho">0</span></a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="slider">
+    <div class="slides" id="slides">
+      <div class="slide"><img src="banner1.jpeg" alt="Produtos com até 50% OFF"></div>
+      <div class="slide"><img src="banner2.jpeg" alt="Alerta de Preço Baixo"></div>
+      <div class="slide"><img src="banner3.jpeg" alt="Entrega Garantida"></div>
+      <div class="slide"><img src="banner4.jpeg" alt="Parcele em até 12x"></div>
+    </div>
+    <button class="slider-btn prev" onclick="moverSlide(-1)">&#8592;</button>
+    <button class="slider-btn next" onclick="moverSlide(1)">&#8594;</button>
+    <div class="slider-dots">
+      <div class="dot ativo" onclick="irSlide(0)"></div>
+      <div class="dot" onclick="irSlide(1)"></div>
+      <div class="dot" onclick="irSlide(2)"></div>
+      <div class="dot" onclick="irSlide(3)"></div>
+    </div>
+  </div>
+
+  <div class="strip-beneficios">
+    <div class="strip-inner">
+      <div class="strip-item"><span>🚚</span><span>Frete grátis acima de R$ 199</span></div>
+      <div class="strip-item"><span>💳</span><span>Parcele em 12x sem juros</span></div>
+      <div class="strip-item"><span>🔄</span><span>Troca fácil em 30 dias</span></div>
+      <div class="strip-item"><span>🔒</span><span>Compra 100% segura</span></div>
+    </div>
+  </div>
+
+  <section class="secao" id="categorias">
+    <div class="secao-titulo"><h2>Categorias</h2><a href="#">Ver todas →</a></div>
+    <div class="categorias-grid">
+      <div class="categoria-card" onclick="filtrarCategoria('Cafeteiras')"><div class="cat-emoji">☕</div><p>Cafeteiras</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Higiene')"><div class="cat-emoji">🪥</div><p>Higiene</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Cozinha')"><div class="cat-emoji">🍳</div><p>Cozinha</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Casa inteligente')"><div class="cat-emoji">💡</div><p>Casa inteligente</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Eletrônicos')"><div class="cat-emoji">🔌</div><p>Eletrônicos</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Limpeza')"><div class="cat-emoji">🧹</div><p>Limpeza</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Climatização')"><div class="cat-emoji">❄️</div><p>Climatização</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('')"><div class="cat-emoji">🛍️</div><p>Todos</p></div>
+    </div>
+  </section>
+
+  <section class="secao" id="produtos">
+    <div class="secao-titulo">
+      <h2>Mais vendidos</h2>
+      <a href="#">Ver todos →</a>
+    </div>
+    <div class="produtos-grid" id="produtos-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">Carregando produtos...</div>
+    </div>
+  </section>
+
+  <div class="banner-promo-wrap">
+    <div class="banner-promo">
+      <div class="banner-promo-texto">
+        <h2>Semana Tech:<br><span>até 50% OFF</span></h2>
+        <p>Produtos selecionados com desconto especial.<br>Aproveite enquanto durar o estoque!</p>
+        <a href="#produtos" class="btn-primario">Ver ofertas</a>
+      </div>
+      <div class="banner-emojis">🎉 ⚡ 🛍️</div>
+    </div>
+  </div>
+
+  <section class="secao" id="avaliacoes">
+    <div class="secao-titulo">
+      <h2>O que nossos clientes dizem</h2>
+      <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--verde);font-weight:500">
+        <span style="width:8px;height:8px;background:var(--verde);border-radius:50%;animation:pulse 1.5s infinite;display:inline-block"></span>
+        Ao vivo
+      </div>
+    </div>
+    <div class="avaliacoes-grid" id="avaliacoes-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:30px;color:#9ca3af">Carregando avaliações...</div>
+    </div>
+  </section>
+
+  <footer id="contato">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <img src="logo.png" alt="Tech Life Store" class="footer-logo-img">
+          <p class="footer-desc">Eletrônicos e utilidades domésticas com qualidade garantida e entrega rápida para todo o Brasil.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Institucional</h4>
+          <ul>
+            <li><a href="#">Sobre nós</a></li>
+            <li><a href="#">Política de privacidade</a></li>
+            <li><a href="#">Termos de uso</a></li>
+            <li><a href="#">Trabalhe conosco</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Atendimento</h4>
+          <ul>
+            <li><a href="#">Central de ajuda</a></li>
+            <li><a href="#">Trocas e devoluções</a></li>
+            <li><a href="#">Rastrear pedido</a></li>
+            <li><a href="https://wa.me/5513978253993">WhatsApp</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Contato</h4>
+          <ul>
+            <li>📧 Suporte@techlifestore.com.br</li>
+            <li>📱 (13) 97825-3993</li>
+            <li>⏰ Seg–Sex: 9h às 18h</li>
+            <li>📍 Poeta Gonçalves Dias, 29</li>
+            <li>Jardim Brasil II — Guarujá SP</li>
+            <li>CEP 11497-560</li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Redes sociais</h4>
+          <ul>
+            <li><a href="https://instagram.com/techlife_storee" target="_blank">📸 Instagram</a></li>
+            <li><a href="https://tiktok.com/@techlife_store" target="_blank">🎵 TikTok</a></li>
+            <li><a href="https://youtube.com/@techlife_store" target="_blank">▶️ YouTube</a></li>
+            <li><a href="https://shopee.com.br/techlife_store" target="_blank">🛍️ Shopee</a></li>
+            <li><a href="https://wa.me/5513978253993" target="_blank">💬 WhatsApp</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2025 Tech Life Store — CNPJ 50.137.700/0001-09 — Todos os direitos reservados</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="pag-badge">Pix</span>
+          <span class="pag-badge">Visa</span>
+          <span class="pag-badge">Mastercard</span>
+          <span class="pag-badge">Boleto</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="https://wa.me/5513978253993" target="_blank" class="wpp-fixo">💬</a>
+
+  <script>
+    // ── SLIDER ──
+    let atual = 0;
+    const totalSlides = 4;
+    function atualizarSlider() {
+      document.getElementById('slides').style.transform = 'translateX(-' + (atual * 100) + '%)';
+      document.querySelectorAll('.dot').forEach(function(d,i){ d.classList.toggle('ativo', i===atual); });
+    }
+    function moverSlide(dir) { atual = (atual + dir + totalSlides) % totalSlides; atualizarSlider(); }
+    function irSlide(n) { atual = n; atualizarSlider(); }
+    setInterval(function(){ moverSlide(1); }, 5000);
+
+    // ── CONFIG SUPABASE ──
+    var SUPA_URL = 'https://dprloosfnttdhibsihfk.supabase.co/rest/v1';
+    var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwcmxvb3NmbnR0ZGhpYnNpaGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTc1MTQsImV4cCI6MjA5MjYzMzUxNH0.l6orZE8J77wTU0hKbDV2F7FvYbLB1DOEKqKDpnFlQ2k';
+    var emojiCat = {'Cafeteiras':'☕','Higiene':'🪥','Cozinha':'🍳','Casa inteligente':'💡','Eletrônicos':'🔌','Limpeza':'🧹','Climatização':'❄️','Entretenimento':'🎮'};
+    var todosProdutos = [];
+
+    // ── CARRINHO ──
+    function atualizarBadgeCarrinho() {
+      var c = JSON.parse(localStorage.getItem('carrinho') || '[]');
+      var total = c.reduce(function(s,i){ return s+i.qtd; }, 0);
+      document.getElementById('qtd-carrinho').textContent = total;
+    }
+
+    function addCarrinho(id, nome, preco, foto) {
+      var carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+      var existente = carrinho.find(function(i){ return i.id == id; });
+      if (existente) { existente.qtd++; }
+      else { carrinho.push({id:id, nome:nome, preco:preco, qtd:1, foto:foto||''}); }
+      localStorage.setItem('carrinho', JSON.stringify(carrinho));
+      atualizarBadgeCarrinho();
+      mostrarToast('Produto adicionado! <a href="carrinho.html" style="color:#fff;font-weight:700;text-decoration:underline">Ver carrinho →</a>');
+    }
+
+    // ── PRODUTOS ──
+    function renderProdutos(lista) {
+      var grid = document.getElementById('produtos-grid');
+      if (!lista || lista.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">Nenhum produto encontrado.</div>';
+        return;
+      }
+      grid.innerHTML = lista.map(function(p) {
+        var preco = Number(p['Preço'] || 0);
+        var precoAnt = Number(p['Antigo Preço'] || 0);
+        var pix = (preco * 0.95).toFixed(2).replace('.', ',');
+        var emoji = emojiCat[p.categoria] || '📦';
+        var fotoHTML = p.foto_url
+          ? '<img src="' + p.foto_url + '" alt="' + p.Nome + '" style="width:100%;height:100%;object-fit:contain;background:#fff">'
+          : emoji;
+        var nomeEsc = (p.Nome || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        var fotoEsc = (p.foto_url || '').replace(/'/g, "\\'");
+        return '<div class="produto-card" onclick="window.location=\'produto.html?id=' + p.id + '\'">' +
+          '<div class="produto-img" style="' + (p.foto_url ? 'padding:0;overflow:hidden' : '') + '">' + fotoHTML +
+          (p.Desconto ? '<span class="badge-desconto">-' + p.Desconto + '%</span>' : '') + '</div>' +
+          '<div class="produto-info">' +
+          '<p class="produto-nome">' + (p.Nome || '') + '</p>' +
+          '<p class="produto-stars">★★★★★ <span>(novo)</span></p>' +
+          (precoAnt ? '<p class="produto-preco-old">R$ ' + precoAnt.toFixed(2).replace('.', ',') + '</p>' : '') +
+          '<p class="produto-preco">R$ ' + preco.toFixed(2).replace('.', ',') + '</p>' +
+          '<p class="produto-pix">✓ Pix: R$ ' + pix + '</p>' +
+          '<div style="display:flex;gap:6px">' +
+          '<a href="produto.html?id=' + p.id + '" onclick="event.stopPropagation()" style="flex:1;background:#0d1f1b;color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;font-family:Syne,sans-serif;text-decoration:none">Ver produto</a>' +
+          '<button onclick="event.stopPropagation();addCarrinho(' + p.id + ',\'' + nomeEsc + '\',' + preco + ',\'' + fotoEsc + '\')" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer">🛒</button>' +
+          '</div></div></div>';
+      }).join('');
+    }
+
+    async function carregarProdutos() {
+      try {
+        var res = await fetch(SUPA_URL + '/Produtos?select=*&Ativo=eq.true&order=id.desc', {
+          headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+        });
+        todosProdutos = await res.json();
+        if (!Array.isArray(todosProdutos)) todosProdutos = [];
+        renderProdutos(todosProdutos);
+      } catch(e) {
+        document.getElementById('produtos-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">Erro ao carregar produtos.</div>';
+      }
+    }
+
+    function filtrarCategoria(cat) {
+      if (!cat) { renderProdutos(todosProdutos); return; }
+      renderProdutos(todosProdutos.filter(function(p){ return p.categoria === cat; }));
+      document.getElementById('produtos').scrollIntoView({behavior:'smooth'});
+    }
+
+    function buscarProdutos(q) {
+      if (!q) { renderProdutos(todosProdutos); return; }
+      var ql = q.toLowerCase();
+      renderProdutos(todosProdutos.filter(function(p){
+        return (p.Nome||'').toLowerCase().includes(ql) || (p.categoria||'').toLowerCase().includes(ql);
+      }));
+    }
+
+    // ── AVALIAÇÕES ──
+    var todasAvaliacoes = [];
+    var avalIndex = 0;
+    var VISIVEIS = 3;
+
+    async function carregarAvaliacoes() {
+      try {
+        var res = await fetch(SUPA_URL + '/Avaliacoes?select=*&ativo=eq.true&order=id.desc', {
+          headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+        });
+        var avals = await res.json();
+        var grid = document.getElementById('avaliacoes-grid');
+        if (!Array.isArray(avals) || avals.length === 0) {
+          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#9ca3af">Em breve teremos avaliações aqui!</div>';
+          return;
+        }
+        todasAvaliacoes = avals;
+        renderAvaliacoes();
+        if (avals.length > VISIVEIS) setInterval(rotacionarAvaliacoes, 4000);
+      } catch(e) {}
+    }
+
+    function renderAvaliacoes() {
+      var grid = document.getElementById('avaliacoes-grid');
+      function stars(n) { return '★'.repeat(n) + '☆'.repeat(5-n); }
+      var tempos = ['agora mesmo','há 2 min','há 5 min','há 10 min','há 15 min','há 1 hora'];
+      var visiveis = [];
+      for (var i = 0; i < VISIVEIS; i++) {
+        visiveis.push(todasAvaliacoes[(avalIndex + i) % todasAvaliacoes.length]);
+      }
+      grid.innerHTML = visiveis.map(function(a) {
+        var iniciais = (a.nome_cliente||'?').split(' ').map(function(n){return n[0];}).slice(0,2).join('').toUpperCase();
+        var t = tempos[Math.floor(Math.random() * tempos.length)];
+        return '<div class="avaliacao-card aval-entrada">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+          '<p class="avaliacao-stars">' + stars(a.estrelas||5) + '</p>' +
+          '<span style="font-size:11px;color:#9ca3af">🕐 ' + t + '</span></div>' +
+          '<p class="avaliacao-texto">"' + (a.texto||'') + '"</p>' +
+          '<div class="avaliacao-autor"><div class="avaliacao-avatar">' + iniciais + '</div>' +
+          '<div><p class="avaliacao-nome">' + (a.nome_cliente||'') + '</p>' +
+          '<p class="avaliacao-prod">✓ Compra verificada — ' + (a.produto_nome||'') + '</p></div></div></div>';
+      }).join('');
+    }
+
+    function rotacionarAvaliacoes() {
+      avalIndex = (avalIndex + 1) % todasAvaliacoes.length;
+      renderAvaliacoes();
+    }
+
+    function mostrarToast(html) {
+      var t = document.getElementById('toast-loja');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'toast-loja';
+        t.style.cssText = 'position:fixed;bottom:90px;right:24px;background:#0d1f1b;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:300;transition:all .3s;opacity:0;transform:translateY(20px);max-width:280px';
+        document.body.appendChild(t);
+      }
+      t.innerHTML = html;
+      t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
+      setTimeout(function(){ t.style.opacity='0'; t.style.transform='translateY(20px)'; }, 3000);
+    }
+
+    atualizarBadgeCarrinho();
+    carregarProdutos();
+    carregarAvaliacoes();
+  </script>
+</body>
+</html>

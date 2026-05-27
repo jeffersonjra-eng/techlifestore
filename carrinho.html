@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrinho — Tech Life Store</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --verde:#16a085; --verde-claro:#1abc9c; --verde-escuro:#0e6655;
+      --vermelho:#c0392b; --branco:#ffffff; --cinza:#f4f6fa;
+      --cinza2:#e5e7eb; --texto:#374151; --escuro:#0d1f1b;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--cinza); color:var(--texto); }
+    h1,h2,h3 { font-family:'Syne',sans-serif; }
+    a { text-decoration:none; color:inherit; }
+
+    header { background:var(--escuro); padding:0 20px; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+    .logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:#fff; }
+    .logo span { color:var(--verde); }
+
+    .wrap { max-width:1000px; margin:0 auto; padding:32px 20px; display:grid; grid-template-columns:1fr 360px; gap:24px; }
+
+    .card { background:#fff; border-radius:16px; border:1px solid var(--cinza2); padding:24px; }
+    .card h2 { font-size:18px; font-weight:700; margin-bottom:20px; color:var(--escuro); }
+
+    /* ITENS */
+    .item { display:flex; gap:14px; align-items:center; padding:14px 0; border-bottom:1px solid #f3f4f6; }
+    .item:last-child { border-bottom:none; }
+    .item-foto { width:60px; height:60px; border-radius:10px; background:var(--cinza); display:flex; align-items:center; justify-content:center; font-size:28px; overflow:hidden; flex-shrink:0; }
+    .item-foto img { width:100%;height:100%;object-fit:contain; }
+    .item-info { flex:1; }
+    .item-nome { font-size:14px; font-weight:500; color:var(--escuro); margin-bottom:4px; }
+    .item-preco { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:var(--verde); }
+    .item-qtd { display:flex; align-items:center; gap:8px; margin-top:8px; }
+    .btn-qtd { width:28px; height:28px; border-radius:6px; border:1px solid var(--cinza2); background:#fff; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:background .2s; }
+    .btn-qtd:hover { background:var(--cinza); }
+    .qtd-val { font-size:14px; font-weight:600; min-width:20px; text-align:center; }
+    .btn-remover { background:none; border:none; color:#9ca3af; cursor:pointer; font-size:18px; margin-left:auto; }
+    .btn-remover:hover { color:var(--vermelho); }
+
+    /* FORMULÁRIO */
+    .form-grupo { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+    .form-grupo label { font-size:12px; font-weight:600; color:var(--texto); text-transform:uppercase; letter-spacing:.05em; }
+    .form-grupo input, .form-grupo select {
+      padding:10px 14px; border:1.5px solid var(--cinza2);
+      border-radius:8px; font-size:14px; font-family:'DM Sans',sans-serif;
+      outline:none; transition:border .2s;
+    }
+    .form-grupo input:focus, .form-grupo select:focus { border-color:var(--verde); }
+    .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    /* RESUMO */
+    .resumo-linha { display:flex; justify-content:space-between; font-size:14px; padding:8px 0; border-bottom:1px solid #f3f4f6; }
+    .resumo-linha:last-child { border-bottom:none; }
+    .resumo-total { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--escuro); }
+    .resumo-pix { font-size:13px; color:var(--verde); font-weight:600; margin-top:4px; }
+
+    .btn-finalizar {
+      width:100%; background:var(--verde); color:#fff; border:none;
+      padding:16px; border-radius:12px; font-size:16px; font-weight:700;
+      font-family:'Syne',sans-serif; cursor:pointer; margin-top:16px;
+      transition:background .2s; display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .btn-finalizar:hover { background:var(--verde-claro); }
+    .btn-finalizar:disabled { background:#9ca3af; cursor:not-allowed; }
+
+    .btn-wpp {
+      width:100%; background:#25d366; color:#fff; border:none;
+      padding:13px; border-radius:12px; font-size:14px; font-weight:600;
+      font-family:'Syne',sans-serif; cursor:pointer; margin-top:10px;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .btn-wpp:hover { background:#00b37e; }
+
+    .carrinho-vazio { text-align:center; padding:60px 20px; }
+    .carrinho-vazio p { color:#9ca3af; font-size:15px; margin:12px 0 20px; }
+
+    .loading-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      display:none; align-items:center; justify-content:center;
+      z-index:200; flex-direction:column; gap:16px;
+    }
+    .loading-overlay.show { display:flex; }
+    .loading-overlay p { color:#fff; font-size:16px; font-weight:500; }
+    .spinner { width:48px; height:48px; border:4px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .toast { position:fixed; bottom:24px; right:24px; background:var(--escuro); color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; transform:translateY(80px); opacity:0; transition:all .3s; z-index:300; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.verde { background:var(--verde); }
+    .toast.vermelho { background:var(--vermelho); }
+
+    @media (max-width:768px) {
+      .wrap { grid-template-columns:1fr; }
+      .form-grid2 { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">Tech<span>Life</span> Store</a>
+  <a href="index.html" style="color:rgba(255,255,255,0.7);font-size:13px">← Continuar comprando</a>
+</header>
+
+<div class="wrap">
+  <!-- ITENS DO CARRINHO -->
+  <div>
+    <div class="card" id="card-itens">
+      <h2>🛒 Meu carrinho</h2>
+      <div id="lista-itens">
+        <div class="carrinho-vazio">
+          <div style="font-size:48px">🛒</div>
+          <p>Seu carrinho está vazio.</p>
+          <a href="index.html" style="background:var(--verde);color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;font-family:Syne,sans-serif;display:inline-block">Ver produtos</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- DADOS DO CLIENTE -->
+    <div class="card" id="card-dados" style="margin-top:16px;display:none">
+      <h2>📋 Seus dados</h2>
+      <div class="form-grid2">
+        <div class="form-grupo">
+          <label>Nome completo</label>
+          <input type="text" id="c-nome" placeholder="João Silva">
+        </div>
+        <div class="form-grupo">
+          <label>E-mail</label>
+          <input type="email" id="c-email" placeholder="joao@email.com">
+        </div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-grupo">
+          <label>CPF</label>
+          <input type="text" id="c-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascaraCpf(this)">
+        </div>
+        <div class="form-grupo">
+          <label>Telefone</label>
+          <input type="text" id="c-tel" placeholder="(13) 99999-9999" maxlength="15" oninput="mascaraTel(this)">
+        </div>
+      </div>
+      <h3 style="font-size:15px;font-weight:600;margin:8px 0 14px;color:var(--escuro)">📍 Endereço de entrega</h3>
+      <div class="form-grid2">
+        <div class="form-grupo">
+          <label>CEP</label>
+          <input type="text" id="c-cep" placeholder="00000-000" maxlength="9" oninput="mascaraCep(this)" onblur="buscarCep(this.value)">
+        </div>
+        <div class="form-grupo">
+          <label>Número</label>
+          <input type="text" id="c-numero" placeholder="123">
+        </div>
+      </div>
+      <div class="form-grupo">
+        <label>Rua</label>
+        <input type="text" id="c-rua" placeholder="Rua das Flores">
+      </div>
+      <div class="form-grid2">
+        <div class="form-grupo">
+          <label>Bairro</label>
+          <input type="text" id="c-bairro" placeholder="Centro">
+        </div>
+        <div class="form-grupo">
+          <label>Complemento</label>
+          <input type="text" id="c-comp" placeholder="Apto 12 (opcional)">
+        </div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-grupo">
+          <label>Cidade</label>
+          <input type="text" id="c-cidade" placeholder="Guarujá">
+        </div>
+        <div class="form-grupo">
+          <label>Estado</label>
+          <select id="c-estado">
+            <option value="">Selecione...</option>
+            <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
+            <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
+            <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
+            <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+            <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
+            <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
+            <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
+            <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+            <option value="SP" selected>SP</option><option value="SE">SE</option><option value="TO">TO</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUMO E PAGAMENTO -->
+  <div>
+    <div class="card" id="card-resumo" style="display:none">
+      <h2>💰 Resumo</h2>
+      <div id="resumo-itens"></div>
+      <div style="margin-top:16px;padding-top:16px;border-top:2px solid var(--cinza2)">
+        <div class="resumo-total" id="resumo-total">R$ 0,00</div>
+        <div class="resumo-pix" id="resumo-pix"></div>
+      </div>
+      <button class="btn-finalizar" onclick="finalizar()" id="btn-finalizar">
+        💳 Pagar com PagSeguro
+      </button>
+      <button class="btn-wpp" onclick="finalizarWpp()">
+        💬 Finalizar pelo WhatsApp
+      </button>
+      <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">🔒 Pagamento 100% seguro via PagSeguro</p>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <p>Processando seu pedido...</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+
+  function salvarCarrinho() {
+    localStorage.setItem('carrinho', JSON.stringify(carrinho));
+  }
+
+  function formatarPreco(v) {
+    return 'R$ ' + Number(v).toFixed(2).replace('.', ',');
+  }
+
+  function renderCarrinho() {
+    const lista = document.getElementById('lista-itens');
+    const cardDados = document.getElementById('card-dados');
+    const cardResumo = document.getElementById('card-resumo');
+    const resumoItens = document.getElementById('resumo-itens');
+
+    if (carrinho.length === 0) {
+      lista.innerHTML = `<div class="carrinho-vazio"><div style="font-size:48px">🛒</div><p>Seu carrinho está vazio.</p><a href="index.html" style="background:var(--verde);color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;font-family:Syne,sans-serif;display:inline-block">Ver produtos</a></div>`;
+      cardDados.style.display = 'none';
+      cardResumo.style.display = 'none';
+      return;
+    }
+
+    cardDados.style.display = 'block';
+    cardResumo.style.display = 'block';
+
+    lista.innerHTML = carrinho.map((item, i) => `
+      <div class="item">
+        <div class="item-foto">${item.foto ? `<img src="${item.foto}" alt="${item.nome}">` : (item.emoji || '📦')}</div>
+        <div class="item-info">
+          <div class="item-nome">${item.nome}</div>
+          <div class="item-preco">${formatarPreco(item.preco)}</div>
+          <div class="item-qtd">
+            <button class="btn-qtd" onclick="mudarQtd(${i}, -1)">−</button>
+            <span class="qtd-val">${item.qtd}</span>
+            <button class="btn-qtd" onclick="mudarQtd(${i}, 1)">+</button>
+          </div>
+        </div>
+        <button class="btn-remover" onclick="remover(${i})">×</button>
+      </div>`).join('');
+
+    const total = carrinho.reduce((s, i) => s + (i.preco * i.qtd), 0);
+    const pix = total * 0.95;
+
+    resumoItens.innerHTML = carrinho.map(i =>
+      `<div class="resumo-linha"><span>${i.nome} x${i.qtd}</span><span>${formatarPreco(i.preco * i.qtd)}</span></div>`
+    ).join('');
+
+    document.getElementById('resumo-total').textContent = formatarPreco(total);
+    document.getElementById('resumo-pix').textContent = `✓ No Pix: ${formatarPreco(pix)}`;
+  }
+
+  function mudarQtd(i, dir) {
+    carrinho[i].qtd = Math.max(1, carrinho[i].qtd + dir);
+    salvarCarrinho();
+    renderCarrinho();
+  }
+
+  function remover(i) {
+    carrinho.splice(i, 1);
+    salvarCarrinho();
+    renderCarrinho();
+    mostrarToast('Produto removido!');
+  }
+
+  function validar() {
+    const campos = [
+      { id:'c-nome', msg:'Digite seu nome completo' },
+      { id:'c-email', msg:'Digite seu e-mail' },
+      { id:'c-cpf', msg:'Digite seu CPF' },
+      { id:'c-tel', msg:'Digite seu telefone' },
+      { id:'c-cep', msg:'Digite seu CEP' },
+      { id:'c-rua', msg:'Digite sua rua' },
+      { id:'c-numero', msg:'Digite o número' },
+      { id:'c-bairro', msg:'Digite seu bairro' },
+      { id:'c-cidade', msg:'Digite sua cidade' },
+      { id:'c-estado', msg:'Selecione seu estado' },
+    ];
+    for (const c of campos) {
+      if (!document.getElementById(c.id).value.trim()) {
+        mostrarToast(c.msg, 'vermelho');
+        document.getElementById(c.id).focus();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  async function finalizar() {
+    if (!validar()) return;
+    document.getElementById('loading').classList.add('show');
+    document.getElementById('btn-finalizar').disabled = true;
+
+    try {
+      const sender = {
+        nome: document.getElementById('c-nome').value,
+        email: document.getElementById('c-email').value,
+        cpf: document.getElementById('c-cpf').value.replace(/\D/g,''),
+        telefone: document.getElementById('c-tel').value.replace(/\D/g,''),
+        cep: document.getElementById('c-cep').value,
+        rua: document.getElementById('c-rua').value,
+        numero: document.getElementById('c-numero').value,
+        complemento: document.getElementById('c-comp').value,
+        bairro: document.getElementById('c-bairro').value,
+        cidade: document.getElementById('c-cidade').value,
+        estado: document.getElementById('c-estado').value,
+      };
+
+      const res = await fetch('/.netlify/functions/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: carrinho, sender })
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        carrinho = [];
+        salvarCarrinho();
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Erro ao processar pagamento');
+      }
+    } catch(e) {
+      mostrarToast('Erro: ' + e.message, 'vermelho');
+      document.getElementById('btn-finalizar').disabled = false;
+    } finally {
+      document.getElementById('loading').classList.remove('show');
+    }
+  }
+
+  function finalizarWpp() {
+    if (carrinho.length === 0) return;
+    const total = carrinho.reduce((s,i) => s + (i.preco * i.qtd), 0);
+    const nome = document.getElementById('c-nome').value || 'Cliente';
+    let msg = `Olá! Gostaria de finalizar meu pedido na *Tech Life Store*:\n\n`;
+    carrinho.forEach(i => { msg += `📦 ${i.nome} x${i.qtd} — ${formatarPreco(i.preco * i.qtd)}\n`; });
+    msg += `\n💰 *Total: ${formatarPreco(total)}*\n`;
+    if (nome) msg += `\n👤 Nome: ${nome}`;
+    const cep = document.getElementById('c-cep').value;
+    if (cep) msg += `\n📍 CEP: ${cep}`;
+    window.open(`https://wa.me/5513978253993?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+
+  // Máscaras
+  function mascaraCpf(el) {
+    let v = el.value.replace(/\D/g,'').substring(0,11);
+    v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    el.value = v;
+  }
+  function mascaraTel(el) {
+    let v = el.value.replace(/\D/g,'').substring(0,11);
+    v = v.replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2');
+    el.value = v;
+  }
+  function mascaraCep(el) {
+    let v = el.value.replace(/\D/g,'').substring(0,8);
+    v = v.replace(/(\d{5})(\d)/, '$1-$2');
+    el.value = v;
+  }
+
+  async function buscarCep(cep) {
+    cep = cep.replace(/\D/g,'');
+    if (cep.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const d = await res.json();
+      if (!d.erro) {
+        document.getElementById('c-rua').value = d.logradouro || '';
+        document.getElementById('c-bairro').value = d.bairro || '';
+        document.getElementById('c-cidade').value = d.localidade || '';
+        document.getElementById('c-estado').value = d.uf || '';
+        document.getElementById('c-numero').focus();
+      }
+    } catch(e) {}
+  }
+
+  function mostrarToast(msg, tipo='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + tipo;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+
+  renderCarrinho();
+</script>
+</body>
+</html>

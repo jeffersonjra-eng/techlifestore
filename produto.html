@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produto — Tech Life Store</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --verde: #16a085; --verde-claro: #1abc9c; --verde-escuro: #0e6655;
+      --vermelho: #c0392b; --branco: #ffffff; --cinza: #f4f6fa;
+      --cinza2: #e5e7eb; --texto: #374151; --escuro: #0d1f1b; --star: #f59e0b;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--cinza); color:var(--texto); }
+    h1,h2,h3 { font-family:'Syne',sans-serif; }
+    a { text-decoration:none; color:inherit; }
+
+    header { background:var(--escuro); padding:0 20px; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+    .logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:#fff; }
+    .logo span { color:var(--verde); }
+    .nav-links { display:flex; gap:16px; }
+    .nav-links a { color:rgba(255,255,255,0.7); font-size:13px; }
+    .nav-carrinho { background:var(--verde); color:#fff !important; padding:7px 14px; border-radius:8px; }
+
+    .breadcrumb { max-width:1100px; margin:20px auto; padding:0 20px; font-size:13px; color:#9ca3af; }
+    .breadcrumb a { color:var(--verde); }
+    .breadcrumb span { margin:0 6px; }
+
+    .produto-wrap { max-width:1100px; margin:0 auto; padding:0 20px 48px; }
+    .produto-grid { display:grid; grid-template-columns:1fr 1fr; gap:40px; background:#fff; border-radius:20px; padding:32px; }
+
+    /* FOTO */
+    .foto-principal {
+      background:var(--cinza); border-radius:14px;
+      height:380px; display:flex; align-items:center; justify-content:center;
+      font-size:80px; overflow:hidden;
+    }
+    .foto-principal img { width:100%; height:100%; object-fit:cover; }
+
+    /* INFO */
+    .prod-categoria { font-size:12px; font-weight:600; color:var(--verde); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+    .prod-titulo { font-size:24px; font-weight:700; color:var(--escuro); margin-bottom:12px; line-height:1.3; }
+    .prod-stars { color:var(--star); font-size:14px; margin-bottom:16px; }
+    .prod-stars span { color:#9ca3af; font-size:12px; }
+
+    .prod-preco-wrap { background:var(--cinza); border-radius:12px; padding:16px 20px; margin-bottom:20px; }
+    .prod-preco-old { font-size:13px; color:#9ca3af; text-decoration:line-through; }
+    .prod-preco { font-family:'Syne',sans-serif; font-size:32px; font-weight:800; color:var(--escuro); margin:4px 0; }
+    .prod-pix { font-size:13px; color:var(--verde); font-weight:600; }
+    .prod-parcela { font-size:12px; color:#9ca3af; margin-top:2px; }
+    .badge-desc { background:var(--vermelho); color:#fff; font-size:12px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:8px; }
+
+    .btn-comprar {
+      width:100%; background:var(--verde); color:#fff; border:none;
+      padding:16px; border-radius:12px; font-size:16px; font-weight:700;
+      font-family:'Syne',sans-serif; cursor:pointer; margin-bottom:10px;
+      transition:background .2s;
+    }
+    .btn-comprar:hover { background:var(--verde-claro); }
+    .btn-wpp {
+      width:100%; background:#25d366; color:#fff; border:none;
+      padding:14px; border-radius:12px; font-size:15px; font-weight:600;
+      font-family:'Syne',sans-serif; cursor:pointer; display:flex;
+      align-items:center; justify-content:center; gap:8px; transition:background .2s;
+    }
+    .btn-wpp:hover { background:#00b37e; }
+
+    .garantias { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px; }
+    .garantia { background:var(--cinza); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px; font-size:12px; font-weight:500; }
+
+    /* DESCRIÇÃO */
+    .descricao-wrap { background:#fff; border-radius:20px; padding:32px; margin-top:16px; }
+    .descricao-wrap h2 { font-size:18px; font-weight:700; margin-bottom:16px; color:var(--escuro); }
+    .descricao-texto { font-size:14px; line-height:1.8; color:var(--texto); white-space:pre-line; }
+
+    /* LOADING */
+    .loading-wrap { text-align:center; padding:80px 20px; }
+    .loading-wrap p { color:#9ca3af; font-size:15px; margin-top:12px; }
+
+    /* WPP FIXO */
+    .wpp-fixo { position:fixed; bottom:24px; right:24px; background:#25d366; color:#fff; width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:0 4px 20px rgba(37,211,102,0.4); cursor:pointer; transition:transform .2s; z-index:200; }
+    .wpp-fixo:hover { transform:scale(1.1); }
+
+    /* CARROSSEL */
+    .carrossel { position:relative; }
+    .fotos-principais { border-radius:14px; overflow:hidden; }
+    .foto-slide { width:100%; aspect-ratio:1/1; background:var(--cinza); display:flex; align-items:center; justify-content:center; font-size:80px; overflow:hidden; }
+    .foto-slide img { width:100%;height:100%;object-fit:contain;background:#fff; }
+    .car-btn { position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.4);color:#fff;border:none;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+    .car-btn.prev { left:10px; }
+    .car-btn.next { right:10px; }
+    .miniaturas { display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:4px; }
+    .miniatura { width:64px;height:64px;border-radius:8px;background:#fff;overflow:hidden;cursor:pointer;border:2px solid transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px; }
+    .miniatura img { width:100%;height:100%;object-fit:contain; }
+    .miniatura.ativa { border-color:var(--verde); }
+
+    .aval-card-prod { background:var(--cinza); border-radius:12px; padding:16px; margin-bottom:12px; }
+    .aval-card-prod .stars { color:#f59e0b; font-size:14px; margin-bottom:6px; }
+    .aval-card-prod .texto { font-size:14px; line-height:1.6; color:var(--texto); margin-bottom:10px; }
+    .aval-card-prod .autor { display:flex; align-items:center; gap:10px; }
+    .aval-avatar { width:32px;height:32px;border-radius:50%;background:var(--verde);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0; }
+    .aval-nome-prod { font-size:13px; font-weight:600; color:var(--escuro); }
+    .aval-produto-nome { font-size:11px; color:#9ca3af; }
+
+    @media (max-width:768px) {
+      .produto-grid { grid-template-columns:1fr; gap:24px; }
+      .foto-slide { aspect-ratio:1/1; }
+      .prod-titulo { font-size:20px; }
+      .prod-preco { font-size:26px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">Tech<span>Life</span> Store</a>
+  <div class="nav-links">
+    <a href="index.html">← Voltar à loja</a>
+    <a href="carrinho.html" class="nav-carrinho">🛒 Carrinho</a>
+  </div>
+</header>
+
+<div class="breadcrumb">
+  <a href="index.html">Início</a>
+  <span>›</span>
+  <span id="bread-cat">Produtos</span>
+  <span>›</span>
+  <span id="bread-nome">Carregando...</span>
+</div>
+
+<div class="produto-wrap">
+  <div id="loading" class="loading-wrap">
+    <div style="font-size:48px">⏳</div>
+    <p>Carregando produto...</p>
+  </div>
+
+  <div id="conteudo" style="display:none">
+    <div class="produto-grid">
+      <div>
+        <div class="carrossel">
+          <div class="fotos-principais" id="fotos-principais" style="overflow:hidden">
+            <div class="foto-slide" id="prod-foto">📦</div>
+          </div>
+          <button class="car-btn prev" id="btn-prev" onclick="moverFoto(-1)" style="display:none">‹</button>
+          <button class="car-btn next" id="btn-next" onclick="moverFoto(1)" style="display:none">›</button>
+        </div>
+        <div class="miniaturas" id="miniaturas"></div>
+      </div>
+      <div>
+        <div class="prod-categoria" id="prod-cat"></div>
+        <h1 class="prod-titulo" id="prod-nome"></h1>
+        <div class="prod-stars">★★★★★ <span>(avaliações de clientes)</span></div>
+
+        <div class="prod-preco-wrap">
+          <div id="badge-desc"></div>
+          <div class="prod-preco-old" id="prod-preco-old"></div>
+          <div class="prod-preco" id="prod-preco"></div>
+          <div class="prod-pix" id="prod-pix"></div>
+          <div class="prod-parcela" id="prod-parcela"></div>
+        </div>
+
+        <button class="btn-comprar" onclick="comprar()">🛒 Adicionar ao carrinho</button>
+        <a id="btn-wpp" href="#" target="_blank" class="btn-wpp">💬 Comprar pelo WhatsApp</a>
+
+        <div class="garantias">
+          <div class="garantia">🚚 Frete grátis acima de R$199</div>
+          <div class="garantia">🔒 Compra 100% segura</div>
+          <div class="garantia">🔄 Troca em 30 dias</div>
+          <div class="garantia">💳 Parcele em 12x</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="descricao-wrap">
+      <h2>Descrição do produto</h2>
+      <div class="descricao-texto" id="prod-desc"></div>
+    </div>
+
+    <div class="descricao-wrap" id="aval-wrap" style="display:none;margin-top:16px">
+      <h2>⭐ Avaliações dos clientes</h2>
+      <div id="aval-resumo" style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:var(--cinza);border-radius:12px">
+        <div style="text-align:center">
+          <div id="aval-media" style="font-family:Syne,sans-serif;font-size:40px;font-weight:800;color:var(--escuro)">—</div>
+          <div id="aval-stars-media" style="color:#f59e0b;font-size:18px"></div>
+          <div id="aval-total" style="font-size:12px;color:#9ca3af;margin-top:2px"></div>
+        </div>
+      </div>
+      <div id="aval-lista"></div>
+    </div>
+  </div>
+</div>
+
+<a href="https://wa.me/5513978253993" target="_blank" class="wpp-fixo">💬</a>
+
+<script>
+  const SUPA_URL = 'https://dprloosfnttdhibsihfk.supabase.co/rest/v1';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwcmxvb3NmbnR0ZGhpYnNpaGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTc1MTQsImV4cCI6MjA5MjYzMzUxNH0.l6orZE8J77wTU0hKbDV2F7FvYbLB1DOEKqKDpnFlQ2k';
+  const emojiCat = {'Cafeteiras':'☕','Higiene':'🪥','Cozinha':'🍳','Casa inteligente':'💡','Eletrônicos':'🔌','Limpeza':'🧹','Climatização':'❄️','Entretenimento':'🎮'};
+
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+
+  async function carregarProduto() {
+    if (!id) { window.location.href = 'index.html'; return; }
+    try {
+      const res = await fetch(`${SUPA_URL}/Produtos?id=eq.${id}&select=*`, {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` }
+      });
+      const dados = await res.json();
+      if (!dados || dados.length === 0) { window.location.href = 'index.html'; return; }
+      const p = dados[0];
+
+      // Breadcrumb
+      document.getElementById('bread-cat').textContent = p.categoria || 'Produtos';
+      document.getElementById('bread-nome').textContent = p.Nome || '';
+      document.title = (p.Nome || 'Produto') + ' — Tech Life Store';
+
+      // Fotos múltiplas
+      const fotos = [];
+      if (p.foto_url) fotos.push(p.foto_url);
+      if (p.foto2_url) fotos.push(p.foto2_url);
+      if (p.foto3_url) fotos.push(p.foto3_url);
+      if (p.foto4_url) fotos.push(p.foto4_url);
+      if (p.foto5_url) fotos.push(p.foto5_url);
+      if (p.foto6_url) fotos.push(p.foto6_url);
+      if (p.foto7_url) fotos.push(p.foto7_url);
+
+      const container = document.getElementById('fotos-principais');
+      const miniaturas = document.getElementById('miniaturas');
+
+      if (fotos.length === 0) {
+        document.getElementById('prod-foto').textContent = emojiCat[p.categoria] || '📦';
+      } else {
+        container.innerHTML = fotos.map((f,i) =>
+          `<div class="foto-slide" style="${i>0?'display:none':''}"><img src="${f}" alt="${p.Nome} foto ${i+1}" loading="lazy"></div>`
+        ).join('');
+        miniaturas.innerHTML = fotos.map((f,i) =>
+          `<div class="miniatura ${i===0?'ativa':''}" onclick="irFoto(${i})"><img src="${f}" alt="miniatura ${i+1}"></div>`
+        ).join('');
+        if (fotos.length > 1) {
+          document.getElementById('btn-prev').style.display = 'flex';
+          document.getElementById('btn-next').style.display = 'flex';
+        }
+      }
+
+      // Info
+      document.getElementById('prod-cat').textContent = p.categoria || '';
+      document.getElementById('prod-nome').textContent = p.Nome || '';
+      document.getElementById('prod-desc').textContent = p['Descrição'] || 'Sem descrição disponível.';
+
+      // Preços
+      const preco = Number(p['Preço'] || 0);
+      const precoAnt = Number(p['Antigo Preço'] || 0);
+      const pix = (preco * 0.95).toFixed(2).replace('.', ',');
+      const parcela = (preco / 12).toFixed(2).replace('.', ',');
+
+      if (p.Desconto) document.getElementById('badge-desc').innerHTML = `<span class="badge-desc">-${p.Desconto}% OFF</span>`;
+      if (precoAnt) document.getElementById('prod-preco-old').textContent = `De R$ ${precoAnt.toFixed(2).replace('.', ',')}`;
+      document.getElementById('prod-preco').textContent = `R$ ${preco.toFixed(2).replace('.', ',')}`;
+      document.getElementById('prod-pix').textContent = `✓ No Pix: R$ ${pix}`;
+      document.getElementById('prod-parcela').textContent = `ou 12x de R$ ${parcela} sem juros`;
+
+      // WhatsApp
+      const msgWpp = encodeURIComponent(`Olá! Tenho interesse no produto: *${p.Nome}* por R$ ${preco.toFixed(2).replace('.', ',')}. Podem me ajudar?`);
+      document.getElementById('btn-wpp').href = `https://wa.me/5513978253993?text=${msgWpp}`;
+
+      prodId = p.id;
+      prodPreco = p['Preço'] || 0;
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('conteudo').style.display = 'block';
+      carregarAvaliacoesProduto(p.Nome);
+    } catch(e) {
+      window.location.href = 'index.html';
+    }
+  }
+
+  let fotoAtual = 0;
+  function moverFoto(dir) {
+    const slides = document.querySelectorAll('.foto-slide');
+    const minis = document.querySelectorAll('.miniatura');
+    if (slides.length === 0) return;
+    fotoAtual = (fotoAtual + dir + slides.length) % slides.length;
+    slides.forEach((s,i) => {
+      s.style.display = i === fotoAtual ? 'flex' : 'none';
+    });
+    minis.forEach((m,i) => m.classList.toggle('ativa', i === fotoAtual));
+  }
+  function irFoto(n) {
+    const slides = document.querySelectorAll('.foto-slide');
+    fotoAtual = n;
+    slides.forEach((s,i) => {
+      s.style.display = i === n ? 'flex' : 'none';
+    });
+    document.querySelectorAll('.miniatura').forEach((m,i) => m.classList.toggle('ativa', i === n));
+  }
+
+  function comprar() {
+    const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+    const existente = carrinho.find(i => i.id == prodId);
+    if (existente) { existente.qtd++; }
+    else {
+      const foto = document.querySelector('.foto-slide img');
+      carrinho.push({ id: prodId, nome: document.getElementById('prod-nome').textContent, preco: prodPreco, qtd:1, foto: foto ? foto.src : null });
+    }
+    localStorage.setItem('carrinho', JSON.stringify(carrinho));
+    const t = document.createElement('div');
+    t.innerHTML = 'Adicionado ao carrinho! <a href="carrinho.html" style="color:#fff;font-weight:700;text-decoration:underline">Finalizar compra →</a>';
+    t.style.cssText = 'position:fixed;bottom:90px;right:24px;background:#16a085;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:300;max-width:280px';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+  let prodId = 0, prodPreco = 0;
+
+  carregarProduto();
+
+  async function carregarAvaliacoesProduto(nomeProduto) {
+    try {
+      const res = await fetch(`${SUPA_URL}/Avaliacoes?select=*&ativo=eq.true&order=id.desc`, {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` }
+      });
+      const avals = await res.json();
+      if (!Array.isArray(avals) || avals.length === 0) return;
+
+      // Filtrar avaliações do produto pelo nome
+      const filtradas = avals.filter(a =>
+        !a.produto_nome || a.produto_nome === '' ||
+        (nomeProduto && a.produto_nome.toLowerCase().includes(nomeProduto.toLowerCase().substring(0,10)))
+      );
+
+      const lista = filtradas.length > 0 ? filtradas : avals.slice(0,3);
+      if (lista.length === 0) return;
+
+      // Calcular média
+      const media = (lista.reduce((s,a) => s + (a.estrelas||5), 0) / lista.length).toFixed(1);
+      const stars = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5-Math.round(n));
+
+      document.getElementById('aval-media').textContent = media;
+      document.getElementById('aval-stars-media').textContent = stars(media);
+      document.getElementById('aval-total').textContent = lista.length + ' avaliações';
+
+      document.getElementById('aval-lista').innerHTML = lista.map(a => {
+        const iniciais = (a.nome_cliente||'?').split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+        return `<div class="aval-card-prod">
+          <div class="stars">${stars(a.estrelas||5)}</div>
+          <div class="texto">"${a.texto||''}"</div>
+          <div class="autor">
+            <div class="aval-avatar">${iniciais}</div>
+            <div>
+              <div class="aval-nome-prod">${a.nome_cliente||''}</div>
+              <div class="aval-produto-nome">Comprado na Tech Life Store ✓</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('aval-wrap').style.display = 'block';
+    } catch(e) {}
+  }
+</script>
+</body>
+</html>
