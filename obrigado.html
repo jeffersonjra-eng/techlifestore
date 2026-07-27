@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedido realizado — Tech Life Store</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --verde:#16a085; --escuro:#0d1f1b; --cinza:#f4f6fa; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--cinza); color:var(--escuro); min-height:100vh; display:flex; flex-direction:column; }
+    h1,h2 { font-family:'Syne',sans-serif; }
+    header { background:var(--escuro); padding:0 20px; height:64px; display:flex; align-items:center; }
+    .logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:#fff; text-decoration:none; }
+    .logo span { color:var(--verde); }
+    .wrap { max-width:600px; margin:0 auto; padding:60px 20px; text-align:center; flex:1; }
+    .icone { font-size:80px; margin-bottom:24px; animation:bounce .6s ease; }
+    @keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+    h1 { font-size:28px; font-weight:800; color:var(--escuro); margin-bottom:12px; }
+    .subtitulo { font-size:16px; color:#6b7280; margin-bottom:32px; line-height:1.6; }
+    .card { background:#fff; border-radius:16px; padding:24px; margin-bottom:20px; border:1px solid #e5e7eb; text-align:left; }
+    .card h2 { font-size:16px; font-weight:700; margin-bottom:16px; color:var(--escuro); }
+    .passo { display:flex; gap:12px; align-items:flex-start; margin-bottom:14px; }
+    .passo:last-child { margin-bottom:0; }
+    .num { width:28px; height:28px; border-radius:50%; background:var(--verde); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+    .passo-text { font-size:14px; color:#374151; line-height:1.5; }
+    .btn-voltar { display:inline-block; background:var(--verde); color:#fff; padding:14px 32px; border-radius:12px; font-size:15px; font-weight:700; font-family:'Syne',sans-serif; margin-top:8px; transition:background .2s; }
+    .btn-voltar:hover { background:#1abc9c; }
+    .btn-wpp { display:inline-block; background:#25d366; color:#fff; padding:14px 32px; border-radius:12px; font-size:15px; font-weight:700; font-family:'Syne',sans-serif; margin-top:8px; margin-left:10px; transition:background .2s; }
+    .btn-wpp:hover { background:#00b37e; }
+    .transaction { font-size:12px; color:#9ca3af; margin-top:16px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">Tech<span>Life</span> Store</a>
+  </header>
+  <div class="wrap">
+    <div class="icone">🎉</div>
+    <h1>Pedido realizado com sucesso!</h1>
+    <p class="subtitulo">Obrigado pela sua compra! Você receberá um e-mail de confirmação em breve.</p>
+
+    <div class="card">
+      <h2>📦 Próximos passos</h2>
+      <div class="passo">
+        <div class="num">1</div>
+        <div class="passo-text">Você receberá um <strong>e-mail de confirmação</strong> do PagBank com os detalhes do pagamento.</div>
+      </div>
+      <div class="passo">
+        <div class="num">2</div>
+        <div class="passo-text">Após a confirmação do pagamento, seu pedido será <strong>separado e embalado</strong> com cuidado.</div>
+      </div>
+      <div class="passo">
+        <div class="num">3</div>
+        <div class="passo-text">Você receberá o <strong>código de rastreio</strong> pelo e-mail para acompanhar sua entrega.</div>
+      </div>
+      <div class="passo">
+        <div class="num">4</div>
+        <div class="passo-text">Prazo de entrega: <strong>5 a 10 dias úteis</strong> após confirmação do pagamento.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💬 Precisa de ajuda?</h2>
+      <p style="font-size:14px;color:#374151;margin-bottom:12px">Entre em contato conosco pelo WhatsApp ou e-mail. Estamos aqui para ajudar!</p>
+      <p style="font-size:13px;color:#6b7280">📱 (13) 97825-3993</p>
+      <p style="font-size:13px;color:#6b7280;margin-top:4px">📧 Suporte@techlifestore.com.br</p>
+    </div>
+
+    <a href="index.html" class="btn-voltar">🛍️ Continuar comprando</a>
+    <a href="https://wa.me/5513978253993" target="_blank" class="btn-wpp">💬 Falar no WhatsApp</a>
+
+    <div class="transaction" id="transaction-id"></div>
+  </div>
+
+  <script>
+    // Pegar código de transação da URL
+    var params = new URLSearchParams(window.location.search);
+    var transactionId = params.get('transaction_id') || params.get('code');
+    if (transactionId) {
+      document.getElementById('transaction-id').textContent = 'Código do pedido: ' + transactionId;
+    }
+    // Limpar carrinho
+    localStorage.removeItem('carrinho');
+  </script>
+</body>
+</html>
