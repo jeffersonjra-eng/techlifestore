@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastrear pedido — Tech Life Store</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--verde:#16a085;--verde-claro:#1abc9c;--verde-escuro:#0e6655;--vermelho:#c0392b;--cinza:#f4f6fa;--cinza2:#e5e7eb;--texto:#374151;--escuro:#0d1f1b;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--cinza);color:var(--texto);}
+    h1,h2{font-family:'Syne',sans-serif;}
+    a{text-decoration:none;color:inherit;}
+    header{background:var(--escuro);height:64px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;}
+    .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;}
+    .logo span{color:var(--verde-claro);}
+    header .voltar{color:#fff;font-size:14px;}
+    .wrap{max-width:760px;margin:0 auto;padding:32px 20px 64px;}
+    .card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:20px;}
+    h1{font-size:26px;color:var(--escuro);margin-bottom:6px;}
+    h2{font-size:20px;color:var(--escuro);}
+    .sub{font-size:14px;color:#6b7280;margin-bottom:22px;}
+    form{display:flex;gap:10px;flex-wrap:wrap;}
+    input{flex:1;min-width:220px;padding:14px 16px;border:1px solid var(--cinza2);border-radius:10px;font-family:inherit;font-size:15px;}
+    input:focus{outline:none;border-color:var(--verde);}
+    button{padding:14px 28px;border:0;border-radius:10px;background:var(--verde);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}
+    button:hover{background:var(--verde-escuro);}
+    button:disabled{opacity:.6;cursor:not-allowed;}
+    .aviso{margin-top:14px;font-size:13px;color:#6b7280;}
+    .erro{padding:16px;border-radius:10px;background:#fdecea;color:var(--vermelho);font-size:14px;}
+    .topo{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+    .badge{padding:7px 16px;border-radius:999px;background:var(--verde);color:#fff;font-size:13px;font-weight:700;font-family:'Syne',sans-serif;}
+    .badge.ruim{background:var(--vermelho);}
+    .linha{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--cinza2);font-size:14px;}
+    .linha span{color:#6b7280;}
+    .linha b{color:var(--escuro);}
+    ul.tl{list-style:none;margin-top:6px;}
+    ul.tl li{position:relative;padding:0 0 24px 26px;border-left:2px solid var(--cinza2);}
+    ul.tl li:last-child{border-left-color:transparent;padding-bottom:0;}
+    ul.tl li::before{content:'';position:absolute;left:-8px;top:1px;width:14px;height:14px;border-radius:50%;background:var(--cinza2);}
+    ul.tl li.ok{border-left-color:var(--verde);}
+    ul.tl li.ok::before{background:var(--verde);}
+    .tl-tit{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--escuro);}
+    .tl-data{font-size:13px;color:#6b7280;}
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="index.html" class="logo">Tech<span>Life</span> Store</a>
+    <a href="index.html" class="voltar">← Continuar comprando</a>
+    </header>
+  <div class="wrap">
+  <div class="card">
+  <h1>📦 Rastrear meu pedido</h1>
+  <p class="sub">Informe o código de rastreio, o protocolo ou o número do envio que enviamos no seu e-mail de confirmação.</p>
+  <form id="form">
+  <input id="codigo" placeholder="Ex.: ME23002OWZ7BR ou ORD-202304125603" autocomplete="off" required>
+  <button id="btn" type="submit">Rastrear</button>
+  </form>
+  <p class="aviso">🚚 Os envios da Tech Life Store são feitos pelo Melhor Envio. O primeiro status pode levar até 24h para aparecer.</p>
+  </div>
+  <div id="saida"></div>
+  </div>
+  <script>
+    var STATUS={pending:'Aguardando pagamento',released:'Etiqueta liberada',posted:'A caminho',delivered:'Entregue',undelivered:'Não entregue',canceled:'Cancelado',suspended:'Suspenso'};
+    function fmt(d){if(!d)return null;var x=new Date(String(d).replace(' ','T'));if(isNaN(x.getTime()))return d;return x.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+    function passo(t,d){return '<li class="'+(d?'ok':'')+'"><div class="tl-tit">'+t+'</div><div class="tl-data">'+(d?fmt(d):'Aguardando')+'</div></li>';}
+    function render(r){
+      var ruim=(r.status==='canceled'||r.status==='undelivered'||r.status==='suspended');
+      var h='<div class="card"><div class="topo"><h2>Situação do envio</h2><span class="badge'+(ruim?' ruim':'')+'">'+(STATUS[r.status]||r.status)+'</span></div>';
+      if(r.rastreio){h+='<div class="linha"><span>Código de rastreio</span><b>'+r.rastreio+'</b></div>';}
+      if(r.protocolo){h+='<div class="linha"><span>Protocolo</span><b>'+r.protocolo+'</b></div>';}
+      h+='</div><div class="card"><h2 style="margin-bottom:16px">Histórico</h2><ul class="tl">';
+      h+=passo('Pedido registrado',r.datas.criado);
+      h+=passo('Pagamento confirmado',r.datas.pago);
+      h+=passo('Etiqueta gerada',r.datas.gerado);
+      h+=passo('Postado na transportadora',r.datas.postado);
+      h+=passo('Entregue',r.datas.entregue);
+      if(r.datas.cancelado){h+=passo('Cancelado',r.datas.cancelado);}
+      h+='</ul></div>';
+      document.getElementById('saida').innerHTML=h;
+    }
+    document.getElementById('form').addEventListener('submit',async function(e){
+      e.preventDefault();
+      var btn=document.getElementById('btn');
+      var saida=document.getElementById('saida');
+      var codigo=document.getElementById('codigo').value.trim();
+      if(!codigo){return;}
+      btn.disabled=true;btn.textContent='Buscando...';
+      saida.innerHTML='<div class="card">Consultando o Melhor Envio...</div>';
+      try{
+        var res=await fetch('/.netlify/functions/rastreio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo:codigo})});
+        var data=await res.json();
+        if(!res.ok){throw new Error(data.erro||'Não foi possível consultar agora.');}
+        render(data);
+      }catch(err){
+        saida.innerHTML='<div class="card"><div class="erro">'+err.message+'</div></div>';
+      }
+      btn.disabled=false;btn.textContent='Rastrear';
+    });
+  </script>
+  </body>
+</html>
+
+  </script></h1></span>
+    </header>
+  </body>
+  </style></title>
+  </head>
