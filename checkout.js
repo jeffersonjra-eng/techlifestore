@@ -3,7 +3,6 @@ const https = require('https');
 async function getPayPalToken(clientId, secret) {
   const credentials = Buffer.from(`${clientId}:${secret}`).toString('base64');
   const postData = 'grant_type=client_credentials';
-
   const options = {
     hostname: 'api-m.paypal.com',
     path: '/v1/oauth2/token',
@@ -14,7 +13,6 @@ async function getPayPalToken(clientId, secret) {
       'Content-Length': Buffer.byteLength(postData)
     }
   };
-
   return new Promise((resolve, reject) => {
     const req = https.request(options, (res) => {
       let data = '';
@@ -39,29 +37,16 @@ exports.handler = async function(event, context) {
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json'
   };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
-
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
 
   try {
     const { items, sender } = JSON.parse(event.body);
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const secret = process.env.PAYPAL_SECRET;
-
-    // Calcular total
-    const total = items.reduce((sum, item) => {
-      return sum + (Number(item.preco) * item.qtd);
-    }, 0).toFixed(2);
-
-    // Pegar token de acesso
+    const total = items.reduce((sum, item) => sum + (Number(item.preco) * item.qtd), 0).toFixed(2);
     const accessToken = await getPayPalToken(clientId, secret);
 
-    // Criar ordem no PayPal
     const orderPayload = {
       intent: 'CAPTURE',
       purchase_units: [{
@@ -70,17 +55,12 @@ exports.handler = async function(event, context) {
         amount: {
           currency_code: 'BRL',
           value: total,
-          breakdown: {
-            item_total: { currency_code: 'BRL', value: total }
-          }
+          breakdown: { item_total: { currency_code: 'BRL', value: total } }
         },
         items: items.map(item => ({
           name: (item.nome || '').substring(0, 127),
           quantity: String(item.qtd),
-          unit_amount: {
-            currency_code: 'BRL',
-            value: Number(item.preco).toFixed(2)
-          }
+          unit_amount: { currency_code: 'BRL', value: Number(item.preco).toFixed(2) }
         })),
         shipping: {
           name: { full_name: sender.nome },
@@ -133,20 +113,12 @@ exports.handler = async function(event, context) {
 
     if (result.status === 201) {
       const approveLink = result.body.links.find(l => l.rel === 'approve');
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ url: approveLink.href, id: result.body.id })
-      };
+      return { statusCode: 200, headers, body: JSON.stringify({ url: approveLink.href, id: result.body.id }) };
     } else {
       throw new Error(JSON.stringify(result.body));
     }
 
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: err.message })
-    };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };
