@@ -1,81 +1,98 @@
 const https = require('https');
 
+async function getPayPalToken(clientId, secret) {
+  const credentials = Buffer.from(`${clientId}:${secret}`).toString('base64');
+  const postData = 'grant_type=client_credentials';
+  const options = {
+    hostname: 'api-m.paypal.com',
+    path: '/v1/oauth2/token',
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${credentials}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.access_token) resolve(parsed.access_token);
+          else reject(new Error('Token error: ' + data));
+        } catch(e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.write(postData);
+    req.end();
+  });
+}
+
 exports.handler = async function(event, context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json'
   };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
-
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
 
   try {
     const { items, sender } = JSON.parse(event.body);
-    const token = process.env.PAGSEGURO_TOKEN;
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const secret = process.env.PAYPAL_SECRET;
+    const total = items.reduce((sum, item) => sum + (Number(item.preco) * item.qtd), 0).toFixed(2);
+    const accessToken = await getPayPalToken(clientId, secret);
 
-    const total = items.reduce((sum, item) => {
-      return sum + (Math.round(Number(item.preco) * 100) * item.qtd);
-    }, 0);
-
-    const payload = {
-      reference_id: `pedido_${Date.now()}`,
-      customer: {
-        name: sender.nome,
-        email: sender.email,
-        tax_id: sender.cpf.replace(/\D/g, ''),
-        phones: [{
-          country: '55',
-          area: sender.telefone.replace(/\D/g, '').substring(0, 2),
-          number: sender.telefone.replace(/\D/g, '').substring(2),
-          type: 'MOBILE'
-        }]
-      },
-      items: items.map((item, i) => ({
-        reference_id: String(i + 1),
-        name: (item.nome || '').substring(0, 100),
-        quantity: item.qtd,
-        unit_amount: Math.round(Number(item.preco) * 100)
-      })),
-      shipping: {
-        address: {
-          street: sender.rua,
-          number: sender.numero,
-          complement: sender.complemento || '',
-          locality: sender.bairro,
-          city: sender.cidade,
-          region_code: sender.estado,
-          country: 'BRA',
-          postal_code: sender.cep.replace(/\D/g, '')
-        }
-      },
-      qr_codes: [{
-        amount: { value: total }
-      }],
-      charges: [{
-        reference_id: `charge_${Date.now()}`,
+    const orderPayload = {
+      intent: 'CAPTURE',
+      purchase_units: [{
+        reference_id: `pedido_${Date.now()}`,
         description: 'Compra Tech Life Store',
-        amount: { value: total, currency: 'BRL' },
-        payment_method: { type: 'CREDIT_CARD', installments: 1, capture: true }
+        amount: {
+          currency_code: 'BRL',
+          value: total,
+          breakdown: { item_total: { currency_code: 'BRL', value: total } }
+        },
+        items: items.map(item => ({
+          name: (item.nome || '').substring(0, 127),
+          quantity: String(item.qtd),
+          unit_amount: { currency_code: 'BRL', value: Number(item.preco).toFixed(2) }
+        })),
+        shipping: {
+          name: { full_name: sender.nome },
+          address: {
+            address_line_1: `${sender.rua}, ${sender.numero}`,
+            address_line_2: sender.complemento || '',
+            admin_area_2: sender.cidade,
+            admin_area_1: sender.estado,
+            postal_code: sender.cep.replace(/\D/g, ''),
+            country_code: 'BR'
+          }
+        }
       }],
-      redirect_url: 'https://techlifestore.com.br',
-      notification_urls: ['https://techlifestore.com.br/.netlify/functions/notificacao']
+      application_context: {
+        brand_name: 'Tech Life Store',
+        locale: 'pt-BR',
+        landing_page: 'BILLING',
+        shipping_preference: 'SET_PROVIDED_ADDRESS',
+        user_action: 'PAY_NOW',
+        return_url: 'https://techlifestore.com.br/obrigado.html',
+        cancel_url: 'https://techlifestore.com.br/carrinho.html'
+      }
     };
 
-    const postData = JSON.stringify(payload);
+    const postData = JSON.stringify(orderPayload);
     const options = {
-      hostname: 'api.pagseguro.com',
-      path: '/orders',
+      hostname: 'api-m.paypal.com',
+      path: '/v2/checkout/orders',
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'x-api-version': '4.0',
         'Content-Length': Buffer.byteLength(postData)
       }
     };
@@ -94,11 +111,9 @@ exports.handler = async function(event, context) {
       req.end();
     });
 
-    if (result.status === 201 || result.status === 200) {
-      const links = result.body.links || [];
-      const payLink = links.find(l => l.rel === 'PAY') || links[0];
-      const url = payLink ? payLink.href : 'https://pagseguro.uol.com.br';
-      return { statusCode: 200, headers, body: JSON.stringify({ url, id: result.body.id }) };
+    if (result.status === 201) {
+      const approveLink = result.body.links.find(l => l.rel === 'approve');
+      return { statusCode: 200, headers, body: JSON.stringify({ url: approveLink.href, id: result.body.id }) };
     } else {
       throw new Error(JSON.stringify(result.body));
     }
