@@ -63,6 +63,10 @@ exports.handler = async function (event) {
                         headers: base
               });
               const lista = Array.isArray(achou.body) ? achou.body : (achou.body && achou.body.data) || [];
+              if (achou.status === 401 || achou.status === 403) {
+                        return { statusCode: 401, headers, body: JSON.stringify({ erro: 'Token do Melhor Envio invalido ou sem permissao. Verifique os escopos shipping-tracking e orders-read.' }) };
+              }
+
               if (achou.status !== 200 || !lista.length) {
                         return { statusCode: 404, headers, body: JSON.stringify({ erro: 'Nao encontramos nenhum envio com esse codigo.' }) };
               }
