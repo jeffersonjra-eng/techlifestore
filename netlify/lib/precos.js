@@ -2,7 +2,7 @@
 // Nenhum valor enviado pelo navegador e usado para cobrar: o cliente informa
 // apenas o id e a quantidade, o resto vem do banco.
 //
-// Variaveis de ambiente necessarias no Netlify:
+// Variaveis de ambiente opcionais no Netlify (se faltarem, usa o padrao abaixo):
 //   SUPABASE_URL       -> ex: https://xxxx.supabase.co
 //   SUPABASE_ANON_KEY  -> chave anon do projeto
 
@@ -11,9 +11,15 @@ const https = require('https');
 const QTD_MAXIMA = 99;
 const FRETE_MAXIMO = 500;
 
+// Fallback: se essas variaveis nao existirem no Netlify, o modulo usa os
+// mesmos valores publicos que ja estao no HTML da loja. A chave anon nao da
+// privilegio nenhum alem do que o navegador ja tem, entao nada novo e exposto.
+const SUPA_URL_PADRAO = 'https://dprloosfnttdhibsihfk.supabase.co';
+const SUPA_KEY_PADRAO = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwcmxvb3NmbnR0ZGhpYnNpaGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTc1MTQsImV4cCI6MjA5MjYzMzUxNH0.l6orZE8J77wTU0hKbDV2F7FvYbLB1DOEKqKDpnFlQ2k';
+
 function config() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_ANON_KEY;
+  const url = process.env.SUPABASE_URL || SUPA_URL_PADRAO;
+  const key = process.env.SUPABASE_ANON_KEY || SUPA_KEY_PADRAO;
   if (!url || !key) {
     throw new Error('SUPABASE_URL / SUPABASE_ANON_KEY nao configurados no Netlify');
   }
