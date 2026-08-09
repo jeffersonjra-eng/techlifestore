@@ -1,6 +1,6 @@
 // Checkout transparente PagBank (PagSeguro)
 // Variaveis de ambiente necessarias no Netlify:
-//   PAGBANK_TOKEN             -> token da conta (obrigatorio, nunca no codigo)
+//   PAGBANK_TOKEN             -> token da conta (aceita PAGSEGURO_TOKEN como alternativa)
 //   PAGBANK_ENV              -> 'production' ou 'sandbox' (padrao: sandbox)
 //   PAGBANK_NOTIFICATION_URL -> url do webhook de notificacao (opcional)
 
@@ -111,9 +111,9 @@ exports.handler = async function(event) {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const token = process.env.PAGBANK_TOKEN;
+  const token = process.env.PAGBANK_TOKEN || process.env.PAGSEGURO_TOKEN;
   if (!token) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'PAGBANK_TOKEN nao configurado' }) };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'PAGBANK_TOKEN (ou PAGSEGURO_TOKEN) nao configurado no Netlify' }) };
   }
 
   try {
