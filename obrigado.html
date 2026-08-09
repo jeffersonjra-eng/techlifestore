@@ -91,6 +91,21 @@
     }
     // Limpar carrinho
     localStorage.removeItem('carrinho');
+
+    // Google Analytics (GA4) - evento de compra
+    try {
+      var pedidoGA = JSON.parse(localStorage.getItem('ga_pedido') || 'null');
+      if (pedidoGA && typeof gtag === 'function') {
+        gtag('event', 'purchase', {
+          transaction_id: String(transactionId || ('pedido-' + Date.now())),
+          currency: pedidoGA.currency || 'BRL',
+          value: Number(pedidoGA.value) || 0,
+          shipping: Number(pedidoGA.shipping) || 0,
+          items: pedidoGA.items || []
+        });
+      }
+      localStorage.removeItem('ga_pedido');
+    } catch(e) {}
   </script>
 </body>
 </html>
