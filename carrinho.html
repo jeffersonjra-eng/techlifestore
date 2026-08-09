@@ -54,6 +54,15 @@
     /* RESUMO */
     .resumo-linha { display:flex; justify-content:space-between; font-size:14px; padding:8px 0; border-bottom:1px solid #f3f4f6; }
     .resumo-linha:last-child { border-bottom:none; }
+    .frete-bloco { margin-top:14px; padding-top:14px; border-top:1px dashed var(--cinza2); }
+    .btn-frete { width:100%; background:var(--escuro); color:#fff; border:none; border-radius:10px; padding:11px 14px; font-family:'Syne',sans-serif; font-weight:700; font-size:13px; cursor:pointer; }
+    .btn-frete:disabled { opacity:.6; cursor:not-allowed; }
+    .frete-opcao { display:flex; align-items:center; gap:10px; padding:10px; border:2px solid var(--cinza2); border-radius:10px; margin-top:8px; cursor:pointer; font-size:13px; }
+    .frete-opcao.ativa { border-color:var(--verde); background:#f0fdf4; }
+    .frete-opcao .fo-nome { flex:1; font-weight:600; }
+    .frete-opcao .fo-prazo { display:block; font-weight:400; font-size:11px; color:#6b7280; }
+    .frete-opcao .fo-preco { font-weight:700; color:var(--verde); }
+    .frete-aviso { font-size:12px; color:#6b7280; margin-top:8px; }
     .resumo-total { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--escuro); }
     .resumo-pix { font-size:13px; color:var(--verde); font-weight:600; margin-top:4px; }
 
@@ -197,6 +206,10 @@
     <div class="card" id="card-resumo" style="display:none">
       <h2>💰 Resumo</h2>
       <div id="resumo-itens"></div>
+      <div class="frete-bloco">
+        <button type="button" class="btn-frete" id="btn-frete" onclick="calcularFrete()">🚚 Calcular frete</button>
+        <div id="frete-opcoes"></div>
+      </div>
       <div style="margin-top:16px;padding-top:16px;border-top:2px solid var(--cinza2)">
         <div class="resumo-total" id="resumo-total">R$ 0,00</div>
         <div class="resumo-pix" id="resumo-pix"></div>
@@ -222,6 +235,8 @@
 
 <script>
   let carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+  let frete = null;
+  let opcoesFrete = [];
 
   function salvarCarrinho() {
     localStorage.setItem('carrinho', JSON.stringify(carrinho));
@@ -262,12 +277,16 @@
         <button class="btn-remover" onclick="remover(${i})">×</button>
       </div>`).join('');
 
-    const total = carrinho.reduce((s, i) => s + (i.preco * i.qtd), 0);
+    const subtotal = carrinho.reduce((s, i) => s + (i.preco * i.qtd), 0);
+    const valorFrete = frete ? Number(frete.preco) : 0;
+    const total = subtotal + valorFrete;
     const pix = total * 0.95;
 
     resumoItens.innerHTML = carrinho.map(i =>
       `<div class="resumo-linha"><span>${i.nome} x${i.qtd}</span><span>${formatarPreco(i.preco * i.qtd)}</span></div>`
-    ).join('');
+    ).join('') +
+      `<div class="resumo-linha"><span>Subtotal</span><span>${formatarPreco(subtotal)}</span></div>` +
+      `<div class="resumo-linha"><span>Frete${frete ? ' - ' + frete.nome : ''}</span><span>${frete ? (valorFrete > 0 ? formatarPreco(valorFrete) : 'Gratis') : 'a calcular'}</span></div>`;
 
     document.getElementById('resumo-total').textContent = formatarPreco(total);
     document.getElementById('resumo-pix').textContent = `✓ No Pix: ${formatarPreco(pix)}`;
@@ -306,6 +325,11 @@
         return false;
       }
     }
+    if (!frete) {
+      mostrarToast('Calcule e escolha uma opcao de frete', 'vermelho');
+      document.getElementById('btn-frete').focus();
+      return false;
+    }
     return true;
   }
 
@@ -332,7 +356,7 @@
       const res = await fetch('/.netlify/functions/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: carrinho, sender })
+        body: JSON.stringify({ items: carrinho, sender, frete })
       });
 
       const data = await res.json();
@@ -354,10 +378,13 @@
 
   function finalizarWpp() {
     if (carrinho.length === 0) return;
-    const total = carrinho.reduce((s,i) => s + (i.preco * i.qtd), 0);
+    const subtotal = carrinho.reduce((s,i) => s + (i.preco * i.qtd), 0);
+    const valorFrete = frete ? Number(frete.preco) : 0;
+    const total = subtotal + valorFrete;
     const nome = document.getElementById('c-nome').value || 'Cliente';
     let msg = `Olá! Gostaria de finalizar meu pedido na *Tech Life Store*:\n\n`;
     carrinho.forEach(i => { msg += `📦 ${i.nome} x${i.qtd} — ${formatarPreco(i.preco * i.qtd)}\n`; });
+    if (frete) msg += `\n🚚 Frete (${frete.nome}): ${valorFrete > 0 ? formatarPreco(valorFrete) : 'Gratis'}\n`;
     msg += `\n💰 *Total: ${formatarPreco(total)}*\n`;
     if (nome) msg += `\n👤 Nome: ${nome}`;
     const cep = document.getElementById('c-cep').value;
@@ -394,8 +421,67 @@
         document.getElementById('c-cidade').value = d.localidade || '';
         document.getElementById('c-estado').value = d.uf || '';
         document.getElementById('c-numero').focus();
+        calcularFrete();
       }
     } catch(e) {}
+  }
+
+  async function calcularFrete() {
+    const cep = document.getElementById('c-cep').value.replace(/\D/g, '');
+    const btn = document.getElementById('btn-frete');
+    const box = document.getElementById('frete-opcoes');
+    if (carrinho.length === 0) return;
+    if (cep.length !== 8) {
+      mostrarToast('Digite um CEP valido para calcular o frete', 'vermelho');
+      document.getElementById('c-cep').focus();
+      return;
+    }
+    frete = null;
+    opcoesFrete = [];
+    box.innerHTML = '';
+    btn.disabled = true;
+    btn.textContent = 'Calculando...';
+    try {
+      const res = await fetch('/.netlify/functions/frete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cep, itens: carrinho.map(i => ({ preco: i.preco, qtd: i.qtd })) })
+      });
+      const d = await res.json();
+      if (d.erro) throw new Error(d.erro);
+      opcoesFrete = d.opcoes || [];
+      if (opcoesFrete.length === 0) {
+        box.innerHTML = `<p class="frete-aviso">${d.aviso || 'Nenhuma opcao de entrega para esse CEP.'}</p>`;
+      } else {
+        frete = opcoesFrete[0];
+        renderFrete();
+        if (!d.gratis && d.falta_para_gratis > 0) {
+          box.innerHTML += `<p class="frete-aviso">Faltam ${formatarPreco(d.falta_para_gratis)} para ganhar frete gratis!</p>`;
+        }
+      }
+      renderCarrinho();
+    } catch (e) {
+      box.innerHTML = `<p class="frete-aviso">${e.message}</p>`;
+      renderCarrinho();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🚚 Calcular frete';
+    }
+  }
+
+  function renderFrete() {
+    document.getElementById('frete-opcoes').innerHTML = opcoesFrete.map((o, i) =>
+      `<div class="frete-opcao ${frete && frete.id === o.id ? 'ativa' : ''}" onclick="escolherFrete(${i})">
+        <span class="fo-nome">${o.empresa ? o.empresa + ' - ' : ''}${o.nome}<span class="fo-prazo">${o.prazo ? 'ate ' + o.prazo + ' dias uteis' : 'prazo a confirmar'}</span></span>
+        <span class="fo-preco">${o.preco > 0 ? formatarPreco(o.preco) : 'Gratis'}</span>
+      </div>`
+    ).join('');
+  }
+
+  function escolherFrete(i) {
+    frete = opcoesFrete[i];
+    renderFrete();
+    renderCarrinho();
   }
 
   function mostrarToast(msg, tipo='') {
