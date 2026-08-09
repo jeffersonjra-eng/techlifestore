@@ -275,6 +275,11 @@
 
       prodId = p.id;
       prodPreco = p['Preço'] || 0;
+      if (typeof gtag === 'function') gtag('event', 'view_item', {
+        currency: 'BRL',
+        value: prodPreco,
+        items: [{ item_id: String(p.id), item_name: p.Nome, item_category: p.categoria || '', price: prodPreco, quantity: 1 }]
+      });
       document.getElementById('loading').style.display = 'none';
       document.getElementById('conteudo').style.display = 'block';
       carregarAvaliacoesProduto(p.Nome);
@@ -312,6 +317,11 @@
       carrinho.push({ id: prodId, nome: document.getElementById('prod-nome').textContent, preco: prodPreco, qtd:1, foto: foto ? foto.src : null });
     }
     localStorage.setItem('carrinho', JSON.stringify(carrinho));
+    if (typeof gtag === 'function') gtag('event', 'add_to_cart', {
+      currency: 'BRL',
+      value: prodPreco,
+      items: [{ item_id: String(prodId), item_name: document.getElementById('prod-nome').textContent, price: prodPreco, quantity: 1 }]
+    });
     const t = document.createElement('div');
     t.innerHTML = 'Adicionado ao carrinho! <a href="carrinho.html" style="color:#fff;font-weight:700;text-decoration:underline">Finalizar compra →</a>';
     t.style.cssText = 'position:fixed;bottom:90px;right:24px;background:#16a085;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:300;max-width:280px';
