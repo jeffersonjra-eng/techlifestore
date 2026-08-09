@@ -254,6 +254,14 @@
     return 'R$ ' + Number(v).toFixed(2).replace('.', ',');
   }
 
+  // --- Google Analytics (GA4) e-commerce ---
+  function gaItens() {
+    return carrinho.map(i => ({ item_id: String(i.id), item_name: i.nome, price: Number(i.preco), quantity: Number(i.qtd) }));
+  }
+  function gaValor() {
+    return carrinho.reduce((s,i) => s + (Number(i.preco) * Number(i.qtd)), 0);
+  }
+
   function renderCarrinho() {
     const lista = document.getElementById('lista-itens');
     const cardDados = document.getElementById('card-dados');
@@ -307,6 +315,12 @@
   }
 
   function remover(i) {
+    const itemGA = carrinho[i];
+    if (typeof gtag === 'function' && itemGA) gtag('event', 'remove_from_cart', {
+      currency: 'BRL',
+      value: Number(itemGA.preco) * Number(itemGA.qtd),
+      items: [{ item_id: String(itemGA.id), item_name: itemGA.nome, price: Number(itemGA.preco), quantity: Number(itemGA.qtd) }]
+    });
     carrinho.splice(i, 1);
     salvarCarrinho();
     renderCarrinho();
@@ -343,6 +357,11 @@
 
   async function finalizar() {
     if (!validar()) return;
+    if (typeof gtag === 'function') gtag('event', 'begin_checkout', {
+      currency: 'BRL',
+      value: gaValor() + (frete ? Number(frete.preco) : 0),
+      items: gaItens()
+    });
     document.getElementById('loading').classList.add('show');
     document.getElementById('btn-finalizar').disabled = true;
 
@@ -370,6 +389,14 @@
       const data = await res.json();
 
       if (data.url) {
+        try {
+          localStorage.setItem('ga_pedido', JSON.stringify({
+            currency: 'BRL',
+            value: gaValor() + (frete ? Number(frete.preco) : 0),
+            shipping: frete ? Number(frete.preco) : 0,
+            items: gaItens()
+          }));
+        } catch(e) {}
         carrinho = [];
         salvarCarrinho();
         window.location.href = data.url;
@@ -488,6 +515,12 @@
 
   function escolherFrete(i) {
     frete = opcoesFrete[i];
+    if (typeof gtag === 'function') gtag('event', 'add_shipping_info', {
+      currency: 'BRL',
+      value: gaValor() + (frete ? Number(frete.preco) : 0),
+      shipping_tier: String((frete && (frete.nome || frete.name)) || 'padrao'),
+      items: gaItens()
+    });
     renderFrete();
     renderCarrinho();
   }
@@ -500,6 +533,12 @@
   }
 
   renderCarrinho();
+
+  if (typeof gtag === 'function' && carrinho.length > 0) gtag('event', 'view_cart', {
+    currency: 'BRL',
+    value: gaValor(),
+    items: gaItens()
+  });
 </script>
 </body>
 </html>
