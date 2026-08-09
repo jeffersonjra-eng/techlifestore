@@ -1,4 +1,5 @@
 const https = require('https');
+const { itensConfiaveis, freteConfiavel } = require('../lib/precos');
 
 async function getPayPalToken(clientId, secret) {
   const credentials = Buffer.from(`${clientId}:${secret}`).toString('base64');
@@ -41,7 +42,13 @@ exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
 
   try {
-    const { items, sender, frete } = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    const sender = body.sender;
+    if (!sender) throw new Error('Dados do comprador ausentes');
+
+    // Nome e preco vem do Supabase; do navegador so aproveitamos id e quantidade.
+    const items = await itensConfiaveis(body.items);
+    const frete = { preco: freteConfiavel(body.frete) };
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const secret = process.env.PAYPAL_SECRET;
     const itemTotal = items.reduce((sum, item) => sum + (Number(item.preco) * item.qtd), 0);

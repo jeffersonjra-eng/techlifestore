@@ -5,6 +5,7 @@
 //   PAGBANK_NOTIFICATION_URL -> url do webhook de notificacao (opcional)
 
 const https = require('https');
+const { itensConfiaveis, freteConfiavel } = require('../lib/precos');
 
 function apiHost() {
   return process.env.PAGBANK_ENV === 'production'
@@ -126,11 +127,12 @@ exports.handler = async function(event) {
       return { statusCode: 200, headers, body: JSON.stringify({ public_key: r.body.public_key }) };
     }
 
-    const items = body.items;
     const sender = body.sender;
-    const frete = body.frete;
-    if (!items || !items.length) throw new Error('Carrinho vazio');
     if (!sender) throw new Error('Dados do comprador ausentes');
+
+    // Nome e preco vem do Supabase; do navegador so aproveitamos id e quantidade.
+    const items = await itensConfiaveis(body.items);
+    const frete = { preco: freteConfiavel(body.frete) };
 
     const montado = montarPedido(items, sender, frete);
 
