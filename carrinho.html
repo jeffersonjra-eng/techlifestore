@@ -113,7 +113,16 @@
       .wrap { grid-template-columns:1fr; }
       .form-grid2 { grid-template-columns:1fr; }
     }
-  </style>
+      /* Pagamento (PagBank checkout transparente) */
+    .pag-bloco { margin-top:16px; padding-top:16px; border-top:2px solid var(--cinza2); }
+    .pag-titulo { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; margin-bottom:8px; }
+    .pag-opcoes { display:flex; gap:8px; }
+    .pag-opcao { flex:1; background:#fff; border:2px solid var(--cinza2); border-radius:10px; padding:9px 6px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .pag-opcao.ativa { border-color:var(--verde); background:#f0fdf4; color:var(--verde); }
+    .pix-box { margin-top:14px; text-align:center; }
+    .pix-box img { width:190px; margin:0 auto; }
+    .pix-codigo { width:100%; font-size:11px; padding:8px; border:1px solid var(--cinza2); border-radius:8px; resize:none; height:70px; margin-top:8px; font-family:'DM Sans',sans-serif; }
+</style>
 </head>
 <body>
 
@@ -222,13 +231,61 @@
         <div class="resumo-total" id="resumo-total">R$ 0,00</div>
         <div class="resumo-pix" id="resumo-pix"></div>
       </div>
-      <button class="btn-finalizar" onclick="finalizar()" id="btn-finalizar">
+      <!-- FORMA DE PAGAMENTO -->
+      <div class="pag-bloco">
+        <p class="pag-titulo">Forma de pagamento</p>
+        <div class="pag-opcoes">
+          <button type="button" class="pag-opcao ativa" id="pag-paypal" onclick="escolherPagamento('paypal')">PayPal</button>
+          <button type="button" class="pag-opcao" id="pag-cartao" onclick="escolherPagamento('cartao')">Cartao</button>
+          <button type="button" class="pag-opcao" id="pag-pix" onclick="escolherPagamento('pix')">Pix</button>
+        </div>
+
+        <div id="form-cartao" style="display:none;margin-top:14px">
+          <div class="form-grupo">
+            <label>Numero do cartao</label>
+            <input type="text" id="cc-numero" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" oninput="mascaraCartao(this)">
+          </div>
+          <div class="form-grupo">
+            <label>Nome impresso no cartao</label>
+            <input type="text" id="cc-nome" autocomplete="cc-name" placeholder="Como esta no cartao">
+          </div>
+          <div class="form-grid2">
+            <div class="form-grupo">
+              <label>Validade</label>
+              <input type="text" id="cc-validade" inputmode="numeric" placeholder="MM/AAAA" oninput="mascaraValidade(this)">
+            </div>
+            <div class="form-grupo">
+              <label>CVV</label>
+              <input type="text" id="cc-cvv" inputmode="numeric" maxlength="4" autocomplete="cc-csc" placeholder="123">
+            </div>
+          </div>
+          <div class="form-grid2">
+            <div class="form-grupo">
+              <label>CPF do titular</label>
+              <input type="text" id="cc-cpf" inputmode="numeric" placeholder="000.000.000-00" oninput="mascaraCpf(this)">
+            </div>
+            <div class="form-grupo">
+              <label>Parcelas</label>
+              <select id="cc-parcelas"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="pix-box" id="box-pix" style="display:none">
+          <p style="font-size:12px;color:#6b7280">Escaneie o QR Code no app do seu banco ou copie o codigo abaixo. O pedido e confirmado assim que o Pix cair.</p>
+          <img id="pix-img" alt="QR Code Pix">
+          <textarea class="pix-codigo" id="pix-codigo" readonly></textarea>
+          <button type="button" class="btn-frete" style="margin-top:8px" onclick="copiarPix()">Copiar codigo Pix</button>
+        </div>
+      </div>
+
+      <button class="btn-finalizar" onclick="pagarAgora()" id="btn-finalizar">
         💳 Pagar com PayPal
       </button>
       <button class="btn-wpp" onclick="finalizarWpp()">
         💬 Finalizar pelo WhatsApp
       </button>
-      <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">🔒 Pagamento 100% seguro via PayPal</p>
+      <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">🔒 Pagamento 100% seguro via PayPal ou PagBank</p>
     </div>
   </div>
 </div>
@@ -240,6 +297,8 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
 
 <script>
   let carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
@@ -523,6 +582,214 @@
     });
     renderFrete();
     renderCarrinho();
+    if (formaPagamento === 'cartao') montarParcelas();
+  }
+
+  // --- Pagamento: PayPal, cartao (PagBank transparente) e Pix ---
+  var formaPagamento = 'paypal';
+  var chavePublicaPagBank = null;
+
+  function escolherPagamento(forma) {
+    formaPagamento = forma;
+    ['paypal','cartao','pix'].forEach(function(f) {
+      var b = document.getElementById('pag-' + f);
+      if (b) b.classList.toggle('ativa', f === forma);
+    });
+    document.getElementById('form-cartao').style.display = forma === 'cartao' ? 'block' : 'none';
+    document.getElementById('box-pix').style.display = 'none';
+    var btn = document.getElementById('btn-finalizar');
+    if (forma === 'paypal') btn.innerHTML = '&#128179; Pagar com PayPal';
+    if (forma === 'cartao') { btn.innerHTML = '&#128179; Pagar com cartao'; montarParcelas(); }
+    if (forma === 'pix') btn.innerHTML = '&#9889; Gerar codigo Pix';
+  }
+
+  function mascaraCartao(el) {
+    el.value = el.value.replace(/\D/g,'').substring(0,16).replace(/(\d{4})(?=\d)/g, '$1 ');
+  }
+
+  function mascaraValidade(el) {
+    var v = el.value.replace(/\D/g,'').substring(0,6);
+    if (v.length > 2) v = v.substring(0,2) + '/' + v.substring(2);
+    el.value = v;
+  }
+
+  function totalComFrete() {
+    return gaValor() + (frete ? Number(frete.preco) : 0);
+  }
+
+  function montarParcelas() {
+    var sel = document.getElementById('cc-parcelas');
+    if (!sel) return;
+    var total = totalComFrete();
+    sel.innerHTML = '';
+    for (var n = 1; n <= 12; n++) {
+      var valor = total / n;
+      if (n > 1 && valor < 5) break;
+      var op = document.createElement('option');
+      op.value = String(n);
+      op.textContent = n + 'x de ' + formatarPreco(valor) + (n === 1 ? ' (a vista)' : ' sem juros');
+      sel.appendChild(op);
+    }
+  }
+
+  function montarSender() {
+    return {
+      nome: document.getElementById('c-nome').value,
+      email: document.getElementById('c-email').value,
+      cpf: document.getElementById('c-cpf').value.replace(/\D/g,''),
+      telefone: document.getElementById('c-tel').value.replace(/\D/g,''),
+      cep: document.getElementById('c-cep').value,
+      rua: document.getElementById('c-rua').value,
+      numero: document.getElementById('c-numero').value,
+      complemento: document.getElementById('c-comp').value,
+      bairro: document.getElementById('c-bairro').value,
+      cidade: document.getElementById('c-cidade').value,
+      estado: document.getElementById('c-estado').value
+    };
+  }
+
+  function salvarPedidoGA() {
+    try {
+      localStorage.setItem('ga_pedido', JSON.stringify({
+        currency: 'BRL',
+        value: totalComFrete(),
+        shipping: frete ? Number(frete.preco) : 0,
+        items: gaItens()
+      }));
+    } catch(e) {}
+  }
+
+  async function chavePublica() {
+    if (chavePublicaPagBank) return chavePublicaPagBank;
+    var res = await fetch('/.netlify/functions/checkout-pagbank', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'chave' })
+    });
+    var data = await res.json();
+    if (!data.public_key) throw new Error(data.error || 'Nao foi possivel obter a chave publica do PagBank');
+    chavePublicaPagBank = data.public_key;
+    return chavePublicaPagBank;
+  }
+
+  function pagarAgora() {
+    if (formaPagamento === 'cartao') return pagarCartao();
+    if (formaPagamento === 'pix') return pagarPix();
+    return finalizar();
+  }
+
+  async function pagarCartao() {
+    if (!validar()) return;
+    var numero = document.getElementById('cc-numero').value.replace(/\D/g,'');
+    var nomeCartao = document.getElementById('cc-nome').value.trim();
+    var validade = document.getElementById('cc-validade').value.split('/');
+    var cvv = document.getElementById('cc-cvv').value.replace(/\D/g,'');
+    var cpfTitular = document.getElementById('cc-cpf').value.replace(/\D/g,'');
+    var parcelas = Number(document.getElementById('cc-parcelas').value || 1);
+
+    if (numero.length < 13) return mostrarToast('Confira o numero do cartao', 'vermelho');
+    if (!nomeCartao) return mostrarToast('Digite o nome impresso no cartao', 'vermelho');
+    if (validade.length !== 2 || validade[1].length !== 4) return mostrarToast('Validade no formato MM/AAAA', 'vermelho');
+    if (cvv.length < 3) return mostrarToast('Confira o CVV', 'vermelho');
+    if (cpfTitular.length !== 11) return mostrarToast('Confira o CPF do titular', 'vermelho');
+
+    document.getElementById('loading').classList.add('show');
+    document.getElementById('btn-finalizar').disabled = true;
+
+    try {
+      if (typeof PagSeguro === 'undefined') throw new Error('SDK do PagBank nao carregou');
+      var publicKey = await chavePublica();
+      var cartao = PagSeguro.encryptCard({
+        publicKey: publicKey,
+        holder: nomeCartao,
+        number: numero,
+        expMonth: validade[0],
+        expYear: validade[1],
+        securityCode: cvv
+      });
+      if (cartao.hasErrors) {
+        throw new Error('Dados do cartao invalidos: ' + cartao.errors.map(function(e){ return e.code; }).join(', '));
+      }
+
+      if (typeof gtag === 'function') gtag('event', 'add_payment_info', {
+        currency: 'BRL',
+        value: totalComFrete(),
+        payment_type: 'Cartao de credito',
+        items: gaItens()
+      });
+
+      var res = await fetch('/.netlify/functions/checkout-pagbank', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          acao: 'cartao',
+          items: carrinho,
+          sender: montarSender(),
+          frete: frete,
+          encrypted: cartao.encryptedCard,
+          titular: nomeCartao,
+          cpfTitular: cpfTitular,
+          parcelas: parcelas
+        })
+      });
+      var data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      if (data.aprovado) {
+        salvarPedidoGA();
+        carrinho = [];
+        salvarCarrinho();
+        window.location.href = 'obrigado.html?transaction_id=' + encodeURIComponent(data.id || '');
+      } else if (data.status === 'IN_ANALYSIS') {
+        mostrarToast('Pagamento em analise pelo PagBank. Voce recebera a confirmacao por e-mail.');
+      } else {
+        throw new Error(data.mensagem || 'Pagamento nao autorizado pelo emissor');
+      }
+    } catch(e) {
+      mostrarToast('Erro: ' + e.message, 'vermelho');
+    } finally {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('btn-finalizar').disabled = false;
+    }
+  }
+
+  async function pagarPix() {
+    if (!validar()) return;
+    document.getElementById('loading').classList.add('show');
+    document.getElementById('btn-finalizar').disabled = true;
+    try {
+      if (typeof gtag === 'function') gtag('event', 'add_payment_info', {
+        currency: 'BRL',
+        value: totalComFrete(),
+        payment_type: 'Pix',
+        items: gaItens()
+      });
+
+      var res = await fetch('/.netlify/functions/checkout-pagbank', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acao: 'pix', items: carrinho, sender: montarSender(), frete: frete })
+      });
+      var data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      document.getElementById('pix-img').src = data.imagem || '';
+      document.getElementById('pix-codigo').value = data.texto || '';
+      document.getElementById('box-pix').style.display = 'block';
+      mostrarToast('Codigo Pix gerado! O pedido e confirmado assim que o pagamento cair.');
+    } catch(e) {
+      mostrarToast('Erro: ' + e.message, 'vermelho');
+    } finally {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('btn-finalizar').disabled = false;
+    }
+  }
+
+  function copiarPix() {
+    var el = document.getElementById('pix-codigo');
+    el.select();
+    document.execCommand('copy');
+    mostrarToast('Codigo Pix copiado!');
   }
 
   function mostrarToast(msg, tipo='') {
