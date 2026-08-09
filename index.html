@@ -320,6 +320,11 @@
       if (existente) { existente.qtd++; }
       else { carrinho.push({id:id, nome:nome, preco:preco, qtd:1, foto:foto||''}); }
       localStorage.setItem('carrinho', JSON.stringify(carrinho));
+      if (typeof gtag === 'function') gtag('event', 'add_to_cart', {
+        currency: 'BRL',
+        value: Number(preco) || 0,
+        items: [{ item_id: String(id), item_name: nome, price: Number(preco) || 0, quantity: 1 }]
+      });
       atualizarBadgeCarrinho();
       mostrarToast('Produto adicionado! <a href="carrinho.html" style="color:#fff;font-weight:700;text-decoration:underline">Ver carrinho →</a>');
     }
@@ -331,6 +336,14 @@
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">Nenhum produto encontrado.</div>';
         return;
       }
+      if (typeof gtag === 'function') gtag('event', 'view_item_list', {
+        item_list_id: 'vitrine',
+        item_list_name: 'Vitrine da loja',
+        items: lista.slice(0, 20).map(function(p, idx) {
+          return { item_id: String(p.id), item_name: p.Nome, item_category: p.categoria || '', price: Number(p['Preço'] || 0), index: idx };
+        })
+      });
+
       grid.innerHTML = lista.map(function(p) {
         var preco = Number(p['Preço'] || 0);
         var precoAnt = Number(p['Antigo Preço'] || 0);
