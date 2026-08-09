@@ -41,10 +41,12 @@ exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
 
   try {
-    const { items, sender } = JSON.parse(event.body);
+    const { items, sender, frete } = JSON.parse(event.body);
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const secret = process.env.PAYPAL_SECRET;
-    const total = items.reduce((sum, item) => sum + (Number(item.preco) * item.qtd), 0).toFixed(2);
+    const itemTotal = items.reduce((sum, item) => sum + (Number(item.preco) * item.qtd), 0);
+    const valorFrete = Math.max(0, Number(frete && frete.preco) || 0);
+    const total = (itemTotal + valorFrete).toFixed(2);
     const accessToken = await getPayPalToken(clientId, secret);
 
     const orderPayload = {
@@ -55,7 +57,10 @@ exports.handler = async function(event, context) {
         amount: {
           currency_code: 'BRL',
           value: total,
-          breakdown: { item_total: { currency_code: 'BRL', value: total } }
+          breakdown: {
+            item_total: { currency_code: 'BRL', value: itemTotal.toFixed(2) },
+            shipping: { currency_code: 'BRL', value: valorFrete.toFixed(2) }
+          }
         },
         items: items.map(item => ({
           name: (item.nome || '').substring(0, 127),
