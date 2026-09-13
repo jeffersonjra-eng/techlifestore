@@ -303,6 +303,31 @@
   let frete = null;
   let opcoesFrete = [];
 
+  // Referencia unica desse carrinho/pedido: gerada uma vez ao carregar a
+  // pagina e reaproveitada em todas as chamadas (rascunho de carrinho
+  // abandonado, WhatsApp, Pix, cartao, PayPal), pra tudo virar a mesma linha
+  // no painel de Vendas em vez de registros duplicados.
+  const referenciaPedido = 'pedido_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
+  function salvarRascunho(status) {
+    if (!carrinho.length) return;
+    try {
+      fetch('/.netlify/functions/carrinho-tracker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia: referenciaPedido, items: carrinho, sender: montarSender(), frete: frete, status: status || 'abandonado' })
+      }).catch(function() {});
+    } catch (e) {}
+  }
+
+  let rascunhoTimer = null;
+  function agendarRascunho() {
+    var email = (document.getElementById('c-email') || {}).value || '';
+    if (!/\S+@\S+\.\S+/.test(email.trim())) return;
+    clearTimeout(rascunhoTimer);
+    rascunhoTimer = setTimeout(function() { salvarRascunho('abandonado'); }, 1200);
+  }
+
   function salvarCarrinho() {
     localStorage.setItem('carrinho', JSON.stringify(carrinho));
   }
@@ -440,7 +465,7 @@
       const res = await fetch('/.netlify/functions/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: carrinho, sender, frete })
+        body: JSON.stringify({ items: carrinho, sender, frete, referencia: referenciaPedido })
       });
 
       const data = await res.json();
@@ -481,6 +506,9 @@
     if (nome) msg += `\n👤 Nome: ${nome}`;
     const cep = document.getElementById('c-cep').value;
     if (cep) msg += `\n📍 CEP: ${cep}`;
+    // Registra como pedido "combinado no WhatsApp" pra aparecer no painel de Vendas
+    // (nao ha cobranca no site nesse fluxo - o admin marca como pago manualmente).
+    salvarRascunho('combinado_whatsapp');
     window.open(`https://wa.me/5513978253993?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
@@ -514,6 +542,7 @@
         document.getElementById('c-estado').value = d.uf || '';
         document.getElementById('c-numero').focus();
         calcularFrete();
+        agendarRascunho();
       }
     } catch(e) {}
   }
@@ -696,6 +725,7 @@
           items: carrinho,
           sender: montarSender(),
           frete: frete,
+          referencia: referenciaPedido,
           cartao: {
             numero: numero,
             nome: nomeCartao,
@@ -744,7 +774,7 @@
       var res = await fetch('/.netlify/functions/checkout-asaas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ acao: 'pix', items: carrinho, sender: montarSender(), frete: frete })
+        body: JSON.stringify({ acao: 'pix', items: carrinho, sender: montarSender(), frete: frete, referencia: referenciaPedido })
       });
       var data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -782,6 +812,16 @@
     value: gaValor(),
     items: gaItens()
   });
+
+  // Rascunho de carrinho abandonado: dispara ao sair do campo de e-mail
+  // (ou digitar nele), que e o sinal mais forte de intencao de compra.
+  (function() {
+    var elEmail = document.getElementById('c-email');
+    if (elEmail) {
+      elEmail.addEventListener('blur', agendarRascunho);
+      elEmail.addEventListener('input', agendarRascunho);
+    }
+  })();
 </script>
 </body>
 </html>

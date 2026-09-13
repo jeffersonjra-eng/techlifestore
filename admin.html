@@ -186,10 +186,42 @@
     .aval-stars { color:#f59e0b; font-size:14px; }
     .aval-texto { font-size:13px; color:var(--texto); line-height:1.5; }
 
+    /* VENDAS / STATUS */
+    .badge-pago { background:#d1fae5; color:#065f46; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+    .badge-pendente { background:#fef3c7; color:#92400e; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+    .badge-analise { background:#dbeafe; color:#1e40af; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+    .badge-cancelado { background:#fee2e2; color:#991b1b; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+    .badge-wpp { background:#dcfce7; color:#14532d; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+    .badge-abandonado { background:#f3f4f6; color:#4b5563; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+    .badge-envio { background:#ede9fe; color:#5b21b6; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+
+    .filtros { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .filtro-chip { padding:7px 16px; border-radius:20px; font-size:13px; font-weight:500; cursor:pointer; border:1.5px solid var(--cinza2); background:#fff; color:var(--texto); transition:all .15s; }
+    .filtro-chip.ativa { background:var(--escuro); color:#fff; border-color:var(--escuro); }
+
+    .btn-mini { background:#eff6ff; color:#2563eb; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+    .btn-mini.verde { background:#d1fae5; color:#065f46; }
+    .btn-mini.roxo { background:#ede9fe; color:#5b21b6; }
+    .btn-mini.vermelho { background:#fef2f2; color:var(--vermelho); }
+    .btn-mini:disabled { opacity:.5; cursor:not-allowed; }
+
+    .cliente-nome { font-weight:500; color:var(--escuro); }
+    .cliente-sub { font-size:11px; color:#9ca3af; margin-top:2px; }
+    .itens-resumo { font-size:12px; color:#6b7280; max-width:220px; }
+
+    .modal.wide { max-width:720px; }
+    .detalhe-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+    .detalhe-bloco { background:var(--cinza); border-radius:10px; padding:14px 16px; }
+    .detalhe-bloco h4 { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#9ca3af; margin-bottom:8px; }
+    .detalhe-bloco p { font-size:13px; color:var(--texto); line-height:1.6; }
+    .detalhe-itens-linha { display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--cinza2); }
+    .detalhe-acoes { display:flex; gap:8px; flex-wrap:wrap; margin-top:20px; }
+
     @media (max-width:600px) {
       .form-grid { grid-template-columns:1fr; }
       table { font-size:12px; }
       th, td { padding:10px 12px; }
+      .detalhe-grid { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -218,8 +250,11 @@
 
   <div class="admin-wrap">
     <div class="abas">
-      <button class="aba ativa" onclick="mudarAba('produtos')">📦 Produtos</button>
-      <button class="aba" onclick="mudarAba('avaliacoes')">⭐ Avaliações</button>
+      <button class="aba ativa" data-aba="produtos" onclick="mudarAba('produtos')">📦 Produtos</button>
+      <button class="aba" data-aba="avaliacoes" onclick="mudarAba('avaliacoes')">⭐ Avaliações</button>
+      <button class="aba" data-aba="vendas" onclick="mudarAba('vendas')">💰 Vendas</button>
+      <button class="aba" data-aba="abandonados" onclick="mudarAba('abandonados')">🛒 Carrinhos abandonados</button>
+      <button class="aba" data-aba="envios" onclick="mudarAba('envios')">📮 Envios</button>
     </div>
 
     <!-- ABA PRODUTOS -->
@@ -254,6 +289,83 @@
         <div class="loading">Carregando avaliações...</div>
       </div>
     </div>
+
+    <!-- ABA VENDAS -->
+    <div id="aba-vendas" style="display:none">
+      <div class="admin-header">
+        <h1>Vendas e controle financeiro</h1>
+      </div>
+      <div class="stats" id="stats-vendas">
+        <div class="stat-card"><div class="stat-label">Vendas hoje</div><div class="stat-valor" id="v-hoje">—</div></div>
+        <div class="stat-card"><div class="stat-label">Vendas no mês</div><div class="stat-valor" id="v-mes">—</div></div>
+        <div class="stat-card"><div class="stat-label">Ticket médio</div><div class="stat-valor" id="v-ticket">—</div></div>
+        <div class="stat-card"><div class="stat-label">Pedidos pendentes</div><div class="stat-valor" id="v-pendentes">—</div></div>
+      </div>
+      <div class="filtros" id="filtros-vendas">
+        <button class="filtro-chip ativa" data-status="todos" onclick="filtrarVendas('todos')">Todos</button>
+        <button class="filtro-chip" data-status="pago" onclick="filtrarVendas('pago')">Pagos</button>
+        <button class="filtro-chip" data-status="aguardando_pagamento" onclick="filtrarVendas('aguardando_pagamento')">Aguardando Pix</button>
+        <button class="filtro-chip" data-status="em_analise" onclick="filtrarVendas('em_analise')">Em análise</button>
+        <button class="filtro-chip" data-status="combinado_whatsapp" onclick="filtrarVendas('combinado_whatsapp')">WhatsApp</button>
+        <button class="filtro-chip" data-status="falhou" onclick="filtrarVendas('falhou')">Falhou/Cancelado</button>
+      </div>
+      <div class="tabela-wrap">
+        <div class="tabela-header">
+          <h3>Pedidos</h3>
+          <input class="busca-admin" type="text" placeholder="Buscar cliente..." oninput="buscarVendas(this.value)">
+        </div>
+        <div id="tabela-vendas">
+          <div class="loading">Carregando pedidos...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA CARRINHOS ABANDONADOS -->
+    <div id="aba-abandonados" style="display:none">
+      <div class="admin-header">
+        <h1>Carrinhos abandonados</h1>
+      </div>
+      <div class="stats" id="stats-abandonados">
+        <div class="stat-card"><div class="stat-label">Carrinhos abandonados</div><div class="stat-valor" id="a-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Valor em jogo</div><div class="stat-valor" id="a-valor">—</div></div>
+      </div>
+      <div class="tabela-wrap">
+        <div class="tabela-header">
+          <h3>Quem começou e não terminou a compra</h3>
+        </div>
+        <div id="tabela-abandonados">
+          <div class="loading">Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA ENVIOS -->
+    <div id="aba-envios" style="display:none">
+      <div class="admin-header">
+        <h1>Envios e etiquetas</h1>
+      </div>
+      <div class="stats" id="stats-envios">
+        <div class="stat-card"><div class="stat-label">Aguardando etiqueta</div><div class="stat-valor" id="e-aguardando">—</div></div>
+        <div class="stat-card"><div class="stat-label">Etiqueta gerada</div><div class="stat-valor" id="e-geradas">—</div></div>
+        <div class="stat-card"><div class="stat-label">Entregues</div><div class="stat-valor" id="e-entregues">—</div></div>
+      </div>
+      <div class="tabela-wrap">
+        <div class="tabela-header">
+          <h3>Pedidos pagos</h3>
+        </div>
+        <div id="tabela-envios">
+          <div class="loading">Carregando...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHES DO PEDIDO -->
+<div class="modal-bg" id="modal-pedido">
+  <div class="modal wide">
+    <h2 id="modal-pedido-titulo">Pedido</h2>
+    <div id="modal-pedido-corpo"></div>
   </div>
 </div>
 
@@ -618,11 +730,17 @@
   }
 
   // ── ABAS ──
+  const TODAS_ABAS = ['produtos','avaliacoes','vendas','abandonados','envios'];
   function mudarAba(aba) {
-    document.getElementById('aba-produtos').style.display = aba === 'produtos' ? 'block' : 'none';
-    document.getElementById('aba-avaliacoes').style.display = aba === 'avaliacoes' ? 'block' : 'none';
-    document.querySelectorAll('.aba').forEach((a,i) => a.classList.toggle('ativa', (i===0&&aba==='produtos')||(i===1&&aba==='avaliacoes')));
+    TODAS_ABAS.forEach(a => {
+      const el = document.getElementById('aba-' + a);
+      if (el) el.style.display = a === aba ? 'block' : 'none';
+    });
+    document.querySelectorAll('.aba').forEach(el => el.classList.toggle('ativa', el.dataset.aba === aba));
     if (aba === 'avaliacoes') carregarAvaliacoes();
+    if (aba === 'vendas') carregarVendas();
+    if (aba === 'abandonados') carregarAbandonados();
+    if (aba === 'envios') carregarEnvios();
   }
 
   // ── AVALIAÇÕES ──
@@ -725,6 +843,312 @@
   // Fechar modal clicando fora
   document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) fecharModal(); });
   document.getElementById('modal-aval').addEventListener('click', e => { if (e.target === document.getElementById('modal-aval')) fecharModalAval(); });
+  document.getElementById('modal-pedido').addEventListener('click', e => { if (e.target === document.getElementById('modal-pedido')) fecharDetalhesPedido(); });
+
+  // ══════════════════════════════════════════════════════════════
+  // VENDAS / CARRINHOS ABANDONADOS / ENVIOS  (tabela "Pedidos")
+  // ══════════════════════════════════════════════════════════════
+  let pedidos = [];
+  let filtroVendasAtual = 'todos';
+  let buscaVendasAtual = '';
+
+  const ORIGEM_LABEL = { asaas_pix: 'Pix', asaas_cartao: 'Cartão', paypal: 'PayPal', whatsapp: 'WhatsApp', site: 'Site' };
+  const STATUS_INFO = {
+    pago: { label: 'Pago', cls: 'badge-pago' },
+    aguardando_pagamento: { label: 'Aguardando Pix', cls: 'badge-pendente' },
+    em_analise: { label: 'Em análise', cls: 'badge-analise' },
+    combinado_whatsapp: { label: 'Combinado no WhatsApp', cls: 'badge-wpp' },
+    falhou: { label: 'Falhou', cls: 'badge-cancelado' },
+    cancelado: { label: 'Cancelado', cls: 'badge-cancelado' },
+    abandonado: { label: 'Abandonado', cls: 'badge-abandonado' }
+  };
+  const ENVIO_LABEL = { aguardando: 'Aguardando etiqueta', etiqueta_gerada: 'Etiqueta gerada', postado: 'Postado', entregue: 'Entregue', cancelado: 'Cancelado' };
+
+  function moeda(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+  function dataFmt(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }); }
+    catch (e) { return iso; }
+  }
+  function cabecalhosSupa() { return { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }; }
+  function patchHeadersSupa() { return Object.assign({}, cabecalhosSupa(), { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }); }
+
+  function recarregarAbaAtual() {
+    const atual = document.querySelector('.aba.ativa');
+    const aba = atual ? atual.dataset.aba : null;
+    if (aba === 'vendas') carregarVendas();
+    else if (aba === 'abandonados') carregarAbandonados();
+    else if (aba === 'envios') carregarEnvios();
+  }
+
+  async function carregarPedidos() {
+    try {
+      const res = await fetch(`${SUPABASE_REST}/Pedidos?select=*&order=created_at.desc&limit=1000`, { headers: cabecalhosSupa() });
+      const data = await res.json();
+      pedidos = Array.isArray(data) ? data : [];
+    } catch (e) {
+      pedidos = [];
+      mostrarToast('Erro ao carregar pedidos: ' + e.message, 'vermelho');
+    }
+  }
+
+  // ── VENDAS ──
+  async function carregarVendas() {
+    document.getElementById('tabela-vendas').innerHTML = '<div class="loading">Carregando pedidos...</div>';
+    await carregarPedidos();
+    atualizarStatsVendas();
+    renderizarVendas();
+  }
+
+  function atualizarStatsVendas() {
+    const hojeStr = new Date().toISOString().substring(0, 10);
+    const mesStr = new Date().toISOString().substring(0, 7);
+    const pagos = pedidos.filter(p => p.status === 'pago');
+    const vendasHoje = pagos.filter(p => String(p.pago_em || p.created_at || '').substring(0, 10) === hojeStr);
+    const vendasMes = pagos.filter(p => String(p.pago_em || p.created_at || '').substring(0, 7) === mesStr);
+    document.getElementById('v-hoje').textContent = moeda(vendasHoje.reduce((s, p) => s + Number(p.total || 0), 0));
+    document.getElementById('v-mes').textContent = moeda(vendasMes.reduce((s, p) => s + Number(p.total || 0), 0));
+    document.getElementById('v-ticket').textContent = pagos.length ? moeda(pagos.reduce((s, p) => s + Number(p.total || 0), 0) / pagos.length) : moeda(0);
+    const pendentes = pedidos.filter(p => ['aguardando_pagamento', 'em_analise', 'combinado_whatsapp'].includes(p.status)).length;
+    document.getElementById('v-pendentes').textContent = pendentes;
+  }
+
+  function filtrarVendas(status) {
+    filtroVendasAtual = status;
+    document.querySelectorAll('#filtros-vendas .filtro-chip').forEach(el => el.classList.toggle('ativa', el.dataset.status === status));
+    renderizarVendas();
+  }
+
+  function buscarVendas(q) {
+    buscaVendasAtual = q.trim().toLowerCase();
+    renderizarVendas();
+  }
+
+  function linhaVenda(p) {
+    const st = STATUS_INFO[p.status] || { label: p.status, cls: 'badge-abandonado' };
+    const origemLabel = ORIGEM_LABEL[p.origem] || p.origem || '—';
+    const itensTxt = (p.itens || []).map(i => `${i.nome} x${i.qtd}`).join(', ');
+    const podeMarcarPago = ['aguardando_pagamento', 'em_analise', 'combinado_whatsapp'].includes(p.status);
+    return `<tr>
+      <td>${dataFmt(p.created_at)}</td>
+      <td><div class="cliente-nome">${p.cliente_nome || '—'}</div><div class="cliente-sub">${p.cliente_email || ''}</div></td>
+      <td><div class="itens-resumo">${itensTxt}</div></td>
+      <td class="preco-val">${moeda(p.total)}</td>
+      <td>${origemLabel}</td>
+      <td><span class="${st.cls}">${st.label}</span></td>
+      <td><div class="acoes">
+        <button class="btn-mini" onclick="abrirDetalhesPedido(${p.id})">Ver</button>
+        ${podeMarcarPago ? `<button class="btn-mini verde" onclick="marcarComoPago(${p.id})">Marcar pago</button>` : ''}
+      </div></td>
+    </tr>`;
+  }
+
+  function renderizarVendas() {
+    let lista = pedidos.filter(p => p.status !== 'abandonado');
+    if (filtroVendasAtual !== 'todos') {
+      lista = filtroVendasAtual === 'falhou'
+        ? lista.filter(p => p.status === 'falhou' || p.status === 'cancelado')
+        : lista.filter(p => p.status === filtroVendasAtual);
+    }
+    if (buscaVendasAtual) {
+      lista = lista.filter(p => (p.cliente_nome || '').toLowerCase().includes(buscaVendasAtual) || (p.cliente_email || '').toLowerCase().includes(buscaVendasAtual));
+    }
+    const tabela = document.getElementById('tabela-vendas');
+    if (!lista.length) {
+      tabela.innerHTML = '<div class="vazio"><div style="font-size:48px">💰</div><p>Nenhum pedido encontrado.</p></div>';
+      return;
+    }
+    tabela.innerHTML = `<table><thead><tr><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Origem</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+      ${lista.map(linhaVenda).join('')}
+    </tbody></table>`;
+  }
+
+  // ── CARRINHOS ABANDONADOS ──
+  async function carregarAbandonados() {
+    document.getElementById('tabela-abandonados').innerHTML = '<div class="loading">Carregando...</div>';
+    await carregarPedidos();
+    renderizarAbandonados();
+  }
+
+  function contatarWpp(tel, nome) {
+    const digitos = String(tel || '').replace(/\D/g, '');
+    if (!digitos) return;
+    const numero = digitos.length <= 11 ? '55' + digitos : digitos;
+    const msg = encodeURIComponent(`Olá${nome ? ' ' + nome : ''}! Vi que você deixou um carrinho na Tech Life Store, posso te ajudar a finalizar a compra?`);
+    window.open(`https://wa.me/${numero}?text=${msg}`, '_blank');
+  }
+
+  function renderizarAbandonados() {
+    const lista = pedidos.filter(p => p.status === 'abandonado').sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    document.getElementById('a-total').textContent = lista.length;
+    document.getElementById('a-valor').textContent = moeda(lista.reduce((s, p) => s + Number(p.total || 0), 0));
+    const tabela = document.getElementById('tabela-abandonados');
+    if (!lista.length) {
+      tabela.innerHTML = '<div class="vazio"><div style="font-size:48px">🛒</div><p>Nenhum carrinho abandonado por enquanto. Ótimo sinal!</p></div>';
+      return;
+    }
+    tabela.innerHTML = `<table><thead><tr><th>Quando</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Contato</th><th>Ações</th></tr></thead><tbody>
+      ${lista.map(p => `
+        <tr>
+          <td>${dataFmt(p.created_at)}</td>
+          <td><div class="cliente-nome">${p.cliente_nome || 'Não informado'}</div></td>
+          <td><div class="itens-resumo">${(p.itens || []).map(i => `${i.nome} x${i.qtd}`).join(', ')}</div></td>
+          <td class="preco-val">${moeda(p.total)}</td>
+          <td>${p.cliente_email || ''}${p.cliente_telefone ? '<br>' + p.cliente_telefone : ''}</td>
+          <td><div class="acoes">
+            <button class="btn-mini" onclick="abrirDetalhesPedido(${p.id})">Ver</button>
+            ${p.cliente_telefone ? `<button class="btn-mini verde" onclick="contatarWpp('${p.cliente_telefone}', ${JSON.stringify(p.cliente_nome || '')})">WhatsApp</button>` : ''}
+            <button class="btn-mini vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
+          </div></td>
+        </tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  // ── ENVIOS ──
+  async function carregarEnvios() {
+    document.getElementById('tabela-envios').innerHTML = '<div class="loading">Carregando...</div>';
+    await carregarPedidos();
+    renderizarEnvios();
+  }
+
+  function renderizarEnvios() {
+    const pagos = pedidos.filter(p => p.status === 'pago' || p.status === 'combinado_whatsapp');
+    const aguardando = pagos.filter(p => p.envio_status === 'aguardando');
+    const geradas = pagos.filter(p => p.envio_status === 'etiqueta_gerada' || p.envio_status === 'postado');
+    const entregues = pagos.filter(p => p.envio_status === 'entregue');
+    document.getElementById('e-aguardando').textContent = aguardando.length;
+    document.getElementById('e-geradas').textContent = geradas.length;
+    document.getElementById('e-entregues').textContent = entregues.length;
+
+    const lista = pagos.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const tabela = document.getElementById('tabela-envios');
+    if (!lista.length) {
+      tabela.innerHTML = '<div class="vazio"><div style="font-size:48px">📮</div><p>Nenhum pedido pago ainda.</p></div>';
+      return;
+    }
+    tabela.innerHTML = `<table><thead><tr><th>Cliente</th><th>Destino</th><th>Total</th><th>Envio</th><th>Ações</th></tr></thead><tbody>
+      ${lista.map(p => {
+        const end = p.endereco || {};
+        return `<tr>
+          <td><div class="cliente-nome">${p.cliente_nome || '—'}</div></td>
+          <td>${end.cidade || ''}${end.estado ? '/' + end.estado : ''}</td>
+          <td class="preco-val">${moeda(p.total)}</td>
+          <td><span class="badge-envio">${ENVIO_LABEL[p.envio_status] || p.envio_status}</span>${p.rastreio_codigo ? '<div class="cliente-sub">' + p.rastreio_codigo + '</div>' : ''}</td>
+          <td><div class="acoes">
+            <button class="btn-mini" onclick="abrirDetalhesPedido(${p.id})">Ver</button>
+            ${p.envio_status === 'aguardando' ? `<button class="btn-mini roxo" onclick="gerarEtiqueta(${JSON.stringify(p.referencia)})">Gerar etiqueta</button>` : ''}
+            ${p.etiqueta_url ? `<a class="btn-mini verde" href="${p.etiqueta_url}" target="_blank" style="text-decoration:none;display:inline-block">Imprimir</a>` : ''}
+          </div></td>
+        </tr>`;
+      }).join('')}
+    </tbody></table>`;
+  }
+
+  // ── DETALHES / AÇÕES COMUNS A UM PEDIDO ──
+  function abrirDetalhesPedido(id) {
+    const p = pedidos.find(x => x.id === id);
+    if (!p) return;
+    const st = STATUS_INFO[p.status] || { label: p.status, cls: 'badge-abandonado' };
+    const end = p.endereco || {};
+    const itensHtml = (p.itens || []).map(i => `<div class="detalhe-itens-linha"><span>${i.nome} x${i.qtd}</span><span>${moeda(i.preco * i.qtd)}</span></div>`).join('');
+    const podeMarcarPago = ['aguardando_pagamento', 'em_analise', 'combinado_whatsapp'].includes(p.status);
+    const podeGerarEtiqueta = (p.status === 'pago' || p.status === 'combinado_whatsapp') && p.envio_status === 'aguardando';
+
+    document.getElementById('modal-pedido-titulo').textContent = 'Pedido ' + (p.referencia || p.id);
+    document.getElementById('modal-pedido-corpo').innerHTML = `
+      <div class="detalhe-grid">
+        <div class="detalhe-bloco">
+          <h4>Cliente</h4>
+          <p>${p.cliente_nome || '—'}<br>${p.cliente_email || ''}<br>${p.cliente_telefone || ''}</p>
+        </div>
+        <div class="detalhe-bloco">
+          <h4>Endereço</h4>
+          <p>${end.rua || ''} ${end.numero || ''} ${end.complemento || ''}<br>${end.bairro || ''}${end.cidade ? ' - ' + end.cidade : ''}${end.estado ? '/' + end.estado : ''}<br>${end.cep ? 'CEP ' + end.cep : ''}</p>
+        </div>
+      </div>
+      <div class="detalhe-bloco" style="margin-bottom:16px">
+        <h4>Itens</h4>
+        ${itensHtml || '<p>—</p>'}
+        <div class="detalhe-itens-linha"><span>Frete${p.frete_nome ? ' - ' + p.frete_nome : ''}</span><span>${moeda(p.frete)}</span></div>
+        <div class="detalhe-itens-linha" style="font-weight:700;border-bottom:none"><span>Total</span><span>${moeda(p.total)}</span></div>
+      </div>
+      <div class="detalhe-grid">
+        <div class="detalhe-bloco"><h4>Pagamento</h4><p>Origem: ${ORIGEM_LABEL[p.origem] || p.origem}<br>Status: <span class="${st.cls}">${st.label}</span>${p.gateway_id ? '<br>ID gateway: ' + p.gateway_id : ''}</p></div>
+        <div class="detalhe-bloco"><h4>Envio</h4><p>Status: ${ENVIO_LABEL[p.envio_status] || p.envio_status}${p.rastreio_codigo ? '<br>Rastreio: ' + p.rastreio_codigo : ''}${p.etiqueta_url ? '<br><a href="' + p.etiqueta_url + '" target="_blank">Ver etiqueta</a>' : ''}</p></div>
+      </div>
+      <div class="detalhe-acoes">
+        ${podeMarcarPago ? `<button class="btn-salvar" onclick="marcarComoPago(${p.id})">Marcar como pago</button>` : ''}
+        ${podeGerarEtiqueta ? `<button class="btn-mini roxo" onclick="gerarEtiqueta(${JSON.stringify(p.referencia)})">Gerar etiqueta de envio</button>` : ''}
+        ${p.envio_status === 'etiqueta_gerada' ? `<button class="btn-mini" onclick="marcarPostado(${p.id})">Marcar como postado</button>` : ''}
+        ${p.envio_status === 'postado' ? `<button class="btn-mini verde" onclick="marcarEntregue(${p.id})">Marcar como entregue</button>` : ''}
+        <button class="btn-mini vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
+        <button class="btn-cancelar" onclick="fecharDetalhesPedido()">Fechar</button>
+      </div>
+    `;
+    document.getElementById('modal-pedido').classList.add('aberto');
+  }
+
+  function fecharDetalhesPedido() {
+    document.getElementById('modal-pedido').classList.remove('aberto');
+  }
+
+  async function marcarComoPago(id) {
+    if (!confirm('Confirmar que esse pedido foi pago?')) return;
+    const res = await fetch(`${SUPABASE_REST}/Pedidos?id=eq.${id}`, {
+      method: 'PATCH', headers: patchHeadersSupa(),
+      body: JSON.stringify({ status: 'pago', pago_em: new Date().toISOString() })
+    });
+    if (!res.ok) { mostrarToast('Erro ao atualizar pedido', 'vermelho'); return; }
+    mostrarToast('Pedido marcado como pago!', 'verde');
+    fecharDetalhesPedido();
+    recarregarAbaAtual();
+  }
+
+  async function marcarPostado(id) {
+    const codigo = prompt('Código de rastreio (opcional, pode deixar em branco):', '');
+    const patch = { envio_status: 'postado' };
+    if (codigo && codigo.trim()) patch.rastreio_codigo = codigo.trim();
+    const res = await fetch(`${SUPABASE_REST}/Pedidos?id=eq.${id}`, { method: 'PATCH', headers: patchHeadersSupa(), body: JSON.stringify(patch) });
+    if (!res.ok) { mostrarToast('Erro ao atualizar envio', 'vermelho'); return; }
+    mostrarToast('Marcado como postado!', 'verde');
+    fecharDetalhesPedido();
+    recarregarAbaAtual();
+  }
+
+  async function marcarEntregue(id) {
+    const res = await fetch(`${SUPABASE_REST}/Pedidos?id=eq.${id}`, { method: 'PATCH', headers: patchHeadersSupa(), body: JSON.stringify({ envio_status: 'entregue' }) });
+    if (!res.ok) { mostrarToast('Erro ao atualizar envio', 'vermelho'); return; }
+    mostrarToast('Marcado como entregue!', 'verde');
+    fecharDetalhesPedido();
+    recarregarAbaAtual();
+  }
+
+  async function excluirPedido(id) {
+    if (!confirm('Excluir este registro do painel? (isso não cancela nenhum pagamento já feito)')) return;
+    const res = await fetch(`${SUPABASE_REST}/Pedidos?id=eq.${id}`, { method: 'DELETE', headers: cabecalhosSupa() });
+    if (!res.ok) { mostrarToast('Erro ao excluir', 'vermelho'); return; }
+    mostrarToast('Removido!', 'verde');
+    fecharDetalhesPedido();
+    recarregarAbaAtual();
+  }
+
+  async function gerarEtiqueta(referencia) {
+    if (!referencia) { mostrarToast('Pedido sem referência de checkout, não é possível gerar etiqueta automaticamente.', 'vermelho'); return; }
+    if (!confirm('Isso vai comprar a etiqueta de verdade, usando o saldo da sua conta Melhor Envio. Confirmar?')) return;
+    mostrarToast('Gerando etiqueta...');
+    try {
+      const res = await fetch('/.netlify/functions/etiqueta', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia })
+      });
+      const data = await res.json();
+      if (data.erro) throw new Error(data.erro);
+      mostrarToast('Etiqueta gerada com sucesso!', 'verde');
+      fecharDetalhesPedido();
+      recarregarAbaAtual();
+    } catch (e) {
+      mostrarToast('Erro ao gerar etiqueta: ' + e.message, 'vermelho');
+    }
+  }
 </script>
 </body>
 </html>

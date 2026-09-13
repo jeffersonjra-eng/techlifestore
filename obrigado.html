@@ -52,7 +52,7 @@
       <h2>📦 Próximos passos</h2>
       <div class="passo">
         <div class="num">1</div>
-        <div class="passo-text">Você receberá um <strong>e-mail de confirmação</strong> do PayPal com os detalhes do pagamento.</div>
+        <div class="passo-text" id="passo-confirmacao">Você receberá um <strong>e-mail de confirmação</strong> com os detalhes do pagamento.</div>
       </div>
       <div class="passo">
         <div class="num">2</div>
@@ -86,9 +86,26 @@
     // Pegar código de transação da URL
     var params = new URLSearchParams(window.location.search);
     var transactionId = params.get('transaction_id') || params.get('code');
+    var paypalOrderId = params.get('token'); // PayPal manda ?token=<order_id>&PayerID=... na volta da aprovação
     if (transactionId) {
       document.getElementById('transaction-id').textContent = 'Código do pedido: ' + transactionId;
     }
+
+    // Se veio do PayPal, precisamos capturar o pagamento agora (o PayPal so
+    // autoriza na aprovacao; sem essa chamada o valor nunca seria efetivado).
+    if (paypalOrderId) {
+      document.getElementById('transaction-id').textContent = 'Código do pedido: ' + paypalOrderId;
+      fetch('/.netlify/functions/checkout-paypal-capturar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: paypalOrderId })
+      }).then(function(r){ return r.json(); }).then(function(data){
+        if (data.error) {
+          document.getElementById('passo-confirmacao').innerHTML = 'Recebemos sua aprovação no PayPal. Se não receber a confirmação em alguns minutos, fale com a gente pelo WhatsApp.';
+        }
+      }).catch(function(){});
+    }
+
     // Limpar carrinho
     localStorage.removeItem('carrinho');
 
