@@ -1,5 +1,6 @@
 const https = require('https');
 const { itensConfiaveis, freteConfiavel } = require('../lib/precos');
+const { salvarPedido, atualizarPorReferencia, enderecoDe } = require('../lib/pedidos');
 
 async function getPayPalToken(clientId, secret) {
   const credentials = Buffer.from(`${clientId}:${secret}`).toString('base64');
@@ -55,11 +56,14 @@ exports.handler = async function(event, context) {
     const valorFrete = Math.max(0, Number(frete && frete.preco) || 0);
     const total = (itemTotal + valorFrete).toFixed(2);
     const accessToken = await getPayPalToken(clientId, secret);
+    // referencia: preferimos a gerada no navegador (mesma do rascunho de carrinho abandonado),
+    // assim o pedido vira uma atualizacao da mesma linha em vez de criar duplicado.
+    const referencia = String(body.referencia || `pedido_${Date.now()}`);
 
     const orderPayload = {
       intent: 'CAPTURE',
       purchase_units: [{
-        reference_id: `pedido_${Date.now()}`,
+        reference_id: referencia,
         description: 'Compra Tech Life Store',
         amount: {
           currency_code: 'BRL',
@@ -125,12 +129,30 @@ exports.handler = async function(event, context) {
 
     if (result.status === 201) {
       const approveLink = result.body.links.find(l => l.rel === 'approve');
+
+      try {
+        await salvarPedido({
+          referencia: referencia,
+          origem: 'paypal',
+          status: 'aguardando_pagamento',
+          cliente_nome: sender.nome, cliente_email: sender.email,
+          cliente_telefone: sender.telefone, cliente_cpf: sender.cpf,
+          endereco: enderecoDe(sender), itens: items,
+          subtotal: itemTotal, frete: valorFrete, frete_servico_id: (body.frete && body.frete.id) || null, frete_nome: (body.frete && body.frete.nome) || null,
+          total: Number(total), gateway_id: result.body.id
+        });
+      } catch (e) { /* nao bloqueia o checkout se o registro de vendas falhar */ }
+
       return { statusCode: 200, headers, body: JSON.stringify({ url: approveLink.href, id: result.body.id }) };
     } else {
       throw new Error(JSON.stringify(result.body));
     }
 
   } catch (err) {
+    try {
+      const refSegura = JSON.parse(event.body || '{}').referencia;
+      if (refSegura) await atualizarPorReferencia(refSegura, { status: 'falhou', observacoes: String(err.message || '').substring(0, 500) });
+    } catch (e2) {}
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };

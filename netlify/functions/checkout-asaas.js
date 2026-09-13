@@ -5,6 +5,7 @@
 
 const https = require('https');
 const { itensConfiaveis, freteConfiavel } = require('../lib/precos');
+const { salvarPedido, atualizarPorReferencia, enderecoDe } = require('../lib/pedidos');
 
 function apiHost() {
   return process.env.ASAAS_ENV === 'production'
@@ -104,10 +105,13 @@ exports.handler = async function(event) {
 
     // Nome e preco vem do Supabase; do navegador so aproveitamos id e quantidade.
     const items = await itensConfiaveis(body.items);
-    const frete = { preco: freteConfiavel(body.frete) };
+    const frete = { preco: freteConfiavel(body.frete), id: (body.frete && body.frete.id) || null, nome: (body.frete && body.frete.nome) || null };
     const total = montarTotal(items, frete);
-    const referencia = 'pedido_' + Date.now();
+    // referencia: preferimos a gerada no navegador (mesma do rascunho de carrinho abandonado),
+    // assim o pedido vira uma atualizacao da mesma linha em vez de criar duplicado.
+    const referencia = String(body.referencia || ('pedido_' + Date.now()));
     const descricao = ('Compra Tech Life Store - ' + items.map(function(i) { return i.nome; }).join(', ')).substring(0, 180);
+    const subtotal = items.reduce(function(s, i) { return s + (i.preco * i.qtd); }, 0);
 
     const customerId = await criarCliente(sender, token);
 
@@ -126,6 +130,19 @@ exports.handler = async function(event) {
 
       const qr = await asaas('/payments/' + r.body.id + '/pixQrCode', 'GET', null, token);
       if (qr.status !== 200) throw new Error(erroAsaas(qr.body));
+
+      try {
+        await salvarPedido({
+          referencia: referencia,
+          origem: 'asaas_pix',
+          status: 'aguardando_pagamento',
+          cliente_nome: sender.nome, cliente_email: sender.email,
+          cliente_telefone: sender.telefone, cliente_cpf: sender.cpf,
+          endereco: enderecoDe(sender), itens: items,
+          subtotal: subtotal, frete: frete.preco, frete_servico_id: frete.id, frete_nome: frete.nome,
+          total: total, gateway_id: r.body.id
+        });
+      } catch (e) { /* nao bloqueia o pagamento se o registro de vendas falhar */ }
 
       return {
         statusCode: 200,
@@ -186,6 +203,21 @@ exports.handler = async function(event) {
       const status = r.body.status;
       const aprovado = status === 'CONFIRMED' || status === 'RECEIVED';
       const emAnalise = status === 'PENDING' || status === 'AWAITING_RISK_ANALYSIS';
+
+      try {
+        await salvarPedido({
+          referencia: referencia,
+          origem: 'asaas_cartao',
+          status: aprovado ? 'pago' : (emAnalise ? 'em_analise' : 'falhou'),
+          cliente_nome: sender.nome, cliente_email: sender.email,
+          cliente_telefone: sender.telefone, cliente_cpf: sender.cpf,
+          endereco: enderecoDe(sender), itens: items,
+          subtotal: subtotal, frete: frete.preco, frete_servico_id: frete.id, frete_nome: frete.nome,
+          total: total, gateway_id: r.body.id,
+          pago_em: aprovado ? new Date().toISOString() : null
+        });
+      } catch (e) { /* nao bloqueia o pagamento se o registro de vendas falhar */ }
+
       return {
         statusCode: 200,
         headers,
@@ -202,6 +234,10 @@ exports.handler = async function(event) {
 
     throw new Error('Acao invalida');
   } catch (err) {
+    const refSegura = (function() { try { return JSON.parse(event.body || '{}').referencia || null; } catch (e2) { return null; } })();
+    if (refSegura) {
+      try { await atualizarPorReferencia(refSegura, { status: 'falhou', observacoes: String(err.message || '').substring(0, 500) }); } catch (e3) {}
+    }
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };
