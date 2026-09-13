@@ -21,7 +21,8 @@ function asaas(path, method, payload, token) {
     headers: {
       'access_token': token,
       'Content-Type': 'application/json',
-      'Accept': 'application/json'
+      'Accept': 'application/json',
+      'User-Agent': 'TechLifeStore-Checkout'
     }
   };
   if (postData) options.headers['Content-Length'] = Buffer.byteLength(postData);
