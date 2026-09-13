@@ -113,7 +113,7 @@
       .wrap { grid-template-columns:1fr; }
       .form-grid2 { grid-template-columns:1fr; }
     }
-      /* Pagamento (PagBank checkout transparente) */
+      /* Pagamento (Asaas checkout transparente) */
     .pag-bloco { margin-top:16px; padding-top:16px; border-top:2px solid var(--cinza2); }
     .pag-titulo { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; margin-bottom:8px; }
     .pag-opcoes { display:flex; gap:8px; }
@@ -285,7 +285,7 @@
       <button class="btn-wpp" onclick="finalizarWpp()">
         💬 Finalizar pelo WhatsApp
       </button>
-      <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">🔒 Pagamento 100% seguro via PayPal ou PagBank</p>
+      <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">🔒 Pagamento 100% seguro via PayPal ou Asaas</p>
     </div>
   </div>
 </div>
@@ -297,8 +297,6 @@
 </div>
 
 <div class="toast" id="toast"></div>
-
-<script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
 
 <script>
   let carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
@@ -585,9 +583,8 @@
     if (formaPagamento === 'cartao') montarParcelas();
   }
 
-  // --- Pagamento: PayPal, cartao (PagBank transparente) e Pix ---
+  // --- Pagamento: PayPal, cartao (Asaas transparente) e Pix ---
   var formaPagamento = 'paypal';
-  var chavePublicaPagBank = null;
 
   function escolherPagamento(forma) {
     formaPagamento = forma;
@@ -659,19 +656,6 @@
     } catch(e) {}
   }
 
-  async function chavePublica() {
-    if (chavePublicaPagBank) return chavePublicaPagBank;
-    var res = await fetch('/.netlify/functions/checkout-pagbank', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acao: 'chave' })
-    });
-    var data = await res.json();
-    if (!data.public_key) throw new Error(data.error || 'Nao foi possivel obter a chave publica do PagBank');
-    chavePublicaPagBank = data.public_key;
-    return chavePublicaPagBank;
-  }
-
   function pagarAgora() {
     if (formaPagamento === 'cartao') return pagarCartao();
     if (formaPagamento === 'pix') return pagarPix();
@@ -697,20 +681,6 @@
     document.getElementById('btn-finalizar').disabled = true;
 
     try {
-      if (typeof PagSeguro === 'undefined') throw new Error('SDK do PagBank nao carregou');
-      var publicKey = await chavePublica();
-      var cartao = PagSeguro.encryptCard({
-        publicKey: publicKey,
-        holder: nomeCartao,
-        number: numero,
-        expMonth: validade[0],
-        expYear: validade[1],
-        securityCode: cvv
-      });
-      if (cartao.hasErrors) {
-        throw new Error('Dados do cartao invalidos: ' + cartao.errors.map(function(e){ return e.code; }).join(', '));
-      }
-
       if (typeof gtag === 'function') gtag('event', 'add_payment_info', {
         currency: 'BRL',
         value: totalComFrete(),
@@ -718,7 +688,7 @@
         items: gaItens()
       });
 
-      var res = await fetch('/.netlify/functions/checkout-pagbank', {
+      var res = await fetch('/.netlify/functions/checkout-asaas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -726,10 +696,16 @@
           items: carrinho,
           sender: montarSender(),
           frete: frete,
-          encrypted: cartao.encryptedCard,
-          titular: nomeCartao,
-          cpfTitular: cpfTitular,
-          parcelas: parcelas
+          cartao: {
+            numero: numero,
+            nome: nomeCartao,
+            validadeMes: validade[0],
+            validadeAno: validade[1],
+            cvv: cvv,
+            titular: nomeCartao,
+            cpfTitular: cpfTitular,
+            parcelas: parcelas
+          }
         })
       });
       var data = await res.json();
@@ -741,7 +717,7 @@
         salvarCarrinho();
         window.location.href = 'obrigado.html?transaction_id=' + encodeURIComponent(data.id || '');
       } else if (data.status === 'IN_ANALYSIS') {
-        mostrarToast('Pagamento em analise pelo PagBank. Voce recebera a confirmacao por e-mail.');
+        mostrarToast('Pagamento em analise. Voce recebera a confirmacao por e-mail.');
       } else {
         throw new Error(data.mensagem || 'Pagamento nao autorizado pelo emissor');
       }
@@ -765,7 +741,7 @@
         items: gaItens()
       });
 
-      var res = await fetch('/.netlify/functions/checkout-pagbank', {
+      var res = await fetch('/.netlify/functions/checkout-asaas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ acao: 'pix', items: carrinho, sender: montarSender(), frete: frete })
