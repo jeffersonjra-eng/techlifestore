@@ -204,11 +204,21 @@
     </div>
   </section>
 
-  <div class="banner-link-wrap" style="max-width:1200px;margin:0 auto 40px;padding:0 20px">
+  <div class="banner-link-wrap" style="max-width:1200px;margin:0 auto 0;padding:0 20px">
     <a href="produto.html?id=24" onclick="if(typeof gtag==='function')gtag('event','select_promotion',{promotion_name:'Sua cozinha mais pratica e completa'})">
       <img src="banner-cozinha-completa.jpeg" alt="Sua cozinha mais prática e completa — confira a chaleira elétrica" style="width:100%;border-radius:16px;display:block">
     </a>
   </div>
+
+  <section class="secao" id="cozinha">
+    <div class="secao-titulo">
+      <h2>🍳 Cozinha</h2>
+      <a href="#" onclick="filtrarCategoria('Cozinha');return false;">Ver todos →</a>
+    </div>
+    <div class="produtos-grid" id="cozinha-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">Carregando produtos...</div>
+    </div>
+  </section>
 
   <div class="banner-promo-wrap">
     <div class="banner-promo">
@@ -336,49 +346,55 @@
     }
 
     // ── PRODUTOS ──
-    function renderProdutos(lista) {
-      var grid = document.getElementById('produtos-grid');
+    function produtoCardHTML(p) {
+      var preco = Number(p['Preço'] || 0);
+      var precoAnt = Number(p['Antigo Preço'] || 0);
+      var pix = (preco * 0.95).toFixed(2).replace('.', ',');
+      var emoji = emojiCat[p.categoria] || '📦';
+      var fotoHTML = p.foto_url
+        ? '<img src="' + p.foto_url + '" alt="' + p.Nome + '" style="width:100%;height:100%;object-fit:contain;background:#fff">'
+        : emoji;
+      var nomeEsc = (p.Nome || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      var fotoEsc = (p.foto_url || '').replace(/'/g, "\\'");
+      var precisaEscolherVoltagem = p.voltagem === '127V/220V';
+      var botaoCarrinho = precisaEscolherVoltagem
+        ? '<a href="produto.html?id=' + p.id + '" onclick="event.stopPropagation()" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer;text-decoration:none;display:flex;align-items:center">🛒</a>'
+        : '<button onclick="event.stopPropagation();addCarrinho(' + p.id + ',\'' + nomeEsc + '\',' + preco + ',\'' + fotoEsc + '\')" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer">🛒</button>';
+      return '<div class="produto-card" onclick="window.location=\'produto.html?id=' + p.id + '\'">' +
+        '<div class="produto-img" style="' + (p.foto_url ? 'padding:0;overflow:hidden' : '') + '">' + fotoHTML +
+        (p.Desconto ? '<span class="badge-desconto">-' + p.Desconto + '%</span>' : '') + '</div>' +
+        '<div class="produto-info">' +
+        '<p class="produto-nome">' + (p.Nome || '') + '</p>' +
+        '<p class="produto-stars">★★★★★ <span>(novo)</span></p>' +
+        (p.voltagem ? '<p style="font-size:11px;color:#6b7280;font-weight:600;margin:2px 0">⚡ ' + (precisaEscolherVoltagem ? 'Escolha a voltagem' : p.voltagem) + '</p>' : '') +
+        (precoAnt ? '<p class="produto-preco-old">R$ ' + precoAnt.toFixed(2).replace('.', ',') + '</p>' : '') +
+        '<p class="produto-preco">R$ ' + preco.toFixed(2).replace('.', ',') + '</p>' +
+        '<p class="produto-pix">✓ Pix: R$ ' + pix + '</p>' +
+        '<div style="display:flex;gap:6px">' +
+        '<a href="produto.html?id=' + p.id + '" onclick="event.stopPropagation()" style="flex:1;background:#0d1f1b;color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;font-family:Syne,sans-serif;text-decoration:none">Ver produto</a>' +
+        botaoCarrinho +
+        '</div></div></div>';
+    }
+
+    function renderGrid(gridId, lista, mensagemVazio) {
+      var grid = document.getElementById(gridId);
+      if (!grid) return;
       if (!lista || lista.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">Nenhum produto encontrado.</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">' + (mensagemVazio || 'Nenhum produto encontrado.') + '</div>';
         return;
       }
-      if (typeof gtag === 'function') gtag('event', 'view_item_list', {
+      grid.innerHTML = lista.map(produtoCardHTML).join('');
+    }
+
+    function renderProdutos(lista) {
+      if (typeof gtag === 'function' && lista && lista.length) gtag('event', 'view_item_list', {
         item_list_id: 'vitrine',
         item_list_name: 'Vitrine da loja',
         items: lista.slice(0, 20).map(function(p, idx) {
           return { item_id: String(p.id), item_name: p.Nome, item_category: p.categoria || '', price: Number(p['Preço'] || 0), index: idx };
         })
       });
-
-      grid.innerHTML = lista.map(function(p) {
-        var preco = Number(p['Preço'] || 0);
-        var precoAnt = Number(p['Antigo Preço'] || 0);
-        var pix = (preco * 0.95).toFixed(2).replace('.', ',');
-        var emoji = emojiCat[p.categoria] || '📦';
-        var fotoHTML = p.foto_url
-          ? '<img src="' + p.foto_url + '" alt="' + p.Nome + '" style="width:100%;height:100%;object-fit:contain;background:#fff">'
-          : emoji;
-        var nomeEsc = (p.Nome || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        var fotoEsc = (p.foto_url || '').replace(/'/g, "\\'");
-        var precisaEscolherVoltagem = p.voltagem === '127V/220V';
-        var botaoCarrinho = precisaEscolherVoltagem
-          ? '<a href="produto.html?id=' + p.id + '" onclick="event.stopPropagation()" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer;text-decoration:none;display:flex;align-items:center">🛒</a>'
-          : '<button onclick="event.stopPropagation();addCarrinho(' + p.id + ',\'' + nomeEsc + '\',' + preco + ',\'' + fotoEsc + '\')" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer">🛒</button>';
-        return '<div class="produto-card" onclick="window.location=\'produto.html?id=' + p.id + '\'">' +
-          '<div class="produto-img" style="' + (p.foto_url ? 'padding:0;overflow:hidden' : '') + '">' + fotoHTML +
-          (p.Desconto ? '<span class="badge-desconto">-' + p.Desconto + '%</span>' : '') + '</div>' +
-          '<div class="produto-info">' +
-          '<p class="produto-nome">' + (p.Nome || '') + '</p>' +
-          '<p class="produto-stars">★★★★★ <span>(novo)</span></p>' +
-          (p.voltagem ? '<p style="font-size:11px;color:#6b7280;font-weight:600;margin:2px 0">⚡ ' + (precisaEscolherVoltagem ? 'Escolha a voltagem' : p.voltagem) + '</p>' : '') +
-          (precoAnt ? '<p class="produto-preco-old">R$ ' + precoAnt.toFixed(2).replace('.', ',') + '</p>' : '') +
-          '<p class="produto-preco">R$ ' + preco.toFixed(2).replace('.', ',') + '</p>' +
-          '<p class="produto-pix">✓ Pix: R$ ' + pix + '</p>' +
-          '<div style="display:flex;gap:6px">' +
-          '<a href="produto.html?id=' + p.id + '" onclick="event.stopPropagation()" style="flex:1;background:#0d1f1b;color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;font-family:Syne,sans-serif;text-decoration:none">Ver produto</a>' +
-          botaoCarrinho +
-          '</div></div></div>';
-      }).join('');
+      renderGrid('produtos-grid', lista);
     }
 
     async function carregarProdutos() {
@@ -389,8 +405,10 @@
         todosProdutos = await res.json();
         if (!Array.isArray(todosProdutos)) todosProdutos = [];
         renderProdutos(todosProdutos);
+        renderGrid('cozinha-grid', todosProdutos.filter(function(p){ return p.categoria === 'Cozinha'; }), 'Em breve novidades para a cozinha!');
       } catch(e) {
         document.getElementById('produtos-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">Erro ao carregar produtos.</div>';
+        document.getElementById('cozinha-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">Erro ao carregar produtos.</div>';
       }
     }
 
