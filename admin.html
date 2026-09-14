@@ -1036,7 +1036,7 @@
           <td><span class="badge-envio">${ENVIO_LABEL[p.envio_status] || p.envio_status}</span>${p.rastreio_codigo ? '<div class="cliente-sub">' + p.rastreio_codigo + '</div>' : ''}</td>
           <td><div class="acoes">
             <button class="btn-mini" onclick="abrirDetalhesPedido(${p.id})">Ver</button>
-            ${p.envio_status === 'aguardando' ? `<button class="btn-mini roxo" onclick="gerarEtiqueta(${JSON.stringify(p.referencia)})">Gerar etiqueta</button>` : ''}
+            ${p.envio_status === 'aguardando' ? `<button class="btn-mini roxo" onclick='gerarEtiqueta(${JSON.stringify(p.referencia)})'>Gerar etiqueta</button>` : ''}
             ${p.etiqueta_url ? `<a class="btn-mini verde" href="${p.etiqueta_url}" target="_blank" style="text-decoration:none;display:inline-block">Imprimir</a>` : ''}
           </div></td>
         </tr>`;
@@ -1078,7 +1078,7 @@
       </div>
       <div class="detalhe-acoes">
         ${podeMarcarPago ? `<button class="btn-salvar" onclick="marcarComoPago(${p.id})">Marcar como pago</button>` : ''}
-        ${podeGerarEtiqueta ? `<button class="btn-mini roxo" onclick="gerarEtiqueta(${JSON.stringify(p.referencia)})">Gerar etiqueta de envio</button>` : ''}
+        ${podeGerarEtiqueta ? `<button class="btn-mini roxo" onclick='gerarEtiqueta(${JSON.stringify(p.referencia)})'>Gerar etiqueta de envio</button>` : ''}
         ${p.envio_status === 'etiqueta_gerada' ? `<button class="btn-mini" onclick="marcarPostado(${p.id})">Marcar como postado</button>` : ''}
         ${p.envio_status === 'postado' ? `<button class="btn-mini verde" onclick="marcarEntregue(${p.id})">Marcar como entregue</button>` : ''}
         <button class="btn-mini vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
