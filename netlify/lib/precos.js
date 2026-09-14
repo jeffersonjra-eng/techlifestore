@@ -93,12 +93,21 @@ async function itensConfiaveis(itensCliente) {
       throw new Error('Preco invalido no cadastro do produto ' + i.id);
     }
 
-    return {
+    // Voltagem: nao afeta preco/fraude, so passa adiante o que o cliente
+    // escolheu (saneado), e so quando o produto de fato permite escolha.
+    const item = {
       id: String(p.id),
       nome: String(p.Nome || 'Produto'),
       preco: preco,
       qtd: qtd
     };
+    if (p.voltagem === '127V/220V') {
+      const escolha = String((i && i.voltagem) || '').trim();
+      if (escolha === '127V' || escolha === '220V') item.voltagem = escolha;
+    } else if (p.voltagem) {
+      item.voltagem = String(p.voltagem);
+    }
+    return item;
   });
 }
 
