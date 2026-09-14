@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- Google tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z1H8LWTK8P"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-Z1H8LWTK8P');
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Conheça a Tech Life Store: eletrônicos e utilidades para o dia a dia, com qualidade e entrega para todo o Brasil.">
+  <title>Sobre nós — Tech Life Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--verde:#16a085;--verde-claro:#1abc9c;--verde-escuro:#0e6655;--vermelho:#c0392b;--cinza:#f4f6fa;--cinza2:#e5e7eb;--texto:#374151;--escuro:#0d1f1b;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--cinza);color:var(--texto);}
+    h1,h2,h3{font-family:'Syne',sans-serif;color:var(--escuro);}
+    a{text-decoration:none;color:inherit;}
+    header{background:var(--escuro);position:sticky;top:0;z-index:100;height:64px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 20px rgba(0,0,0,.35);}
+    .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;}
+    .logo span{color:var(--verde-claro);}
+    .nav-links{display:flex;align-items:center;gap:18px;}
+    .nav-links a{color:rgba(255,255,255,.72);font-size:14px;font-weight:500;}
+    .nav-links a:hover{color:#fff;}
+    .nav-carrinho{background:var(--verde);color:#fff !important;padding:7px 14px;border-radius:8px;}
+    .breadcrumb{max-width:800px;margin:20px auto 0;padding:0 20px;font-size:13px;color:#9ca3af;}
+    .breadcrumb a{color:var(--verde);}
+    .breadcrumb span{margin:0 6px;}
+    .wrap{max-width:800px;margin:0 auto;padding:20px 20px 60px;}
+    .card{background:#fff;border-radius:16px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,.05);}
+    .card h1{font-size:28px;margin-bottom:8px;}
+    .card .intro{font-size:14px;color:#6b7280;margin-bottom:28px;}
+    .card h2{font-size:18px;margin:28px 0 12px;}
+    .card h2:first-of-type{margin-top:0;}
+    .card p{font-size:14.5px;line-height:1.8;margin-bottom:14px;}
+    .card ul,.card ol{margin:0 0 14px 22px;font-size:14.5px;line-height:1.8;}
+    .card li{margin-bottom:6px;}
+    .card strong{color:var(--escuro);}
+    .box-verde{background:#e6f7f4;border:1px solid #b7e6db;border-radius:12px;padding:16px 18px;margin:18px 0;font-size:14px;line-height:1.7;}
+    .box-verde a{color:var(--verde-escuro);font-weight:700;}
+    .btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;}
+    .btn-primario{background:var(--verde);color:#fff;}
+    .btn-primario:hover{background:var(--verde-claro);}
+    .btn-secundario{background:var(--cinza);color:var(--escuro);border:1.5px solid var(--cinza2);}
+    .btn-secundario:hover{border-color:var(--verde);}
+    details{border-bottom:1px solid var(--cinza2);padding:14px 0;}
+    details:last-child{border-bottom:none;}
+    summary{cursor:pointer;font-weight:700;font-size:15px;color:var(--escuro);font-family:'Syne',sans-serif;list-style:none;display:flex;justify-content:space-between;align-items:center;}
+    summary::-webkit-details-marker{display:none;}
+    summary::after{content:'+';font-size:20px;color:var(--verde);font-weight:400;}
+    details[open] summary::after{content:'\2212';}
+    details p{margin-top:10px;color:#4b5563;}
+    .faq-cat{margin:28px 0 10px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--verde);}
+    .faq-cat:first-child{margin-top:0;}
+    footer{background:var(--escuro);color:rgba(255,255,255,.6);padding:48px 20px 24px;margin-top:48px;}
+    .footer-inner{max-width:1200px;margin:0 auto;}
+    .footer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:32px;margin-bottom:40px;}
+    .footer-col h4{color:#fff;font-size:14px;font-weight:700;margin-bottom:14px;}
+    .footer-col ul{list-style:none;}
+    .footer-col ul li{margin-bottom:8px;font-size:13px;}
+    .footer-col ul li a:hover{color:#fff;}
+    .footer-logo-img{height:44px;margin-bottom:12px;filter:brightness(0) invert(1);}
+    .footer-desc{font-size:13px;line-height:1.7;max-width:220px;}
+    .footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;font-size:12px;}
+    .pag-badge{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;}
+    .wpp-fixo{position:fixed;bottom:24px;right:24px;background:#25d366;color:#fff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 20px rgba(37,211,102,.4);cursor:pointer;transition:transform .2s;z-index:200;}
+    .wpp-fixo:hover{transform:scale(1.1);}
+    @media (max-width:600px){
+      .nav-links{gap:10px;}
+      .nav-links a:not(.nav-carrinho){display:none;}
+      .card{padding:22px;}
+      .card h1{font-size:22px;}
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo">Tech<span>Life</span> Store</a>
+    <div class="nav-links">
+      <a href="index.html">Início</a>
+      <a href="rastreio.html">Rastrear pedido</a>
+      <a href="carrinho.html" class="nav-carrinho">🛒 Carrinho</a>
+    </div>
+  </header>
+
+  <div class="breadcrumb">
+    <a href="index.html">Início</a>
+    <span>›</span>
+    <span>Sobre nós</span>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+
+      <h1>Sobre a Tech Life Store</h1>
+      <p class="intro">Eletrônicos e utilidades para tornar o seu dia a dia mais prático.</p>
+
+      <p>A Tech Life Store é uma loja online especializada em eletrônicos e utilidades domésticas: cafeteiras, chaleiras, produtos de cozinha, higiene, casa inteligente, limpeza e climatização. Nosso objetivo é simples — colocar produtos úteis e de qualidade na casa dos nossos clientes, com um processo de compra rápido, transparente e seguro, do clique à entrega na porta.</p>
+
+      <h2>Como trabalhamos</h2>
+      <p>Selecionamos cada produto do nosso catálogo pensando em custo-benefício e utilidade real no dia a dia. Trabalhamos com pagamento via Pix (com desconto) e cartão de crédito parcelado, e os envios são feitos pelo Melhor Envio para todo o território nacional, com rastreio disponível para todos os pedidos.</p>
+
+      <h2>Nossos valores</h2>
+      <ul>
+        <li><strong>Transparência</strong> — preços claros, sem letras miúdas.</li>
+        <li><strong>Qualidade</strong> — produtos escolhidos com cuidado.</li>
+        <li><strong>Agilidade</strong> — processamento rápido de pedidos e envios.</li>
+        <li><strong>Atendimento próximo</strong> — suporte real por WhatsApp e e-mail.</li>
+      </ul>
+
+      <h2>Onde estamos</h2>
+      <p>Nossa operação é baseada em Guarujá, São Paulo, e atendemos clientes em todo o Brasil através dos Correios e transportadoras parceiras do Melhor Envio.</p>
+
+      <div class="box-verde">
+        📍 Poeta Gonçalves Dias, 29 — Jardim Brasil II, Guarujá/SP — CEP 11497-560<br>
+        📧 suporte@techlifestore.com.br &nbsp;·&nbsp; 📱 (13) 97825-3993
+      </div>
+
+      <h2>Fale com a gente</h2>
+      <p>Tem alguma dúvida antes de comprar, ou quer saber mais sobre um produto específico? Fale com a nossa equipe.</p>
+      <div class="btns">
+        <a href="https://wa.me/5513978253993" target="_blank" class="btn btn-primario">💬 Falar no WhatsApp</a>
+        <a href="ajuda.html" class="btn btn-secundario">Central de ajuda</a>
+      </div>
+    </div>
+  </div>
+
+  <footer id="contato">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <img src="logo.png" alt="Tech Life Store" class="footer-logo-img">
+          <p class="footer-desc">Eletrônicos e utilidades domésticas com qualidade garantida e entrega rápida para todo o Brasil.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Institucional</h4>
+          <ul>
+            <li><a href="sobre.html">Sobre nós</a></li>
+            <li><a href="privacidade.html">Política de privacidade</a></li>
+            <li><a href="termos.html">Termos de uso</a></li>
+            <li><a href="trabalhe-conosco.html">Trabalhe conosco</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Atendimento</h4>
+          <ul>
+            <li><a href="ajuda.html">Central de ajuda</a></li>
+            <li><a href="trocas-devolucoes.html">Trocas e devoluções</a></li>
+            <li><a href="rastreio.html">Rastrear pedido</a></li>
+            <li><a href="https://wa.me/5513978253993">WhatsApp</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Contato</h4>
+          <ul>
+            <li>📧 Suporte@techlifestore.com.br</li>
+            <li>📱 (13) 97825-3993</li>
+            <li>⏰ Seg–Sex: 9h às 18h</li>
+            <li>📍 Poeta Gonçalves Dias, 29</li>
+            <li>Jardim Brasil II — Guarujá SP</li>
+            <li>CEP 11497-560</li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Redes sociais</h4>
+          <ul>
+            <li><a href="https://instagram.com/techlife_storee" target="_blank">📸 Instagram</a></li>
+            <li><a href="https://tiktok.com/@techlife_store" target="_blank">🎵 TikTok</a></li>
+            <li><a href="https://youtube.com/@techlife_store" target="_blank">▶️ YouTube</a></li>
+            <li><a href="https://shopee.com.br/techlife_store" target="_blank">🛍️ Shopee</a></li>
+            <li><a href="https://wa.me/5513978253993" target="_blank">💬 WhatsApp</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2025 Tech Life Store — CNPJ 50.137.700/0001-09 — Todos os direitos reservados</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="pag-badge">Pix</span>
+          <span class="pag-badge">Visa</span>
+          <span class="pag-badge">Mastercard</span>
+          <span class="pag-badge">Boleto</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="https://wa.me/5513978253993" target="_blank" class="wpp-fixo">💬</a>
+
+</body>
+</html>
