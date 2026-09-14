@@ -408,11 +408,15 @@
           <option value="Entretenimento">Entretenimento</option>
         </select>
       </div>
-      <div class="form-grupo full">
-        <label>Fotos do produto (até 7)</label>
-        <div id="fotos-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px"></div>
-        <button type="button" onclick="adicionarSlotFoto()" style="width:100%;padding:10px;border:1.5px dashed #e5e7eb;border-radius:8px;background:#f4f6fa;color:#9ca3af;font-size:13px;cursor:pointer">+ Adicionar foto</button>
-        <input type="hidden" id="f-foto">
+      <div class="form-grupo">
+        <label>Voltagem</label>
+        <select id="f-voltagem">
+          <option value="">Não se aplica</option>
+          <option value="127V">Somente 127V</option>
+          <option value="220V">Somente 220V</option>
+          <option value="Bivolt">Bivolt (funciona em 127V e 220V)</option>
+          <option value="127V/220V">127V e 220V (cliente escolhe no pedido)</option>
+        </select>
       </div>
       <div class="form-grupo">
         <label>Status</label>
@@ -420,6 +424,20 @@
           <option value="true">Ativo (visível na loja)</option>
           <option value="false">Inativo (oculto)</option>
         </select>
+      </div>
+      <div class="form-grupo full">
+        <label>Fotos do produto (até 7)</label>
+        <div id="fotos-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px"></div>
+        <button type="button" onclick="adicionarSlotFoto()" style="width:100%;padding:10px;border:1.5px dashed #e5e7eb;border-radius:8px;background:#f4f6fa;color:#9ca3af;font-size:13px;cursor:pointer">+ Adicionar foto</button>
+        <input type="hidden" id="f-foto">
+      </div>
+      <div class="form-grupo full">
+        <label>Vídeo do produto (formato vertical 9:16, estilo Reels)</label>
+        <div id="video-slot" style="height:140px;width:100px;background:#f4f6fa;border-radius:8px;border:1.5px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:pointer">
+          <span id="video-slot-label" style="color:#9ca3af;font-size:11px;text-align:center;padding:0 6px">+ Adicionar vídeo</span>
+          <input type="file" accept="video/*" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="uploadVideo(this)">
+        </div>
+        <input type="hidden" id="f-video">
       </div>
     </div>
     <div class="form-btns">
@@ -557,7 +575,7 @@
                   <div class="prod-foto">${p.foto_url ? `<img src="${p.foto_url}" style="width:44px;height:44px;border-radius:8px;object-fit:cover">` : (emojiCat[p.categoria] || '📦')}</div>
                   <div>
                     <div class="prod-nome">${p.Nome || '—'}</div>
-                    <div class="prod-cat">${p.categoria || '—'}</div>
+                    <div class="prod-cat">${p.categoria || '—'}${p.voltagem ? ' · ⚡ ' + p.voltagem : ''}</div>
                   </div>
                 </div>
               </td>
@@ -593,7 +611,10 @@
     document.getElementById('f-cat').value      = p?.categoria || '';
     document.getElementById('f-foto').value     = p?.foto_url || '';
     document.getElementById('f-ativo').value    = p?.Ativo !== false ? 'true' : 'false';
+    document.getElementById('f-voltagem').value = p?.voltagem || '';
+    document.getElementById('f-video').value    = p?.video_url || '';
     inicializarFotoSlots(p);
+    inicializarVideoSlot(p);
     document.getElementById('modal').classList.add('aberto');
   }
 
@@ -619,6 +640,8 @@
       categoria:      document.getElementById('f-cat').value,
       foto_url:       document.getElementById('f-foto').value.trim() || null,
       Ativo:          document.getElementById('f-ativo').value === 'true',
+      voltagem:       document.getElementById('f-voltagem').value || null,
+      video_url:      document.getElementById('f-video').value.trim() || null,
     };
     if (!dados.Nome) { mostrarToast('Digite o nome do produto!', 'vermelho'); return; }
     if (!dados.Preço) { mostrarToast('Digite o preço do produto!', 'vermelho'); return; }
@@ -711,6 +734,45 @@
     const slot = document.getElementById(`slot-${idx}`);
     slot.style.border = '1.5px dashed #e5e7eb';
     slot.innerHTML = `<span style="color:#9ca3af;font-size:11px;text-align:center">Foto ${idx+1}</span><input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="uploadSlot(this, ${idx})">`;
+  }
+
+  // ── UPLOAD DO VIDEO (9:16) ──
+  async function uploadVideo(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (file.size > 50 * 1024 * 1024) { mostrarToast('Vídeo muito grande (máx. 50MB)!', 'vermelho'); return; }
+    const slot = document.getElementById('video-slot');
+    slot.innerHTML = '<span style="color:#9ca3af;font-size:11px">Enviando...</span>';
+    const ext = file.name.split('.').pop();
+    const fileName = `produto_video_${Date.now()}.${ext}`;
+    const res = await fetch(`${SUPABASE_URL.replace('/rest/v1','')}/storage/v1/object/Produtos/${fileName}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type },
+      body: file
+    });
+    if (!res.ok) { slot.innerHTML = '<span style="color:red;font-size:11px">Erro!</span><input type="file" accept="video/*" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="uploadVideo(this)">'; return; }
+    const url = `${SUPABASE_URL.replace('/rest/v1','')}/storage/v1/object/public/Produtos/${fileName}`;
+    document.getElementById('f-video').value = url;
+    slot.style.border = '2px solid #16a085';
+    slot.innerHTML = `<video src="${url}" muted style="width:100%;height:100%;object-fit:cover" onloadeddata="this.pause()"></video><button type="button" onclick="removerVideo()" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
+    mostrarToast('Vídeo enviado!', 'verde');
+  }
+
+  function removerVideo() {
+    document.getElementById('f-video').value = '';
+    const slot = document.getElementById('video-slot');
+    slot.style.border = '1.5px dashed #e5e7eb';
+    slot.innerHTML = '<span id="video-slot-label" style="color:#9ca3af;font-size:11px;text-align:center;padding:0 6px">+ Adicionar vídeo</span><input type="file" accept="video/*" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="uploadVideo(this)">';
+  }
+
+  function inicializarVideoSlot(produto) {
+    const slot = document.getElementById('video-slot');
+    if (produto && produto.video_url) {
+      slot.style.border = '2px solid #16a085';
+      slot.innerHTML = `<video src="${produto.video_url}" muted style="width:100%;height:100%;object-fit:cover"></video><button type="button" onclick="removerVideo()" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
+    } else {
+      removerVideo();
+    }
   }
 
   function inicializarFotoSlots(produto) {
@@ -927,7 +989,7 @@
   function linhaVenda(p) {
     const st = STATUS_INFO[p.status] || { label: p.status, cls: 'badge-abandonado' };
     const origemLabel = ORIGEM_LABEL[p.origem] || p.origem || '—';
-    const itensTxt = (p.itens || []).map(i => `${i.nome} x${i.qtd}`).join(', ');
+    const itensTxt = (p.itens || []).map(i => `${i.nome}${i.voltagem ? ' (' + i.voltagem + ')' : ''} x${i.qtd}`).join(', ');
     const podeMarcarPago = ['aguardando_pagamento', 'em_analise', 'combinado_whatsapp'].includes(p.status);
     return `<tr>
       <td>${dataFmt(p.created_at)}</td>
@@ -992,7 +1054,7 @@
         <tr>
           <td>${dataFmt(p.created_at)}</td>
           <td><div class="cliente-nome">${p.cliente_nome || 'Não informado'}</div></td>
-          <td><div class="itens-resumo">${(p.itens || []).map(i => `${i.nome} x${i.qtd}`).join(', ')}</div></td>
+          <td><div class="itens-resumo">${(p.itens || []).map(i => `${i.nome}${i.voltagem ? ' (' + i.voltagem + ')' : ''} x${i.qtd}`).join(', ')}</div></td>
           <td class="preco-val">${moeda(p.total)}</td>
           <td>${p.cliente_email || ''}${p.cliente_telefone ? '<br>' + p.cliente_telefone : ''}</td>
           <td><div class="acoes">
@@ -1050,7 +1112,7 @@
     if (!p) return;
     const st = STATUS_INFO[p.status] || { label: p.status, cls: 'badge-abandonado' };
     const end = p.endereco || {};
-    const itensHtml = (p.itens || []).map(i => `<div class="detalhe-itens-linha"><span>${i.nome} x${i.qtd}</span><span>${moeda(i.preco * i.qtd)}</span></div>`).join('');
+    const itensHtml = (p.itens || []).map(i => `<div class="detalhe-itens-linha"><span>${i.nome}${i.voltagem ? ' <b>(' + i.voltagem + ')</b>' : ''} x${i.qtd}</span><span>${moeda(i.preco * i.qtd)}</span></div>`).join('');
     const podeMarcarPago = ['aguardando_pagamento', 'em_analise', 'combinado_whatsapp'].includes(p.status);
     const podeGerarEtiqueta = (p.status === 'pago' || p.status === 'combinado_whatsapp') && p.envio_status === 'aguardando';
 

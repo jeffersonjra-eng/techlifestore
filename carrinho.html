@@ -364,7 +364,7 @@
       <div class="item">
         <div class="item-foto">${item.foto ? `<img src="${item.foto}" alt="${item.nome}">` : (item.emoji || '📦')}</div>
         <div class="item-info">
-          <div class="item-nome">${item.nome}</div>
+          <div class="item-nome">${item.nome}${item.voltagem ? ` <span style="color:#16a085;font-weight:700">⚡ ${item.voltagem}</span>` : ''}</div>
           <div class="item-preco">${formatarPreco(item.preco)}</div>
           <div class="item-qtd">
             <button class="btn-qtd" onclick="mudarQtd(${i}, -1)">−</button>
@@ -381,7 +381,7 @@
     const pix = total * 0.95;
 
     resumoItens.innerHTML = carrinho.map(i =>
-      `<div class="resumo-linha"><span>${i.nome} x${i.qtd}</span><span>${formatarPreco(i.preco * i.qtd)}</span></div>`
+      `<div class="resumo-linha"><span>${i.nome}${i.voltagem ? ' (' + i.voltagem + ')' : ''} x${i.qtd}</span><span>${formatarPreco(i.preco * i.qtd)}</span></div>`
     ).join('') +
       `<div class="resumo-linha"><span>Subtotal</span><span>${formatarPreco(subtotal)}</span></div>` +
       `<div class="resumo-linha"><span>Frete${frete ? ' - ' + frete.nome : ''}</span><span>${frete ? (valorFrete > 0 ? formatarPreco(valorFrete) : 'Gratis') : 'a calcular'}</span></div>`;
@@ -500,7 +500,7 @@
     const total = subtotal + valorFrete;
     const nome = document.getElementById('c-nome').value || 'Cliente';
     let msg = `Olá! Gostaria de finalizar meu pedido na *Tech Life Store*:\n\n`;
-    carrinho.forEach(i => { msg += `📦 ${i.nome} x${i.qtd} — ${formatarPreco(i.preco * i.qtd)}\n`; });
+    carrinho.forEach(i => { msg += `📦 ${i.nome}${i.voltagem ? ' (' + i.voltagem + ')' : ''} x${i.qtd} — ${formatarPreco(i.preco * i.qtd)}\n`; });
     if (frete) msg += `\n🚚 Frete (${frete.nome}): ${valorFrete > 0 ? formatarPreco(valorFrete) : 'Gratis'}\n`;
     msg += `\n💰 *Total: ${formatarPreco(total)}*\n`;
     if (nome) msg += `\n👤 Nome: ${nome}`;

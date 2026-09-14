@@ -111,6 +111,20 @@
     .aval-nome-prod { font-size:13px; font-weight:600; color:var(--escuro); }
     .aval-produto-nome { font-size:11px; color:#9ca3af; }
 
+    /* VOLTAGEM */
+    .voltagem-badge { display:inline-flex; align-items:center; gap:6px; background:var(--cinza); color:var(--texto); font-size:13px; font-weight:600; padding:8px 12px; border-radius:10px; margin-bottom:16px; }
+    .voltagem-escolha { margin-bottom:16px; }
+    .voltagem-escolha .rotulo { font-size:13px; font-weight:700; color:var(--escuro); margin-bottom:8px; display:block; }
+    .voltagem-opcoes { display:flex; gap:10px; }
+    .voltagem-opt { flex:1; text-align:center; border:1.5px solid var(--cinza2); border-radius:10px; padding:10px; cursor:pointer; font-size:14px; font-weight:600; color:var(--texto); transition:.15s; user-select:none; }
+    .voltagem-opt:hover { border-color:var(--verde-claro); }
+    .voltagem-opt.selecionada { border-color:var(--verde); background:rgba(22,160,133,0.08); color:var(--verde-escuro); }
+
+    /* VIDEO 9:16 */
+    .video-wrap { background:#fff; border-radius:20px; padding:32px; margin-top:16px; text-align:center; }
+    .video-vertical { width:100%; max-width:300px; aspect-ratio:9/16; border-radius:14px; overflow:hidden; margin:0 auto; background:#000; }
+    .video-vertical video { width:100%; height:100%; object-fit:cover; }
+
     @media (max-width:768px) {
       .produto-grid { grid-template-columns:1fr; gap:24px; }
       .foto-slide { aspect-ratio:1/1; }
@@ -168,6 +182,12 @@
           <div class="prod-parcela" id="prod-parcela"></div>
         </div>
 
+        <div id="voltagem-badge-wrap"></div>
+        <div id="voltagem-escolha-wrap" class="voltagem-escolha" style="display:none">
+          <span class="rotulo">Escolha a voltagem *</span>
+          <div class="voltagem-opcoes" id="voltagem-opcoes"></div>
+        </div>
+
         <button class="btn-comprar" onclick="comprar()">🛒 Adicionar ao carrinho</button>
         <a id="btn-wpp" href="#" target="_blank" class="btn-wpp">💬 Comprar pelo WhatsApp</a>
 
@@ -177,6 +197,13 @@
           <div class="garantia">🔄 Troca em 30 dias</div>
           <div class="garantia">💳 Parcele em 12x</div>
         </div>
+      </div>
+    </div>
+
+    <div class="video-wrap" id="video-wrap" style="display:none">
+      <h2 style="margin-bottom:16px">🎥 Vídeo do produto</h2>
+      <div class="video-vertical">
+        <video id="prod-video" controls loop muted playsinline></video>
       </div>
     </div>
 
@@ -257,6 +284,23 @@
       document.getElementById('prod-nome').textContent = p.Nome || '';
       document.getElementById('prod-desc').textContent = p['Descrição'] || 'Sem descrição disponível.';
 
+      // Voltagem
+      voltagemConfig = p.voltagem || '';
+      if (voltagemConfig === '127V/220V') {
+        document.getElementById('voltagem-escolha-wrap').style.display = 'block';
+        document.getElementById('voltagem-opcoes').innerHTML = ['127V', '220V'].map(v =>
+          `<div class="voltagem-opt" onclick="escolherVoltagem('${v}')" id="volt-opt-${v}">${v}</div>`
+        ).join('');
+      } else if (voltagemConfig) {
+        document.getElementById('voltagem-badge-wrap').innerHTML = `<div class="voltagem-badge">⚡ ${voltagemConfig}</div>`;
+      }
+
+      // Video (formato vertical 9:16)
+      if (p.video_url) {
+        document.getElementById('prod-video').src = p.video_url;
+        document.getElementById('video-wrap').style.display = 'block';
+      }
+
       // Preços
       const preco = Number(p['Preço'] || 0);
       const precoAnt = Number(p['Antigo Preço'] || 0);
@@ -270,8 +314,7 @@
       document.getElementById('prod-parcela').textContent = `ou 12x de R$ ${parcela} sem juros`;
 
       // WhatsApp
-      const msgWpp = encodeURIComponent(`Olá! Tenho interesse no produto: *${p.Nome}* por R$ ${preco.toFixed(2).replace('.', ',')}. Podem me ajudar?`);
-      document.getElementById('btn-wpp').href = `https://wa.me/5513978253993?text=${msgWpp}`;
+      atualizarLinkWpp();
 
       prodId = p.id;
       prodPreco = p['Preço'] || 0;
@@ -308,13 +351,35 @@
     document.querySelectorAll('.miniatura').forEach((m,i) => m.classList.toggle('ativa', i === n));
   }
 
+  function escolherVoltagem(v) {
+    voltagemSelecionada = v;
+    document.querySelectorAll('.voltagem-opt').forEach(el => el.classList.remove('selecionada'));
+    const opt = document.getElementById('volt-opt-' + v);
+    if (opt) opt.classList.add('selecionada');
+    atualizarLinkWpp();
+  }
+
+  function atualizarLinkWpp() {
+    const nome = document.getElementById('prod-nome').textContent;
+    const sufixoVolt = voltagemConfig === '127V/220V' ? (voltagemSelecionada ? ` (${voltagemSelecionada})` : '') : (voltagemConfig ? ` (${voltagemConfig})` : '');
+    const msgWpp = encodeURIComponent(`Olá! Tenho interesse no produto: *${nome}${sufixoVolt}* por R$ ${prodPreco.toFixed(2).replace('.', ',')}. Podem me ajudar?`);
+    document.getElementById('btn-wpp').href = `https://wa.me/5513978253993?text=${msgWpp}`;
+  }
+
   function comprar() {
+    if (voltagemConfig === '127V/220V' && !voltagemSelecionada) {
+      alert('Escolha a voltagem (127V ou 220V) antes de adicionar ao carrinho.');
+      return;
+    }
+    const voltagemFinal = voltagemConfig === '127V/220V' ? voltagemSelecionada : (voltagemConfig || null);
     const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
-    const existente = carrinho.find(i => i.id == prodId);
+    const existente = carrinho.find(i => i.id == prodId && (i.voltagem || null) === voltagemFinal);
     if (existente) { existente.qtd++; }
     else {
       const foto = document.querySelector('.foto-slide img');
-      carrinho.push({ id: prodId, nome: document.getElementById('prod-nome').textContent, preco: prodPreco, qtd:1, foto: foto ? foto.src : null });
+      const item = { id: prodId, nome: document.getElementById('prod-nome').textContent, preco: prodPreco, qtd:1, foto: foto ? foto.src : null };
+      if (voltagemFinal) item.voltagem = voltagemFinal;
+      carrinho.push(item);
     }
     localStorage.setItem('carrinho', JSON.stringify(carrinho));
     if (typeof gtag === 'function') gtag('event', 'add_to_cart', {
@@ -328,7 +393,7 @@
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3000);
   }
-  let prodId = 0, prodPreco = 0;
+  let prodId = 0, prodPreco = 0, voltagemConfig = '', voltagemSelecionada = null;
 
   carregarProduto();
 

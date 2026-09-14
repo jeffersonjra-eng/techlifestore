@@ -354,18 +354,23 @@
           : emoji;
         var nomeEsc = (p.Nome || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         var fotoEsc = (p.foto_url || '').replace(/'/g, "\\'");
+        var precisaEscolherVoltagem = p.voltagem === '127V/220V';
+        var botaoCarrinho = precisaEscolherVoltagem
+          ? '<a href="produto.html?id=' + p.id + '" onclick="event.stopPropagation()" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer;text-decoration:none;display:flex;align-items:center">🛒</a>'
+          : '<button onclick="event.stopPropagation();addCarrinho(' + p.id + ',\'' + nomeEsc + '\',' + preco + ',\'' + fotoEsc + '\')" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer">🛒</button>';
         return '<div class="produto-card" onclick="window.location=\'produto.html?id=' + p.id + '\'">' +
           '<div class="produto-img" style="' + (p.foto_url ? 'padding:0;overflow:hidden' : '') + '">' + fotoHTML +
           (p.Desconto ? '<span class="badge-desconto">-' + p.Desconto + '%</span>' : '') + '</div>' +
           '<div class="produto-info">' +
           '<p class="produto-nome">' + (p.Nome || '') + '</p>' +
           '<p class="produto-stars">★★★★★ <span>(novo)</span></p>' +
+          (p.voltagem ? '<p style="font-size:11px;color:#6b7280;font-weight:600;margin:2px 0">⚡ ' + (precisaEscolherVoltagem ? 'Escolha a voltagem' : p.voltagem) + '</p>' : '') +
           (precoAnt ? '<p class="produto-preco-old">R$ ' + precoAnt.toFixed(2).replace('.', ',') + '</p>' : '') +
           '<p class="produto-preco">R$ ' + preco.toFixed(2).replace('.', ',') + '</p>' +
           '<p class="produto-pix">✓ Pix: R$ ' + pix + '</p>' +
           '<div style="display:flex;gap:6px">' +
           '<a href="produto.html?id=' + p.id + '" onclick="event.stopPropagation()" style="flex:1;background:#0d1f1b;color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;font-family:Syne,sans-serif;text-decoration:none">Ver produto</a>' +
-          '<button onclick="event.stopPropagation();addCarrinho(' + p.id + ',\'' + nomeEsc + '\',' + preco + ',\'' + fotoEsc + '\')" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer">🛒</button>' +
+          botaoCarrinho +
           '</div></div></div>';
       }).join('');
     }
