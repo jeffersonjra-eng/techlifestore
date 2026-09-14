@@ -66,7 +66,13 @@ function remetente() {
     postal_code: digitos(process.env.CEP_ORIGEM || '')
   };
   if (process.env.REMETENTE_NOME) r.name = process.env.REMETENTE_NOME;
-  if (process.env.REMETENTE_DOCUMENTO) r.document = digitos(process.env.REMETENTE_DOCUMENTO);
+  if (process.env.REMETENTE_DOCUMENTO) {
+    // CNPJ (14 digitos) vai em company_document; CPF (11 digitos) vai em document.
+    // A Melhor Envio valida "document" estritamente como CPF, entao um CNPJ ali e rejeitado.
+    const doc = digitos(process.env.REMETENTE_DOCUMENTO);
+    if (doc.length === 14) r.company_document = doc;
+    else if (doc.length === 11) r.document = doc;
+  }
   if (process.env.REMETENTE_ENDERECO) r.address = process.env.REMETENTE_ENDERECO;
   if (process.env.REMETENTE_NUMERO) r.number = process.env.REMETENTE_NUMERO;
   if (process.env.REMETENTE_COMPLEMENTO) r.complement = process.env.REMETENTE_COMPLEMENTO;
