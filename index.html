@@ -9,6 +9,23 @@
     gtag('js', new Date());
     gtag('config', 'G-Z1H8LWTK8P');
   </script>
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '211642158119561');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=211642158119561&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Tech Life Store — Eletrônicos e utilidades para o seu dia a dia. Entrega rápida, Pix com desconto, parcele em 12x.">
@@ -339,6 +356,13 @@
         currency: 'BRL',
         value: Number(preco) || 0,
         items: [{ item_id: String(id), item_name: nome, price: Number(preco) || 0, quantity: 1 }]
+      });
+      if (typeof fbq === 'function') fbq('track', 'AddToCart', {
+        content_ids: [String(id)],
+        content_type: 'product',
+        content_name: nome,
+        currency: 'BRL',
+        value: Number(preco) || 0
       });
       atualizarBadgeCarrinho();
       mostrarToast('Produto adicionado! <a href="carrinho.html" style="color:#fff;font-weight:700;text-decoration:underline">Ver carrinho →</a>');
