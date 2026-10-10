@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — Tech Life Store</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
   <style>
     :root {
       --verde: #16a085;
@@ -232,9 +232,10 @@
   <div class="login-box">
     <div class="login-logo">Tech<span>Life</span> Store</div>
     <p class="login-sub">Painel Administrativo</p>
-    <input type="password" id="senha-input" placeholder="Digite a senha de acesso" onkeydown="if(event.key==='Enter')entrar()">
+    <input type="email" id="email-input" placeholder="E-mail do administrador" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('senha-input').focus()">
+    <input type="password" id="senha-input" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
     <button class="btn-login" onclick="entrar()">Entrar</button>
-    <p class="login-erro" id="login-erro">Senha incorreta. Tente novamente.</p>
+    <p class="login-erro" id="login-erro">E-mail ou senha incorretos. Tente novamente.</p>
   </div>
 </div>
 
@@ -494,31 +495,61 @@
   const SUPABASE_URL = 'https://dprloosfnttdhibsihfk.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwcmxvb3NmbnR0ZGhpYnNpaGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTc1MTQsImV4cCI6MjA5MjYzMzUxNH0.l6orZE8J77wTU0hKbDV2F7FvYbLB1DOEKqKDpnFlQ2k';
   const SUPABASE_REST = 'https://dprloosfnttdhibsihfk.supabase.co/rest/v1';
-  const SENHA_ADMIN  = 'techlife2025'; // Troque por uma senha sua!
 
   const { createClient } = supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Sessao do administrador (Supabase Auth). Todas as chamadas de escrita/leitura
+  // restrita usam o token dessa sessao; a chave anon sozinha so le o catalogo publico.
+  let sessaoAdmin = null;
+  db.auth.onAuthStateChange((evento, sessao) => { sessaoAdmin = sessao; });
+  function tokenAtual() { return (sessaoAdmin && sessaoAdmin.access_token) || SUPABASE_KEY; }
+
+  // Escapa texto antes de entrar em innerHTML (evita injecao de HTML/JS vinda do banco ou de clientes).
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  // So aceita URLs http(s) (bloqueia javascript:, data: etc.) e ja escapa para atributo.
+  function urlOk(u) {
+    const t = String(u == null ? '' : u).trim();
+    return /^https?:\/\//i.test(t) ? esc(t) : '';
+  }
 
   let produtos = [];
   let editandoId = null;
 
   // ── LOGIN ──
-  function entrar() {
-    const s = document.getElementById('senha-input').value;
-    if (s === SENHA_ADMIN) {
-      document.getElementById('tela-login').style.display = 'none';
-      document.getElementById('tela-admin').style.display = 'block';
-      carregarProdutos();
-    } else {
-      document.getElementById('login-erro').style.display = 'block';
-    }
+  function mostrarAdmin() {
+    document.getElementById('tela-login').style.display = 'none';
+    document.getElementById('tela-admin').style.display = 'block';
+    carregarProdutos();
   }
 
-  function sair() {
+  async function entrar() {
+    const email = document.getElementById('email-input').value.trim();
+    const senha = document.getElementById('senha-input').value;
+    const erro = document.getElementById('login-erro');
+    erro.style.display = 'none';
+    if (!email || !senha) { erro.style.display = 'block'; return; }
+    const { data, error } = await db.auth.signInWithPassword({ email: email, password: senha });
+    if (error || !data || !data.session) { erro.style.display = 'block'; return; }
+    sessaoAdmin = data.session;
+    document.getElementById('senha-input').value = '';
+    mostrarAdmin();
+  }
+
+  async function sair() {
+    await db.auth.signOut();
+    sessaoAdmin = null;
     document.getElementById('tela-login').style.display = 'flex';
     document.getElementById('tela-admin').style.display = 'none';
     document.getElementById('senha-input').value = '';
   }
+
+  // Se ja existe uma sessao valida neste navegador, entra direto.
+  db.auth.getSession().then(({ data }) => {
+    if (data && data.session) { sessaoAdmin = data.session; mostrarAdmin(); }
+  });
 
   // ── PRODUTOS ──
   async function carregarProdutos() {
@@ -527,7 +558,7 @@
       const res = await fetch(`${SUPABASE_REST}/Produtos?select=*&order=id.desc`, {
         headers: {
           'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`
+          'Authorization': `Bearer ${tokenAtual()}`
         }
       });
       produtos = await res.json();
@@ -572,15 +603,15 @@
             <tr>
               <td>
                 <div style="display:flex;align-items:center;gap:12px">
-                  <div class="prod-foto">${p.foto_url ? `<img src="${p.foto_url}" style="width:44px;height:44px;border-radius:8px;object-fit:cover">` : (emojiCat[p.categoria] || '📦')}</div>
+                  <div class="prod-foto">${urlOk(p.foto_url) ? `<img src="${urlOk(p.foto_url)}" style="width:44px;height:44px;border-radius:8px;object-fit:cover">` : (emojiCat[p.categoria] || '📦')}</div>
                   <div>
-                    <div class="prod-nome">${p.Nome || '—'}</div>
-                    <div class="prod-cat">${p.categoria || '—'}${p.voltagem ? ' · ⚡ ' + p.voltagem : ''}</div>
+                    <div class="prod-nome">${esc(p.Nome) || '—'}</div>
+                    <div class="prod-cat">${esc(p.categoria) || '—'}${p.voltagem ? ' · ⚡ ' + esc(p.voltagem) : ''}</div>
                   </div>
                 </div>
               </td>
               <td><div class="preco-val">R$ ${Number(p.Preço||0).toFixed(2).replace('.',',')}</div>${p['Antigo Preço'] ? `<div style="font-size:11px;color:#9ca3af;text-decoration:line-through">R$ ${Number(p['Antigo Preço']).toFixed(2).replace('.',',')}</div>` : ''}</td>
-              <td>${p.Desconto ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px">-${p.Desconto}%</span>` : '—'}</td>
+              <td>${p.Desconto ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px">-${esc(p.Desconto)}%</span>` : '—'}</td>
               <td><span class="${p.Ativo ? 'badge-ativo' : 'badge-inativo'}">${p.Ativo ? 'Ativo' : 'Inativo'}</span></td>
               <td>
                 <div class="acoes">
@@ -655,14 +686,14 @@
     if (editandoId) {
       const res = await fetch(`${SUPABASE_REST}/Produtos?id=eq.${editandoId}`, {
         method: 'PATCH',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify(dados)
       });
       if (!res.ok) error = await res.json();
     } else {
       const res = await fetch(`${SUPABASE_REST}/Produtos`, {
         method: 'POST',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify(dados)
       });
       if (!res.ok) error = await res.json();
@@ -678,7 +709,7 @@
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;
     const res = await fetch(`${SUPABASE_REST}/Produtos?id=eq.${id}`, {
       method: 'DELETE',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}` }
     });
     if (!res.ok) { mostrarToast('Erro ao excluir', 'vermelho'); return; }
     mostrarToast('Produto excluído!', 'verde');
@@ -718,14 +749,14 @@
     const fileName = `produto_${Date.now()}_${idx}.${ext}`;
     const res = await fetch(`${SUPABASE_URL.replace('/rest/v1','')}/storage/v1/object/Produtos/${fileName}`, {
       method: 'POST',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type },
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}`, 'Content-Type': file.type },
       body: file
     });
     if (!res.ok) { slot.innerHTML = '<span style="color:red;font-size:11px">Erro!</span>'; return; }
     const url = `${SUPABASE_URL.replace('/rest/v1','')}/storage/v1/object/public/Produtos/${fileName}`;
     fotosSlots[idx] = url;
     slot.style.border = '2px solid #16a085';
-    slot.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover"><button onclick="removerSlot(${idx})" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
+    slot.innerHTML = `<img src="${urlOk(url)}" style="width:100%;height:100%;object-fit:cover"><button onclick="removerSlot(${idx})" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
     mostrarToast('Foto enviada!', 'verde');
   }
 
@@ -747,14 +778,14 @@
     const fileName = `produto_video_${Date.now()}.${ext}`;
     const res = await fetch(`${SUPABASE_URL.replace('/rest/v1','')}/storage/v1/object/Produtos/${fileName}`, {
       method: 'POST',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type },
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}`, 'Content-Type': file.type },
       body: file
     });
     if (!res.ok) { slot.innerHTML = '<span style="color:red;font-size:11px">Erro!</span><input type="file" accept="video/*" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="uploadVideo(this)">'; return; }
     const url = `${SUPABASE_URL.replace('/rest/v1','')}/storage/v1/object/public/Produtos/${fileName}`;
     document.getElementById('f-video').value = url;
     slot.style.border = '2px solid #16a085';
-    slot.innerHTML = `<video src="${url}" muted style="width:100%;height:100%;object-fit:cover" onloadeddata="this.pause()"></video><button type="button" onclick="removerVideo()" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
+    slot.innerHTML = `<video src="${urlOk(url)}" muted style="width:100%;height:100%;object-fit:cover" onloadeddata="this.pause()"></video><button type="button" onclick="removerVideo()" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
     mostrarToast('Vídeo enviado!', 'verde');
   }
 
@@ -769,7 +800,7 @@
     const slot = document.getElementById('video-slot');
     if (produto && produto.video_url) {
       slot.style.border = '2px solid #16a085';
-      slot.innerHTML = `<video src="${produto.video_url}" muted style="width:100%;height:100%;object-fit:cover"></video><button type="button" onclick="removerVideo()" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
+      slot.innerHTML = `<video src="${urlOk(produto.video_url)}" muted style="width:100%;height:100%;object-fit:cover"></video><button type="button" onclick="removerVideo()" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
     } else {
       removerVideo();
     }
@@ -785,7 +816,7 @@
         const slot = document.createElement('div');
         slot.id = `slot-${idx}`;
         slot.style.cssText = 'position:relative;height:80px;background:#f4f6fa;border-radius:8px;border:2px solid #16a085;overflow:hidden';
-        slot.innerHTML = `<img src="${produto[field]}" style="width:100%;height:100%;object-fit:cover"><button onclick="removerSlot(${idx})" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
+        slot.innerHTML = `<img src="${urlOk(produto[field])}" style="width:100%;height:100%;object-fit:cover"><button onclick="removerSlot(${idx})" style="position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
         grid.appendChild(slot);
       }
     });
@@ -811,7 +842,7 @@
   async function carregarAvaliacoes() {
     document.getElementById('lista-avaliacoes').innerHTML = '<div class="loading">Carregando...</div>';
     const res = await fetch(`${SUPABASE_REST}/Avaliacoes?select=*&order=id.desc`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}` }
     });
     const avals = await res.json();
     if (!Array.isArray(avals) || avals.length === 0) {
@@ -823,8 +854,8 @@
       <div class="aval-card">
         <div class="aval-header">
           <div>
-            <div class="aval-nome">${a.nome_cliente || '—'}</div>
-            <div class="aval-prod">📦 ${a.produto_nome || '—'}</div>
+            <div class="aval-nome">${esc(a.nome_cliente) || '—'}</div>
+            <div class="aval-prod">📦 ${esc(a.produto_nome) || '—'}</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <span class="${a.ativo ? 'badge-ativo' : 'badge-inativo'}">${a.ativo ? 'Ativo' : 'Inativo'}</span>
@@ -833,7 +864,7 @@
           </div>
         </div>
         <div class="aval-stars">${stars(a.estrelas||5)}</div>
-        <div class="aval-texto">"${a.texto || ''}"</div>
+        <div class="aval-texto">"${esc(a.texto)}"</div>
       </div>`).join('');
   }
 
@@ -855,7 +886,7 @@
 
   async function editarAval(id) {
     const res = await fetch(`${SUPABASE_REST}/Avaliacoes?id=eq.${id}&select=*`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}` }
     });
     const data = await res.json();
     if (data && data[0]) abrirModalAval(data[0]);
@@ -876,13 +907,13 @@
     if (editandoAvalId) {
       res = await fetch(`${SUPABASE_REST}/Avaliacoes?id=eq.${editandoAvalId}`, {
         method: 'PATCH',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify(dados)
       });
     } else {
       res = await fetch(`${SUPABASE_REST}/Avaliacoes`, {
         method: 'POST',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify(dados)
       });
     }
@@ -896,7 +927,7 @@
     if (!confirm('Excluir esta avaliação?')) return;
     await fetch(`${SUPABASE_REST}/Avaliacoes?id=eq.${id}`, {
       method: 'DELETE',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}` }
     });
     mostrarToast('Avaliação excluída!', 'verde');
     carregarAvaliacoes();
@@ -932,7 +963,7 @@
     try { return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }); }
     catch (e) { return iso; }
   }
-  function cabecalhosSupa() { return { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }; }
+  function cabecalhosSupa() { return { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}` }; }
   function patchHeadersSupa() { return Object.assign({}, cabecalhosSupa(), { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }); }
 
   function recarregarAbaAtual() {
@@ -987,16 +1018,16 @@
   }
 
   function linhaVenda(p) {
-    const st = STATUS_INFO[p.status] || { label: p.status, cls: 'badge-abandonado' };
+    const st = STATUS_INFO[p.status] || { label: esc(p.status), cls: 'badge-abandonado' };
     const origemLabel = ORIGEM_LABEL[p.origem] || p.origem || '—';
-    const itensTxt = (p.itens || []).map(i => `${i.nome}${i.voltagem ? ' (' + i.voltagem + ')' : ''} x${i.qtd}`).join(', ');
+    const itensTxt = (p.itens || []).map(i => `${esc(i.nome)}${i.voltagem ? ' (' + esc(i.voltagem) + ')' : ''} x${esc(i.qtd)}`).join(', ');
     const podeMarcarPago = ['aguardando_pagamento', 'em_analise', 'combinado_whatsapp'].includes(p.status);
     return `<tr>
       <td>${dataFmt(p.created_at)}</td>
-      <td><div class="cliente-nome">${p.cliente_nome || '—'}</div><div class="cliente-sub">${p.cliente_email || ''}</div></td>
+      <td><div class="cliente-nome">${esc(p.cliente_nome) || '—'}</div><div class="cliente-sub">${esc(p.cliente_email)}</div></td>
       <td><div class="itens-resumo">${itensTxt}</div></td>
       <td class="preco-val">${moeda(p.total)}</td>
-      <td>${origemLabel}</td>
+      <td>${esc(origemLabel)}</td>
       <td><span class="${st.cls}">${st.label}</span></td>
       <td><div class="acoes">
         <button class="btn-mini" onclick="abrirDetalhesPedido(${p.id})">Ver</button>
@@ -1053,13 +1084,13 @@
       ${lista.map(p => `
         <tr>
           <td>${dataFmt(p.created_at)}</td>
-          <td><div class="cliente-nome">${p.cliente_nome || 'Não informado'}</div></td>
-          <td><div class="itens-resumo">${(p.itens || []).map(i => `${i.nome}${i.voltagem ? ' (' + i.voltagem + ')' : ''} x${i.qtd}`).join(', ')}</div></td>
+          <td><div class="cliente-nome">${esc(p.cliente_nome) || 'Não informado'}</div></td>
+          <td><div class="itens-resumo">${(p.itens || []).map(i => `${esc(i.nome)}${i.voltagem ? ' (' + esc(i.voltagem) + ')' : ''} x${esc(i.qtd)}`).join(', ')}</div></td>
           <td class="preco-val">${moeda(p.total)}</td>
-          <td>${p.cliente_email || ''}${p.cliente_telefone ? '<br>' + p.cliente_telefone : ''}</td>
+          <td>${esc(p.cliente_email)}${p.cliente_telefone ? '<br>' + esc(p.cliente_telefone) : ''}</td>
           <td><div class="acoes">
             <button class="btn-mini" onclick="abrirDetalhesPedido(${p.id})">Ver</button>
-            ${p.cliente_telefone ? `<button class="btn-mini verde" onclick="contatarWpp('${p.cliente_telefone}', ${JSON.stringify(p.cliente_nome || '')})">WhatsApp</button>` : ''}
+            ${p.cliente_telefone ? `<button class="btn-mini verde" onclick="contatarWpp(${esc(JSON.stringify(String(p.cliente_telefone)))}, ${esc(JSON.stringify(p.cliente_nome || ''))})">WhatsApp</button>` : ''}
             <button class="btn-mini vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
           </div></td>
         </tr>`).join('')}
@@ -1092,14 +1123,14 @@
       ${lista.map(p => {
         const end = p.endereco || {};
         return `<tr>
-          <td><div class="cliente-nome">${p.cliente_nome || '—'}</div></td>
-          <td>${end.cidade || ''}${end.estado ? '/' + end.estado : ''}</td>
+          <td><div class="cliente-nome">${esc(p.cliente_nome) || '—'}</div></td>
+          <td>${esc(end.cidade)}${end.estado ? '/' + esc(end.estado) : ''}</td>
           <td class="preco-val">${moeda(p.total)}</td>
-          <td><span class="badge-envio">${ENVIO_LABEL[p.envio_status] || p.envio_status}</span>${p.rastreio_codigo ? '<div class="cliente-sub">' + p.rastreio_codigo + '</div>' : ''}</td>
+          <td><span class="badge-envio">${esc(ENVIO_LABEL[p.envio_status] || p.envio_status)}</span>${p.rastreio_codigo ? '<div class="cliente-sub">' + esc(p.rastreio_codigo) + '</div>' : ''}</td>
           <td><div class="acoes">
             <button class="btn-mini" onclick="abrirDetalhesPedido(${p.id})">Ver</button>
-            ${p.envio_status === 'aguardando' ? `<button class="btn-mini roxo" onclick='gerarEtiqueta(${JSON.stringify(p.referencia)})'>Gerar etiqueta</button>` : ''}
-            ${p.etiqueta_url ? `<a class="btn-mini verde" href="${p.etiqueta_url}" target="_blank" style="text-decoration:none;display:inline-block">Imprimir</a>` : ''}
+            ${p.envio_status === 'aguardando' ? `<button class="btn-mini roxo" onclick="gerarEtiqueta(${esc(JSON.stringify(p.referencia))})">Gerar etiqueta</button>` : ''}
+            ${urlOk(p.etiqueta_url) ? `<a class="btn-mini verde" href="${urlOk(p.etiqueta_url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-block">Imprimir</a>` : ''}
           </div></td>
         </tr>`;
       }).join('')}
@@ -1110,9 +1141,9 @@
   function abrirDetalhesPedido(id) {
     const p = pedidos.find(x => x.id === id);
     if (!p) return;
-    const st = STATUS_INFO[p.status] || { label: p.status, cls: 'badge-abandonado' };
+    const st = STATUS_INFO[p.status] || { label: esc(p.status), cls: 'badge-abandonado' };
     const end = p.endereco || {};
-    const itensHtml = (p.itens || []).map(i => `<div class="detalhe-itens-linha"><span>${i.nome}${i.voltagem ? ' <b>(' + i.voltagem + ')</b>' : ''} x${i.qtd}</span><span>${moeda(i.preco * i.qtd)}</span></div>`).join('');
+    const itensHtml = (p.itens || []).map(i => `<div class="detalhe-itens-linha"><span>${esc(i.nome)}${i.voltagem ? ' <b>(' + esc(i.voltagem) + ')</b>' : ''} x${esc(i.qtd)}</span><span>${moeda(i.preco * i.qtd)}</span></div>`).join('');
     const podeMarcarPago = ['aguardando_pagamento', 'em_analise', 'combinado_whatsapp'].includes(p.status);
     const podeGerarEtiqueta = (p.status === 'pago' || p.status === 'combinado_whatsapp') && p.envio_status === 'aguardando';
 
@@ -1121,26 +1152,26 @@
       <div class="detalhe-grid">
         <div class="detalhe-bloco">
           <h4>Cliente</h4>
-          <p>${p.cliente_nome || '—'}<br>${p.cliente_email || ''}<br>${p.cliente_telefone || ''}</p>
+          <p>${esc(p.cliente_nome) || '—'}<br>${esc(p.cliente_email)}<br>${esc(p.cliente_telefone)}</p>
         </div>
         <div class="detalhe-bloco">
           <h4>Endereço</h4>
-          <p>${end.rua || ''} ${end.numero || ''} ${end.complemento || ''}<br>${end.bairro || ''}${end.cidade ? ' - ' + end.cidade : ''}${end.estado ? '/' + end.estado : ''}<br>${end.cep ? 'CEP ' + end.cep : ''}</p>
+          <p>${esc(end.rua)} ${esc(end.numero)} ${esc(end.complemento)}<br>${esc(end.bairro)}${end.cidade ? ' - ' + esc(end.cidade) : ''}${end.estado ? '/' + esc(end.estado) : ''}<br>${end.cep ? 'CEP ' + esc(end.cep) : ''}</p>
         </div>
       </div>
       <div class="detalhe-bloco" style="margin-bottom:16px">
         <h4>Itens</h4>
         ${itensHtml || '<p>—</p>'}
-        <div class="detalhe-itens-linha"><span>Frete${p.frete_nome ? ' - ' + p.frete_nome : ''}</span><span>${moeda(p.frete)}</span></div>
+        <div class="detalhe-itens-linha"><span>Frete${p.frete_nome ? ' - ' + esc(p.frete_nome) : ''}</span><span>${moeda(p.frete)}</span></div>
         <div class="detalhe-itens-linha" style="font-weight:700;border-bottom:none"><span>Total</span><span>${moeda(p.total)}</span></div>
       </div>
       <div class="detalhe-grid">
-        <div class="detalhe-bloco"><h4>Pagamento</h4><p>Origem: ${ORIGEM_LABEL[p.origem] || p.origem}<br>Status: <span class="${st.cls}">${st.label}</span>${p.gateway_id ? '<br>ID gateway: ' + p.gateway_id : ''}</p></div>
-        <div class="detalhe-bloco"><h4>Envio</h4><p>Status: ${ENVIO_LABEL[p.envio_status] || p.envio_status}${p.rastreio_codigo ? '<br>Rastreio: ' + p.rastreio_codigo : ''}${p.etiqueta_url ? '<br><a href="' + p.etiqueta_url + '" target="_blank">Ver etiqueta</a>' : ''}</p></div>
+        <div class="detalhe-bloco"><h4>Pagamento</h4><p>Origem: ${esc(ORIGEM_LABEL[p.origem] || p.origem)}<br>Status: <span class="${st.cls}">${st.label}</span>${p.gateway_id ? '<br>ID gateway: ' + esc(p.gateway_id) : ''}</p></div>
+        <div class="detalhe-bloco"><h4>Envio</h4><p>Status: ${esc(ENVIO_LABEL[p.envio_status] || p.envio_status)}${p.rastreio_codigo ? '<br>Rastreio: ' + esc(p.rastreio_codigo) : ''}${urlOk(p.etiqueta_url) ? '<br><a href="' + urlOk(p.etiqueta_url) + '" target="_blank" rel="noopener noreferrer">Ver etiqueta</a>' : ''}</p></div>
       </div>
       <div class="detalhe-acoes">
         ${podeMarcarPago ? `<button class="btn-salvar" onclick="marcarComoPago(${p.id})">Marcar como pago</button>` : ''}
-        ${podeGerarEtiqueta ? `<button class="btn-mini roxo" onclick='gerarEtiqueta(${JSON.stringify(p.referencia)})'>Gerar etiqueta de envio</button>` : ''}
+        ${podeGerarEtiqueta ? `<button class="btn-mini roxo" onclick="gerarEtiqueta(${esc(JSON.stringify(p.referencia))})">Gerar etiqueta de envio</button>` : ''}
         ${p.envio_status === 'etiqueta_gerada' ? `<button class="btn-mini" onclick="marcarPostado(${p.id})">Marcar como postado</button>` : ''}
         ${p.envio_status === 'postado' ? `<button class="btn-mini verde" onclick="marcarEntregue(${p.id})">Marcar como entregue</button>` : ''}
         <button class="btn-mini vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
@@ -1200,7 +1231,7 @@
     mostrarToast('Gerando etiqueta...');
     try {
       const res = await fetch('/.netlify/functions/etiqueta', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia })
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tokenAtual() }, body: JSON.stringify({ referencia })
       });
       const data = await res.json();
       if (data.erro) throw new Error(data.erro);

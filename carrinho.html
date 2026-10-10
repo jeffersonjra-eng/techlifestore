@@ -317,6 +317,17 @@
 <div class="toast" id="toast"></div>
 
 <script>
+
+  // Escapa texto vindo do banco/servidor antes de entrar em innerHTML.
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+  // So aceita URLs http(s) (bloqueia javascript:, data:) e ja escapa para atributo.
+  function urlOk(u) {
+    var t = String(u == null ? '' : u).trim();
+    return /^https?:\/\//i.test(t) ? esc(t) : '';
+  }
+
   let carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
   let frete = null;
   let opcoesFrete = [];
@@ -380,9 +391,9 @@
 
     lista.innerHTML = carrinho.map((item, i) => `
       <div class="item">
-        <div class="item-foto">${item.foto ? `<img src="${item.foto}" alt="${item.nome}">` : (item.emoji || '📦')}</div>
+        <div class="item-foto">${urlOk(item.foto) ? `<img src="${urlOk(item.foto)}" alt="${esc(item.nome)}">` : esc(item.emoji || '📦')}</div>
         <div class="item-info">
-          <div class="item-nome">${item.nome}${item.voltagem ? ` <span style="color:#16a085;font-weight:700">⚡ ${item.voltagem}</span>` : ''}</div>
+          <div class="item-nome">${esc(item.nome)}${item.voltagem ? ` <span style="color:#16a085;font-weight:700">⚡ ${esc(item.voltagem)}</span>` : ''}</div>
           <div class="item-preco">${formatarPreco(item.preco)}</div>
           <div class="item-qtd">
             <button class="btn-qtd" onclick="mudarQtd(${i}, -1)">−</button>
@@ -399,10 +410,10 @@
     const pix = total * 0.95;
 
     resumoItens.innerHTML = carrinho.map(i =>
-      `<div class="resumo-linha"><span>${i.nome}${i.voltagem ? ' (' + i.voltagem + ')' : ''} x${i.qtd}</span><span>${formatarPreco(i.preco * i.qtd)}</span></div>`
+      `<div class="resumo-linha"><span>${esc(i.nome)}${i.voltagem ? ' (' + esc(i.voltagem) + ')' : ''} x${esc(i.qtd)}</span><span>${formatarPreco(i.preco * i.qtd)}</span></div>`
     ).join('') +
       `<div class="resumo-linha"><span>Subtotal</span><span>${formatarPreco(subtotal)}</span></div>` +
-      `<div class="resumo-linha"><span>Frete${frete ? ' - ' + frete.nome : ''}</span><span>${frete ? (valorFrete > 0 ? formatarPreco(valorFrete) : 'Gratis') : 'a calcular'}</span></div>`;
+      `<div class="resumo-linha"><span>Frete${frete ? ' - ' + esc(frete.nome) : ''}</span><span>${frete ? (valorFrete > 0 ? formatarPreco(valorFrete) : 'Gratis') : 'a calcular'}</span></div>`;
 
     document.getElementById('resumo-total').textContent = formatarPreco(total);
     document.getElementById('resumo-pix').textContent = `✓ No Pix: ${formatarPreco(pix)}`;
@@ -597,7 +608,7 @@
       if (d.erro) throw new Error(d.erro);
       opcoesFrete = d.opcoes || [];
       if (opcoesFrete.length === 0) {
-        box.innerHTML = `<p class="frete-aviso">${d.aviso || 'Nenhuma opcao de entrega para esse CEP.'}</p>`;
+        box.innerHTML = `<p class="frete-aviso">${esc(d.aviso || 'Nenhuma opcao de entrega para esse CEP.')}</p>`;
       } else {
         frete = opcoesFrete[0];
         renderFrete();
@@ -607,7 +618,7 @@
       }
       renderCarrinho();
     } catch (e) {
-      box.innerHTML = `<p class="frete-aviso">${e.message}</p>`;
+      box.innerHTML = `<p class="frete-aviso">${esc(e.message)}</p>`;
       renderCarrinho();
     } finally {
       btn.disabled = false;
@@ -618,7 +629,7 @@
   function renderFrete() {
     document.getElementById('frete-opcoes').innerHTML = opcoesFrete.map((o, i) =>
       `<div class="frete-opcao ${frete && frete.id === o.id ? 'ativa' : ''}" onclick="escolherFrete(${i})">
-        <span class="fo-nome">${o.empresa ? o.empresa + ' - ' : ''}${o.nome}<span class="fo-prazo">${o.prazo ? 'ate ' + o.prazo + ' dias uteis' : 'prazo a confirmar'}</span></span>
+        <span class="fo-nome">${o.empresa ? esc(o.empresa) + ' - ' : ''}${esc(o.nome)}<span class="fo-prazo">${o.prazo ? 'ate ' + esc(o.prazo) + ' dias uteis' : 'prazo a confirmar'}</span></span>
         <span class="fo-preco">${o.preco > 0 ? formatarPreco(o.preco) : 'Gratis'}</span>
       </div>`
     ).join('');

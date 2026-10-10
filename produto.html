@@ -248,6 +248,17 @@
 
 <script>
   const SUPA_URL = 'https://dprloosfnttdhibsihfk.supabase.co/rest/v1';
+
+  // Escapa texto vindo do banco/servidor antes de entrar em innerHTML.
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+  // So aceita URLs http(s) (bloqueia javascript:, data:) e ja escapa para atributo.
+  function urlOk(u) {
+    var t = String(u == null ? '' : u).trim();
+    return /^https?:\/\//i.test(t) ? esc(t) : '';
+  }
+
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwcmxvb3NmbnR0ZGhpYnNpaGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTc1MTQsImV4cCI6MjA5MjYzMzUxNH0.l6orZE8J77wTU0hKbDV2F7FvYbLB1DOEKqKDpnFlQ2k';
   const emojiCat = {'Cafeteiras':'☕','Higiene':'🪥','Cozinha':'🍳','Casa inteligente':'💡','Eletrônicos':'🔌','Limpeza':'🧹','Climatização':'❄️','Entretenimento':'🎮'};
 
@@ -286,10 +297,10 @@
         document.getElementById('prod-foto').textContent = emojiCat[p.categoria] || '📦';
       } else {
         container.innerHTML = fotos.map((f,i) =>
-          `<div class="foto-slide" style="${i>0?'display:none':''}"><img src="${f}" alt="${p.Nome} foto ${i+1}" loading="lazy"></div>`
+          `<div class="foto-slide" style="${i>0?'display:none':''}"><img src="${urlOk(f)}" alt="${esc(p.Nome)} foto ${i+1}" loading="lazy"></div>`
         ).join('');
         miniaturas.innerHTML = fotos.map((f,i) =>
-          `<div class="miniatura ${i===0?'ativa':''}" onclick="irFoto(${i})"><img src="${f}" alt="miniatura ${i+1}"></div>`
+          `<div class="miniatura ${i===0?'ativa':''}" onclick="irFoto(${i})"><img src="${urlOk(f)}" alt="miniatura ${i+1}"></div>`
         ).join('');
         if (fotos.length > 1) {
           document.getElementById('btn-prev').style.display = 'flex';
@@ -310,7 +321,7 @@
           `<div class="voltagem-opt" onclick="escolherVoltagem('${v}')" id="volt-opt-${v}">${v}</div>`
         ).join('');
       } else if (voltagemConfig) {
-        document.getElementById('voltagem-badge-wrap').innerHTML = `<div class="voltagem-badge">⚡ ${voltagemConfig}</div>`;
+        document.getElementById('voltagem-badge-wrap').innerHTML = `<div class="voltagem-badge">⚡ ${esc(voltagemConfig)}</div>`;
       }
 
       // Video (formato vertical 9:16)
@@ -325,7 +336,7 @@
       const pix = (preco * 0.95).toFixed(2).replace('.', ',');
       const parcela = (preco / 12).toFixed(2).replace('.', ',');
 
-      if (p.Desconto) document.getElementById('badge-desc').innerHTML = `<span class="badge-desc">-${p.Desconto}% OFF</span>`;
+      if (p.Desconto) document.getElementById('badge-desc').innerHTML = `<span class="badge-desc">-${esc(p.Desconto)}% OFF</span>`;
       if (precoAnt) document.getElementById('prod-preco-old').textContent = `De R$ ${precoAnt.toFixed(2).replace('.', ',')}`;
       document.getElementById('prod-preco').textContent = `R$ ${preco.toFixed(2).replace('.', ',')}`;
       document.getElementById('prod-pix').textContent = `✓ No Pix: R$ ${pix}`;
@@ -455,14 +466,14 @@
       document.getElementById('aval-total').textContent = lista.length + ' avaliações';
 
       document.getElementById('aval-lista').innerHTML = lista.map(a => {
-        const iniciais = (a.nome_cliente||'?').split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+        const iniciais = esc((a.nome_cliente||'?').split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase());
         return `<div class="aval-card-prod">
           <div class="stars">${stars(a.estrelas||5)}</div>
-          <div class="texto">"${a.texto||''}"</div>
+          <div class="texto">"${esc(a.texto)}"</div>
           <div class="autor">
             <div class="aval-avatar">${iniciais}</div>
             <div>
-              <div class="aval-nome-prod">${a.nome_cliente||''}</div>
+              <div class="aval-nome-prod">${esc(a.nome_cliente)}</div>
               <div class="aval-produto-nome">Comprado na Tech Life Store ✓</div>
             </div>
           </div>

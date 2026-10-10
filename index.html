@@ -336,6 +336,17 @@
 
     // ── CONFIG SUPABASE ──
     var SUPA_URL = 'https://dprloosfnttdhibsihfk.supabase.co/rest/v1';
+
+    // Escapa texto vindo do banco/servidor antes de entrar em innerHTML.
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+    }
+    // So aceita URLs http(s) (bloqueia javascript:, data:) e ja escapa para atributo.
+    function urlOk(u) {
+      var t = String(u == null ? '' : u).trim();
+      return /^https?:\/\//i.test(t) ? esc(t) : '';
+    }
+
     var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwcmxvb3NmbnR0ZGhpYnNpaGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTc1MTQsImV4cCI6MjA5MjYzMzUxNH0.l6orZE8J77wTU0hKbDV2F7FvYbLB1DOEKqKDpnFlQ2k';
     var emojiCat = {'Cafeteiras':'☕','Higiene':'🪥','Cozinha':'🍳','Casa inteligente':'💡','Eletrônicos':'🔌','Limpeza':'🧹','Climatização':'❄️','Entretenimento':'🎮'};
     var todosProdutos = [];
@@ -376,21 +387,22 @@
       var pix = (preco * 0.95).toFixed(2).replace('.', ',');
       var emoji = emojiCat[p.categoria] || '📦';
       var fotoHTML = p.foto_url
-        ? '<img src="' + p.foto_url + '" alt="' + p.Nome + '" style="width:100%;height:100%;object-fit:contain;background:#fff">'
+        ? '<img src="' + urlOk(p.foto_url) + '" alt="' + esc(p.Nome) + '" style="width:100%;height:100%;object-fit:contain;background:#fff">'
         : emoji;
-      var nomeEsc = (p.Nome || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      var fotoEsc = (p.foto_url || '').replace(/'/g, "\\'");
+      // valores que entram em onclick="...('texto')": escapa para JS e depois para o atributo HTML
+      var nomeEsc = esc(String(p.Nome || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/[\r\n]+/g, ' '));
+      var fotoEsc = esc(String(urlOk(p.foto_url) ? p.foto_url : '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
       var precisaEscolherVoltagem = p.voltagem === '127V/220V';
       var botaoCarrinho = precisaEscolherVoltagem
         ? '<a href="produto.html?id=' + p.id + '" onclick="event.stopPropagation()" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer;text-decoration:none;display:flex;align-items:center">🛒</a>'
         : '<button onclick="event.stopPropagation();addCarrinho(' + p.id + ',\'' + nomeEsc + '\',' + preco + ',\'' + fotoEsc + '\')" style="background:#16a085;color:#fff;border:none;padding:9px 12px;border-radius:8px;font-size:16px;cursor:pointer">🛒</button>';
       return '<div class="produto-card" onclick="window.location=\'produto.html?id=' + p.id + '\'">' +
         '<div class="produto-img" style="' + (p.foto_url ? 'padding:0;overflow:hidden' : '') + '">' + fotoHTML +
-        (p.Desconto ? '<span class="badge-desconto">-' + p.Desconto + '%</span>' : '') + '</div>' +
+        (p.Desconto ? '<span class="badge-desconto">-' + esc(p.Desconto) + '%</span>' : '') + '</div>' +
         '<div class="produto-info">' +
-        '<p class="produto-nome">' + (p.Nome || '') + '</p>' +
+        '<p class="produto-nome">' + esc(p.Nome) + '</p>' +
         '<p class="produto-stars">★★★★★ <span>(novo)</span></p>' +
-        (p.voltagem ? '<p style="font-size:11px;color:#6b7280;font-weight:600;margin:2px 0">⚡ ' + (precisaEscolherVoltagem ? 'Escolha a voltagem' : p.voltagem) + '</p>' : '') +
+        (p.voltagem ? '<p style="font-size:11px;color:#6b7280;font-weight:600;margin:2px 0">⚡ ' + (precisaEscolherVoltagem ? 'Escolha a voltagem' : esc(p.voltagem)) + '</p>' : '') +
         (precoAnt ? '<p class="produto-preco-old">R$ ' + precoAnt.toFixed(2).replace('.', ',') + '</p>' : '') +
         '<p class="produto-preco">R$ ' + preco.toFixed(2).replace('.', ',') + '</p>' +
         '<p class="produto-pix">✓ Pix: R$ ' + pix + '</p>' +
@@ -481,16 +493,16 @@
         visiveis.push(todasAvaliacoes[(avalIndex + i) % todasAvaliacoes.length]);
       }
       grid.innerHTML = visiveis.map(function(a) {
-        var iniciais = (a.nome_cliente||'?').split(' ').map(function(n){return n[0];}).slice(0,2).join('').toUpperCase();
+        var iniciais = esc((a.nome_cliente||'?').split(' ').map(function(n){return n[0];}).slice(0,2).join('').toUpperCase());
         var t = tempos[Math.floor(Math.random() * tempos.length)];
         return '<div class="avaliacao-card aval-entrada">' +
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
           '<p class="avaliacao-stars">' + stars(a.estrelas||5) + '</p>' +
           '<span style="font-size:11px;color:#9ca3af">🕐 ' + t + '</span></div>' +
-          '<p class="avaliacao-texto">"' + (a.texto||'') + '"</p>' +
+          '<p class="avaliacao-texto">"' + esc(a.texto) + '"</p>' +
           '<div class="avaliacao-autor"><div class="avaliacao-avatar">' + iniciais + '</div>' +
-          '<div><p class="avaliacao-nome">' + (a.nome_cliente||'') + '</p>' +
-          '<p class="avaliacao-prod">✓ Compra verificada — ' + (a.produto_nome||'') + '</p></div></div></div>';
+          '<div><p class="avaliacao-nome">' + esc(a.nome_cliente) + '</p>' +
+          '<p class="avaliacao-prod">✓ Compra verificada — ' + esc(a.produto_nome) + '</p></div></div></div>';
       }).join('');
     }
 
