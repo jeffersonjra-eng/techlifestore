@@ -7,7 +7,12 @@
 // poder ser usado pra forjar uma venda como paga.
 
 const { itensConfiaveis, freteConfiavel } = require('../lib/precos');
-const { salvarPedido, enderecoDe } = require('../lib/pedidos');
+const { salvarPedido, buscarPorReferencia, enderecoDe } = require('../lib/pedidos');
+
+function curto(v, max) {
+  if (v == null) return null;
+  return String(v).substring(0, max);
+}
 
 const STATUS_PERMITIDOS = ['abandonado', 'combinado_whatsapp'];
 
@@ -24,10 +29,18 @@ exports.handler = async function(event) {
     const body = JSON.parse(event.body || '{}');
     const referencia = String(body.referencia || '').trim();
     if (!referencia) throw new Error('Referencia ausente');
+    if (!/^[A-Za-z0-9_-]{6,80}$/.test(referencia)) throw new Error('Referencia invalida');
     if (!Array.isArray(body.items) || body.items.length === 0) throw new Error('Carrinho vazio');
 
     const status = STATUS_PERMITIDOS.indexOf(body.status) !== -1 ? body.status : 'abandonado';
     const sender = body.sender || {};
+
+    // Este endpoint e aberto: so pode criar/atualizar rascunhos. Pedido que ja
+    // avancou (aguardando pagamento, pago, etc.) nao e tocado por aqui.
+    const existente = await buscarPorReferencia(referencia);
+    if (existente && ['abandonado', 'combinado_whatsapp'].indexOf(existente.status) === -1) {
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
+    }
 
     const items = await itensConfiaveis(body.items);
     const freteValor = freteConfiavel(body.frete);
@@ -38,11 +51,11 @@ exports.handler = async function(event) {
       referencia: referencia,
       origem: status === 'combinado_whatsapp' ? 'whatsapp' : 'site',
       status: status,
-      cliente_nome: sender.nome || null, cliente_email: sender.email || null,
-      cliente_telefone: sender.telefone || null, cliente_cpf: sender.cpf || null,
+      cliente_nome: curto(sender.nome, 120), cliente_email: curto(sender.email, 120),
+      cliente_telefone: curto(sender.telefone, 30), cliente_cpf: curto(sender.cpf, 20),
       endereco: enderecoDe(sender), itens: items,
       subtotal: subtotal, frete: freteValor,
-      frete_servico_id: (body.frete && body.frete.id) || null, frete_nome: (body.frete && body.frete.nome) || null,
+      frete_servico_id: curto(body.frete && body.frete.id, 40), frete_nome: curto(body.frete && body.frete.nome, 80),
       total: total
     });
 

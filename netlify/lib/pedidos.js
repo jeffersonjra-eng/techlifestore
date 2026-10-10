@@ -11,11 +11,20 @@ const https = require('https');
 const SUPA_URL_PADRAO = 'https://dprloosfnttdhibsihfk.supabase.co';
 const SUPA_KEY_PADRAO = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwcmxvb3NmbnR0ZGhpYnNpaGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTc1MTQsImV4cCI6MjA5MjYzMzUxNH0.l6orZE8J77wTU0hKbDV2F7FvYbLB1DOEKqKDpnFlQ2k';
 
+// A tabela Pedidos guarda dados de clientes e NAO pode ficar aberta para a chave
+// publica (anon). As funcoes usam a chave de servico (SUPABASE_SERVICE_KEY,
+// definida so no Netlify, nunca no codigo nem no navegador). Enquanto ela nao
+// estiver configurada, cai na chave anon para nao derrubar a loja durante a
+// migracao - depois de aplicar scripts/sql/seguranca.sql isso passa a falhar
+// de proposito, o que sinaliza que falta configurar a variavel.
 function config() {
   const url = process.env.SUPABASE_URL || SUPA_URL_PADRAO;
-  const key = process.env.SUPABASE_ANON_KEY || SUPA_KEY_PADRAO;
+  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || SUPA_KEY_PADRAO;
   return { url: url.replace(/\/+$/, ''), key: key };
 }
+
+// Referencias de pedido aceitas (evita lixo/injecao em filtros e em linhas existentes).
+const REFERENCIA_OK = /^[A-Za-z0-9_-]{6,80}$/;
 
 function chamar(path, method, payload, extraHeaders) {
   const cfg = config();
@@ -51,6 +60,12 @@ function chamar(path, method, payload, extraHeaders) {
 // oficializar um pedido real - sempre a mesma linha, identificada por referencia.
 async function salvarPedido(dados) {
   if (!dados || !dados.referencia) throw new Error('Pedido sem referencia');
+  if (!REFERENCIA_OK.test(String(dados.referencia))) throw new Error('Referencia invalida');
+  // Um pedido ja pago nunca volta para outro estado por uma chamada vinda do navegador.
+  const existente = await buscarPorReferencia(dados.referencia);
+  if (existente && existente.status === 'pago' && dados.status && dados.status !== 'pago') {
+    throw new Error('Pedido ja pago nao pode ser alterado');
+  }
   const r = await chamar('/Pedidos?on_conflict=referencia', 'POST', [dados], {
     'Prefer': 'resolution=merge-duplicates,return=representation'
   });

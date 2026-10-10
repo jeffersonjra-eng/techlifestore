@@ -12,6 +12,7 @@
 
 const https = require('https');
 const { buscarPorReferencia, atualizarPorReferencia } = require('../lib/pedidos');
+const { verificarAdmin } = require('../lib/auth');
 
 function pedir(options, body) {
   return new Promise(function (resolve, reject) {
@@ -101,11 +102,15 @@ function extrairUrlImpressao(body) {
 exports.handler = async function (event) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json'
   };
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ erro: 'Metodo nao permitido' }) };
+
+  // Compra etiqueta com o saldo real do Melhor Envio: so o administrador logado pode.
+  const adm = await verificarAdmin(event);
+  if (!adm.ok) return { statusCode: adm.status, headers, body: JSON.stringify({ erro: adm.erro }) };
 
   const token = process.env.MELHORENVIO_TOKEN;
   if (!token) return { statusCode: 500, headers, body: JSON.stringify({ erro: 'Token do Melhor Envio nao configurado no servidor.' }) };
