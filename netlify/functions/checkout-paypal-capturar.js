@@ -50,6 +50,7 @@ exports.handler = async function(event) {
     const body = JSON.parse(event.body || '{}');
     const orderId = String(body.orderId || '').trim();
     if (!orderId) throw new Error('orderId ausente');
+    if (!/^[A-Za-z0-9-]{8,40}$/.test(orderId)) throw new Error('orderId invalido');
 
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const secret = process.env.PAYPAL_SECRET;
