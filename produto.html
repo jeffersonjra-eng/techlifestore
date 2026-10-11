@@ -144,10 +144,18 @@
     .video-vertical video { width:100%; height:100%; object-fit:cover; }
 
     @media (max-width:768px) {
+      header { padding:0 12px; gap:8px; }
+      .logo { font-size:16px; white-space:nowrap; }
+      .nav-links { gap:10px; }
+      .nav-links a { white-space:nowrap; }
+      .nav-carrinho { padding:7px 10px; }
       .produto-grid { grid-template-columns:1fr; gap:24px; }
       .foto-slide { aspect-ratio:1/1; }
       .prod-titulo { font-size:20px; }
       .prod-preco { font-size:26px; }
+    }
+    @media (max-width:380px) {
+      .nav-links a:not(.nav-carrinho) { display:none; }
     }
   </style>
 </head>
