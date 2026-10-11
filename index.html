@@ -141,11 +141,19 @@
 
     @media (max-width:768px) {
       .busca { display:none; }
-      .nav-links { gap:10px; }
+      nav { padding:0 12px; gap:10px; }
+      .logo-img { height:36px; }
+      .nav-links { gap:12px; }
+      .nav-links a { font-size:13px; }
+      .nav-links li:nth-child(3) { display:none; }
+      .nav-carrinho { padding:7px 12px; }
       .banner-promo { flex-direction:column; text-align:center; }
       .banner-emojis { font-size:44px; }
       .secao { padding:32px 16px; }
       .slide img { max-height:200px; }
+    }
+    @media (max-width:400px) {
+      .nav-links li:nth-child(1) { display:none; }
     }
   </style>
 </head>
