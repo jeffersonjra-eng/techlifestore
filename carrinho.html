@@ -30,7 +30,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Finalizar compra — Tech Life Store</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --verde:#16a085; --verde-claro:#1abc9c; --verde-escuro:#0e6655; --verde-bg:#effaf6;
@@ -39,7 +39,7 @@
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'DM Sans',sans-serif; background:var(--cinza); color:var(--texto); }
-    h1,h2,h3 { font-family:'Syne',sans-serif; }
+    h1,h2,h3 { font-family:'DM Sans',sans-serif; }
     a { text-decoration:none; color:inherit; }
     button { font-family:inherit; }
 
@@ -56,7 +56,7 @@
     #coluna-resumo { grid-area:resumo; position:sticky; top:76px; min-width:0; }
 
     .card { background:#fff; border-radius:16px; border:1px solid var(--cinza2); padding:20px; }
-    .sec-titulo { font-family:'Syne',sans-serif; font-size:17px; font-weight:800; color:var(--escuro); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .sec-titulo { font-family:'DM Sans',sans-serif; font-size:17px; font-weight:800; color:var(--escuro); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
     .sec-titulo .num { background:var(--verde); color:#fff; width:24px; height:24px; border-radius:50%; font-size:13px; display:inline-flex; align-items:center; justify-content:center; }
     .sec-sub { font-size:12px; color:#6b7280; margin:-8px 0 12px; }
 
@@ -65,7 +65,7 @@
     .resumo-toggle .tt { display:flex; align-items:center; gap:8px; }
     .resumo-toggle .seta { transition:transform .2s; }
     .resumo-toggle.aberto .seta { transform:rotate(180deg); }
-    .resumo-toggle .tot { color:var(--escuro); font-weight:800; font-family:'Syne',sans-serif; }
+    .resumo-toggle .tot { color:var(--escuro); font-weight:800; font-family:'DM Sans',sans-serif; }
 
     /* Brinde */
     .brinde-box { background:var(--verde-bg); border:1px solid #bfe9dc; border-radius:12px; padding:12px 14px; margin-bottom:14px; }
@@ -88,7 +88,7 @@
     .btn-qtd { width:26px; height:26px; border-radius:6px; border:1px solid var(--cinza2); background:#fff; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; }
     .btn-qtd:hover { background:var(--cinza); }
     .qtd-val { font-size:13px; font-weight:700; min-width:18px; text-align:center; }
-    .item-preco { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; color:var(--escuro); text-align:right; white-space:nowrap; }
+    .item-preco { font-family:'DM Sans',sans-serif; font-size:14px; font-weight:800; color:var(--escuro); text-align:right; white-space:nowrap; }
     .item-preco .de { display:block; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:400; color:#9ca3af; text-decoration:line-through; }
     .item-preco .gratis { color:var(--verde); }
     .btn-remover { background:none; border:none; color:#9ca3af; cursor:pointer; font-size:12px; text-decoration:underline; }
@@ -97,7 +97,7 @@
     /* Totais */
     .tot-linha { display:flex; justify-content:space-between; font-size:14px; padding:6px 0; }
     .tot-linha.desc { color:var(--verde-escuro); font-weight:600; }
-    .tot-linha.final { border-top:2px solid var(--cinza2); margin-top:6px; padding-top:12px; font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:var(--escuro); }
+    .tot-linha.final { border-top:2px solid var(--cinza2); margin-top:6px; padding-top:12px; font-family:'DM Sans',sans-serif; font-size:20px; font-weight:800; color:var(--escuro); }
     .tot-sub { font-size:12px; color:var(--verde); font-weight:600; text-align:right; margin-top:-2px; }
 
     /* Formulario */
@@ -111,7 +111,7 @@
     .form-grid3 { display:grid; grid-template-columns:2fr 1fr; gap:12px; }
 
     /* Frete */
-    .btn-frete { width:100%; background:var(--escuro); color:#fff; border:none; border-radius:10px; padding:11px 14px; font-family:'Syne',sans-serif; font-weight:700; font-size:13px; cursor:pointer; }
+    .btn-frete { width:100%; background:var(--escuro); color:#fff; border:none; border-radius:10px; padding:11px 14px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:13px; cursor:pointer; }
     .btn-frete:disabled { opacity:.6; cursor:not-allowed; }
     .frete-opcao { display:flex; align-items:center; gap:10px; padding:12px; border:2px solid var(--cinza2); border-radius:12px; margin-top:8px; cursor:pointer; font-size:13px; }
     .frete-opcao.ativa { border-color:var(--verde); background:var(--verde-bg); }
@@ -130,7 +130,7 @@
     .oferta-titulo { font-size:14px; font-weight:700; color:var(--escuro); line-height:1.3; }
     .oferta-desc { font-size:12px; color:#4b5563; margin-top:3px; }
     .oferta-preco { margin-top:6px; font-size:13px; }
-    .oferta-preco b { font-family:'Syne',sans-serif; font-size:16px; color:var(--verde-escuro); }
+    .oferta-preco b { font-family:'DM Sans',sans-serif; font-size:16px; color:var(--verde-escuro); }
     .oferta-preco s { color:#9ca3af; font-size:12px; margin-left:6px; }
     .btn-oferta { width:100%; margin-top:12px; background:var(--verde); color:#fff; border:none; border-radius:10px; padding:12px; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
     .btn-oferta:hover { background:var(--verde-escuro); }
@@ -153,7 +153,7 @@
     .pag-opcao.ativa .pag-radio::after { content:''; position:absolute; inset:3px; border-radius:50%; background:var(--verde); }
     .pag-nome { flex:1; }
     .pag-selo { background:var(--laranja); color:#1f2937; font-size:10px; font-weight:800; padding:2px 7px; border-radius:6px; margin-left:6px; }
-    .pag-valor { text-align:right; font-family:'Syne',sans-serif; font-weight:800; color:var(--verde); font-size:15px; line-height:1.1; }
+    .pag-valor { text-align:right; font-family:'DM Sans',sans-serif; font-weight:800; color:var(--verde); font-size:15px; line-height:1.1; }
     .pag-valor s { display:block; font-family:'DM Sans',sans-serif; font-weight:400; font-size:11px; color:#9ca3af; }
     .pag-corpo { display:none; padding:0 14px 14px; }
     .pag-opcao.ativa .pag-corpo { display:block; }
@@ -164,11 +164,11 @@
 
     .btn-finalizar {
       width:100%; background:var(--verde); color:#fff; border:none; padding:17px; border-radius:12px; font-size:16px; font-weight:800;
-      font-family:'Syne',sans-serif; cursor:pointer; transition:background .2s; display:flex; align-items:center; justify-content:center; gap:8px;
+      font-family:'DM Sans',sans-serif; cursor:pointer; transition:background .2s; display:flex; align-items:center; justify-content:center; gap:8px;
     }
     .btn-finalizar:hover { background:var(--verde-claro); }
     .btn-finalizar:disabled { background:#9ca3af; cursor:not-allowed; }
-    .btn-wpp { width:100%; background:#25d366; color:#fff; border:none; padding:13px; border-radius:12px; font-size:14px; font-weight:600; font-family:'Syne',sans-serif; cursor:pointer; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .btn-wpp { width:100%; background:#25d366; color:#fff; border:none; padding:13px; border-radius:12px; font-size:14px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; }
     .btn-wpp:hover { background:#00b37e; }
     .rodape-seguro { font-size:11px; color:#9ca3af; text-align:center; margin-top:12px; }
 
@@ -393,7 +393,7 @@
 <div id="vazio" class="carrinho-vazio" style="display:none">
   <div style="font-size:48px">🛒</div>
   <p>Seu carrinho está vazio.</p>
-  <a href="index.html" style="background:var(--verde);color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;font-family:Syne,sans-serif;display:inline-block">Ver produtos</a>
+  <a href="index.html" style="background:var(--verde);color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;font-family:'DM Sans',sans-serif;display:inline-block">Ver produtos</a>
 </div>
 
 <!-- LOADING -->
