@@ -23,10 +23,8 @@
   }
 
   var barra = null;
-  var pilula = null;
 
   function esconderBarra() { if (barra) { barra.style.display = 'none'; } }
-  function mostrarPilula() { if (pilula) { pilula.style.display = 'block'; } }
 
   function criarBarra() {
     barra = document.createElement('div');
@@ -46,8 +44,8 @@
     aceitar.type = 'button';
     aceitar.textContent = 'Aceitar';
     aceitar.style.cssText = 'background:#16a085;color:#fff;border:0;border-radius:10px;padding:10px 22px;font:600 14px system-ui,sans-serif;cursor:pointer';
-    recusar.onclick = function () { salvar('recusado'); esconderBarra(); mostrarPilula(); };
-    aceitar.onclick = function () { salvar('aceito'); esconderBarra(); mostrarPilula(); };
+    recusar.onclick = function () { salvar('recusado'); esconderBarra(); };
+    aceitar.onclick = function () { salvar('aceito'); esconderBarra(); };
     acoes.appendChild(recusar);
     acoes.appendChild(aceitar);
     barra.appendChild(txt);
@@ -55,24 +53,13 @@
     document.body.appendChild(barra);
   }
 
-  function criarPilula() {
-    pilula = document.createElement('button');
-    pilula.type = 'button';
-    pilula.textContent = 'Cookies';
-    pilula.setAttribute('aria-label', 'Alterar prefer\u00eancias de cookies');
-    pilula.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:2147482000;background:#0d1f1b;color:#fff;border:0;border-radius:999px;padding:6px 12px;font:12px system-ui,sans-serif;opacity:.75;cursor:pointer;display:none';
-    pilula.onclick = function () {
-      pilula.style.display = 'none';
-      if (barra) { barra.style.display = 'flex'; }
-    };
-    document.body.appendChild(pilula);
-  }
-
   function iniciar() {
     criarBarra();
-    criarPilula();
-    if (estado === 'aceito' || estado === 'recusado') { esconderBarra(); mostrarPilula(); }
+    if (estado === 'aceito' || estado === 'recusado') { esconderBarra(); }
   }
+
+  // Permite reabrir o aviso (link na Politica de privacidade) para mudar a escolha.
+  window.tlAbrirCookies = function () { if (barra) { barra.style.display = 'flex'; } };
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', iniciar); }
   else { iniciar(); }
