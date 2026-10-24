@@ -482,6 +482,7 @@
     return carrinho.map(function(i) {
       var o = { id: String(i.id), qtd: Number(i.qtd) };
       if (i.voltagem) o.voltagem = i.voltagem;
+      if (i.variacao) o.variacao = i.variacao;
       if (i.oferta) o.oferta = i.oferta;
       return o;
     });
@@ -491,7 +492,7 @@
     var sub = carrinho.reduce(function(s, i) { return s + Number(i.preco) * Number(i.qtd); }, 0);
     var f = frete ? Number(frete.preco) : 0;
     return {
-      linhas: carrinho.map(function(i) { return { id: String(i.id), nome: i.nome, preco: Number(i.preco), qtd: Number(i.qtd), foto: i.foto || '', voltagem: i.voltagem || '', tipo: i.oferta ? 'bump' : 'normal', oferta_id: i.oferta || null }; }),
+      linhas: carrinho.map(function(i) { return { id: String(i.id), nome: i.nome, preco: Number(i.preco), qtd: Number(i.qtd), foto: i.foto || '', voltagem: i.voltagem || '', variacao: i.variacao || '', unidades: Number(i.unidades) || 1, tipo: i.oferta ? 'bump' : 'normal', oferta_id: i.oferta || null }; }),
       subtotal: sub, descontos: { combo: 0, cupom: 0, pix: 0 }, combos_aplicados: [], cupom: null, frete: f, pix_pct: 0,
       total: sub + f, total_pix: sub + f, total_sem_pix: sub + f,
       brinde: { ganhos: [], progresso: null, unidades: 0 }, sugestoes: { bump: [], upsell: [], combo: [] }, offline: true
@@ -519,11 +520,11 @@
   }
 
   // ---------- Render ----------
-  function chaveLinha(l) { return [String(l.id), l.voltagem || '', l.oferta_id && l.tipo !== 'brinde' ? l.oferta_id : ''].join('|'); }
+  function chaveLinha(l) { return [String(l.id), l.voltagem || '', l.variacao || '', l.oferta_id && l.tipo !== 'brinde' ? l.oferta_id : ''].join('|'); }
   function indiceNoCarrinho(l) {
     for (var i = 0; i < carrinho.length; i++) {
       var c = carrinho[i];
-      if (chaveLinha({ id: c.id, voltagem: c.voltagem, oferta_id: c.oferta || '', tipo: c.oferta ? 'bump' : 'normal' }) === chaveLinha(l)) return i;
+      if (chaveLinha({ id: c.id, voltagem: c.voltagem, variacao: c.variacao, oferta_id: c.oferta || '', tipo: c.oferta ? 'bump' : 'normal' }) === chaveLinha(l)) return i;
     }
     return -1;
   }
@@ -964,7 +965,7 @@
       var res = await fetch('/.netlify/functions/frete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cep: cep, itens: (cotacao ? cotacao.linhas : carrinho).map(function(i) { return { preco: i.preco, qtd: i.qtd }; }) })
+        body: JSON.stringify({ cep: cep, itens: (cotacao ? cotacao.linhas : carrinho).map(function(i) { return { preco: i.preco, qtd: i.qtd, unidades: i.unidades || 1 }; }) })
       });
       var d = await res.json();
       if (d.erro) throw new Error(d.erro);

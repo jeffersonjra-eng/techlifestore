@@ -135,6 +135,16 @@
     .voltagem-escolha .rotulo { font-size:13px; font-weight:700; color:var(--escuro); margin-bottom:8px; display:block; }
     .voltagem-opcoes { display:flex; gap:10px; }
     .voltagem-opt { flex:1; text-align:center; border:1.5px solid var(--cinza2); border-radius:10px; padding:10px; cursor:pointer; font-size:14px; font-weight:600; color:var(--texto); transition:.15s; user-select:none; }
+    .variacoes-escolha { margin-bottom:16px; }
+    .variacoes-escolha .rotulo { font-size:13px; font-weight:700; color:var(--escuro); margin-bottom:8px; display:block; }
+    .variacoes-opcoes { display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:10px; }
+    .var-opt { position:relative; border:1.5px solid var(--cinza2); border-radius:12px; padding:12px 10px; cursor:pointer; text-align:center; background:#fff; transition:all .15s; }
+    .var-opt:hover { border-color:var(--verde-claro); }
+    .var-opt.selecionada { border-color:var(--verde); background:rgba(22,160,133,0.08); }
+    .var-opt .var-nome { font-size:14px; font-weight:700; color:var(--escuro); }
+    .var-opt .var-preco { font-size:15px; font-weight:800; color:var(--verde-escuro); margin-top:2px; }
+    .var-opt .var-cada { font-size:11px; color:#6b7280; margin-top:2px; }
+    .var-opt .var-eco { position:absolute; top:-9px; right:8px; background:var(--vermelho); color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
     .voltagem-opt:hover { border-color:var(--verde-claro); }
     .voltagem-opt.selecionada { border-color:var(--verde); background:rgba(22,160,133,0.08); color:var(--verde-escuro); }
 
@@ -209,6 +219,11 @@
           <div class="prod-preco" id="prod-preco"></div>
           <div class="prod-pix" id="prod-pix"></div>
           <div class="prod-parcela" id="prod-parcela"></div>
+        </div>
+
+        <div id="variacoes-wrap" class="variacoes-escolha" style="display:none">
+          <span class="rotulo">Escolha a opção *</span>
+          <div class="variacoes-opcoes" id="variacoes-opcoes"></div>
         </div>
 
         <div id="voltagem-badge-wrap"></div>
@@ -341,23 +356,21 @@
         document.getElementById('video-wrap').style.display = 'block';
       }
 
-      // Preços
-      const preco = Number(p['Preço'] || 0);
-      const precoAnt = Number(p['Antigo Preço'] || 0);
-      const pix = (preco * 0.95).toFixed(2).replace('.', ',');
-      const parcela = (preco / 12).toFixed(2).replace('.', ',');
-
-      if (p.Desconto) document.getElementById('badge-desc').innerHTML = `<span class="badge-desc">-${esc(p.Desconto)}% OFF</span>`;
-      if (precoAnt) document.getElementById('prod-preco-old').textContent = `De R$ ${precoAnt.toFixed(2).replace('.', ',')}`;
-      document.getElementById('prod-preco').textContent = `R$ ${preco.toFixed(2).replace('.', ',')}`;
-      document.getElementById('prod-pix').textContent = `✓ No Pix: R$ ${pix}`;
-      document.getElementById('prod-parcela').textContent = `ou 12x de R$ ${parcela} sem juros`;
+      // Variações (1, 2, 3 unidades, cores...) e preços
+      produtoAtual = p;
+      variacoes = listaVariacoes(p);
+      variacaoSel = variacoes.length ? variacoes[0] : null;
+      if (variacoes.length) {
+        document.getElementById('variacoes-wrap').style.display = 'block';
+        renderizarVariacoes();
+      }
+      renderPrecos();
+      carregarPixPct();
 
       // WhatsApp
       atualizarLinkWpp();
 
       prodId = p.id;
-      prodPreco = p['Preço'] || 0;
       if (typeof gtag === 'function') gtag('event', 'view_item', {
         currency: 'BRL',
         value: prodPreco,
@@ -398,6 +411,64 @@
     document.querySelectorAll('.miniatura').forEach((m,i) => m.classList.toggle('ativa', i === n));
   }
 
+  // ---- Variações ----
+  function listaVariacoes(p) {
+    let v = p && p.variacoes;
+    if (typeof v === 'string') { try { v = JSON.parse(v); } catch (e) { v = null; } }
+    if (!Array.isArray(v)) return [];
+    return v.filter(x => x && /^[A-Za-z0-9_-]{1,40}$/.test(String(x.id)) && String(x.nome || '').trim() && Number(x.preco) > 0)
+      .map(x => ({ id: String(x.id), nome: String(x.nome).trim(), preco: Number(x.preco), unidades: Math.max(1, Math.floor(Number(x.unidades)) || 1) }));
+  }
+  const brl = n => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
+  function economiaDe(v) {
+    const ref = variacoes[0].preco * v.unidades;
+    return (v.unidades > 1 && ref > v.preco) ? Math.round((1 - v.preco / ref) * 100) : 0;
+  }
+  function renderizarVariacoes() {
+    document.getElementById('variacoes-opcoes').innerHTML = variacoes.map(v => {
+      const eco = economiaDe(v);
+      return `<div class="var-opt${variacaoSel && variacaoSel.id === v.id ? ' selecionada' : ''}" onclick="escolherVariacao('${esc(v.id)}')">
+        ${eco ? `<span class="var-eco">-${eco}%</span>` : ''}
+        <div class="var-nome">${esc(v.nome)}</div>
+        <div class="var-preco">${brl(v.preco)}</div>
+        ${v.unidades > 1 ? `<div class="var-cada">${brl(v.preco / v.unidades)} cada</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+  function escolherVariacao(id) {
+    const v = variacoes.find(x => x.id === id);
+    if (!v) return;
+    variacaoSel = v;
+    renderizarVariacoes();
+    renderPrecos();
+    atualizarLinkWpp();
+  }
+  function renderPrecos() {
+    const p = produtoAtual;
+    let preco = Number(p['Preço'] || 0), precoAnt = Number(p['Antigo Preço'] || 0), desc = p.Desconto || 0;
+    if (variacaoSel) {
+      preco = variacaoSel.preco;
+      const ref = variacoes[0].preco * variacaoSel.unidades;
+      precoAnt = ref > preco ? ref : 0;
+      desc = precoAnt ? Math.round((1 - preco / precoAnt) * 100) : 0;
+    }
+    prodPreco = preco;
+    document.getElementById('badge-desc').innerHTML = desc ? `<span class="badge-desc">-${esc(desc)}% OFF</span>` : '';
+    document.getElementById('prod-preco-old').textContent = precoAnt ? `De ${brl(precoAnt)}` : '';
+    document.getElementById('prod-preco').textContent = brl(preco);
+    document.getElementById('prod-pix').textContent = `✓ No Pix: ${brl(preco * (1 - pixPct / 100))}`;
+    document.getElementById('prod-parcela').textContent = `ou 12x de ${brl(preco / 12)} sem juros`;
+  }
+  // O desconto do Pix vem da configuração do admin (mesmo valor cobrado no checkout).
+  async function carregarPixPct() {
+    try {
+      const r = await fetch(`${SUPA_URL}/Configuracoes?select=valor&chave=eq.pix_desconto_pct`, { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } });
+      const j = await r.json();
+      const v = Number(j && j[0] && j[0].valor);
+      if (isFinite(v) && v >= 0 && v <= 50) { pixPct = v; renderPrecos(); }
+    } catch (e) {}
+  }
+
   function escolherVoltagem(v) {
     voltagemSelecionada = v;
     document.querySelectorAll('.voltagem-opt').forEach(el => el.classList.remove('selecionada'));
@@ -409,7 +480,8 @@
   function atualizarLinkWpp() {
     const nome = document.getElementById('prod-nome').textContent;
     const sufixoVolt = voltagemConfig === '127V/220V' ? (voltagemSelecionada ? ` (${voltagemSelecionada})` : '') : (voltagemConfig ? ` (${voltagemConfig})` : '');
-    const msgWpp = encodeURIComponent(`Olá! Tenho interesse no produto: *${nome}${sufixoVolt}* por R$ ${prodPreco.toFixed(2).replace('.', ',')}. Podem me ajudar?`);
+    const sufixoVar = variacaoSel ? ` - ${variacaoSel.nome}` : '';
+    const msgWpp = encodeURIComponent(`Olá! Tenho interesse no produto: *${nome}${sufixoVar}${sufixoVolt}* por R$ ${prodPreco.toFixed(2).replace('.', ',')}. Podem me ajudar?`);
     document.getElementById('btn-wpp').href = `https://wa.me/5513978253993?text=${msgWpp}`;
   }
 
@@ -420,11 +492,13 @@
     }
     const voltagemFinal = voltagemConfig === '127V/220V' ? voltagemSelecionada : (voltagemConfig || null);
     const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
-    const existente = carrinho.find(i => i.id == prodId && (i.voltagem || null) === voltagemFinal);
+    const variacaoId = variacaoSel ? variacaoSel.id : null;
+    const existente = carrinho.find(i => i.id == prodId && (i.voltagem || null) === voltagemFinal && (i.variacao || null) === variacaoId);
     if (existente) { existente.qtd++; }
     else {
       const foto = document.querySelector('.foto-slide img');
-      const item = { id: prodId, nome: document.getElementById('prod-nome').textContent, preco: prodPreco, qtd:1, foto: foto ? foto.src : null };
+      const item = { id: prodId, nome: document.getElementById('prod-nome').textContent + (variacaoSel ? ' - ' + variacaoSel.nome : ''), preco: prodPreco, qtd:1, foto: foto ? foto.src : null };
+      if (variacaoSel) { item.variacao = variacaoSel.id; item.unidades = variacaoSel.unidades; }
       if (voltagemFinal) item.voltagem = voltagemFinal;
       carrinho.push(item);
     }
@@ -448,6 +522,7 @@
     setTimeout(() => t.remove(), 3000);
   }
   let prodId = 0, prodPreco = 0, voltagemConfig = '', voltagemSelecionada = null;
+  let produtoAtual = null, variacoes = [], variacaoSel = null, pixPct = 4;
 
   carregarProduto();
 

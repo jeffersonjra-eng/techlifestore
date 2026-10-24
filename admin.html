@@ -457,6 +457,15 @@
           <option value="127V/220V">127V e 220V (cliente escolhe no pedido)</option>
         </select>
       </div>
+      <div class="form-grupo full">
+        <label>Variações (opcional): 1, 2, 3 unidades, cores, tamanhos…</label>
+        <div id="variacoes-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button type="button" onclick="adicionarVariacao()" style="flex:1;min-width:140px;padding:10px;border:1.5px dashed #e5e7eb;border-radius:8px;background:#f4f6fa;color:#6b7280;font-size:13px;cursor:pointer">+ Adicionar opção</button>
+          <button type="button" onclick="gerarVariacoesUnidades()" style="flex:1;min-width:140px;padding:10px;border:1.5px dashed #e5e7eb;border-radius:8px;background:#f4f6fa;color:#6b7280;font-size:13px;cursor:pointer">⚡ Criar 1, 2 e 3 unidades</button>
+        </div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:6px;line-height:1.4">Cada opção tem nome e preço final. "Unidades" é quantos produtos vêm na opção (conta para frete e brinde). Com variações, o preço do produto passa a ser o da 1ª opção e o cliente escolhe na página. Deixe vazio para produto sem variação.</div>
+      </div>
       <div class="form-grupo">
         <label>Status</label>
         <select id="f-ativo">
@@ -794,7 +803,46 @@
     document.getElementById('f-video').value    = p?.video_url || '';
     inicializarFotoSlots(p);
     inicializarVideoSlot(p);
+    variacoesEdicao = Array.isArray(p?.variacoes) ? p.variacoes.map(v => ({ id: v.id, nome: v.nome || '', preco: v.preco || '', unidades: v.unidades || 1 })) : [];
+    produtoTinhaVariacoes = Array.isArray(p?.variacoes);
+    renderizarVariacoes();
     document.getElementById('modal').classList.add('aberto');
+  }
+
+  // ── VARIAÇÕES (1, 2, 3 unidades, cor, tamanho…) ──
+  let variacoesEdicao = [];
+  let produtoTinhaVariacoes = false;
+  function novoIdVariacao() { return 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+  function renderizarVariacoes() {
+    const el = document.getElementById('variacoes-lista');
+    el.innerHTML = variacoesEdicao.map((v, i) => `
+      <div style="display:grid;grid-template-columns:1fr 100px 80px 32px;gap:8px;align-items:center">
+        <input type="text" value="${esc(v.nome)}" placeholder="Ex.: 2 unidades" oninput="variacoesEdicao[${i}].nome=this.value" style="padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;width:100%">
+        <input type="number" step="0.01" min="0" value="${esc(v.preco)}" placeholder="Preço R$" oninput="variacoesEdicao[${i}].preco=this.value" style="padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;width:100%">
+        <input type="number" step="1" min="1" max="99" value="${esc(v.unidades)}" title="Unidades na opção" placeholder="Un." oninput="variacoesEdicao[${i}].unidades=this.value" style="padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;width:100%">
+        <button type="button" onclick="removerVariacao(${i})" title="Remover" style="border:none;background:#fef2f2;color:#c0392b;border-radius:8px;height:38px;cursor:pointer;font-size:16px">×</button>
+      </div>`).join('') + (variacoesEdicao.length ? '<div style="display:grid;grid-template-columns:1fr 100px 80px 32px;gap:8px;font-size:10px;color:#9ca3af;margin-top:-4px"><span>Nome da opção</span><span>Preço final</span><span>Unidades</span><span></span></div>' : '');
+  }
+  function adicionarVariacao() {
+    variacoesEdicao.push({ id: novoIdVariacao(), nome: '', preco: '', unidades: 1 });
+    renderizarVariacoes();
+  }
+  function removerVariacao(i) { variacoesEdicao.splice(i, 1); renderizarVariacoes(); }
+  function gerarVariacoesUnidades() {
+    if (variacoesEdicao.length && !confirm('Isso substitui as opções atuais. Continuar?')) return;
+    const base = parseFloat(document.getElementById('f-preco').value) || '';
+    variacoesEdicao = [1, 2, 3].map(n => ({ id: novoIdVariacao(), nome: n === 1 ? '1 unidade' : n + ' unidades', preco: n === 1 ? base : '', unidades: n }));
+    renderizarVariacoes();
+    mostrarToast('Preencha o preço final de cada opção', 'verde');
+  }
+  function coletarVariacoes() {
+    const lista = variacoesEdicao.map(v => ({
+      id: v.id || novoIdVariacao(),
+      nome: String(v.nome || '').trim(),
+      preco: Math.round((parseFloat(v.preco) || 0) * 100) / 100,
+      unidades: Math.max(1, parseInt(v.unidades, 10) || 1)
+    }));
+    return lista;
   }
 
   function fecharModal() {
@@ -822,6 +870,14 @@
       voltagem:       document.getElementById('f-voltagem').value || null,
       video_url:      document.getElementById('f-video').value.trim() || null,
     };
+    const variacoes = coletarVariacoes();
+    if (variacoes.length) {
+      if (variacoes.some(v => !v.nome || !(v.preco > 0))) { mostrarToast('Cada variação precisa de nome e preço', 'vermelho'); return; }
+      dados.variacoes = variacoes;
+      dados.Preço = variacoes[0].preco; // preço exibido na loja = 1ª opção
+    } else if (produtoTinhaVariacoes) {
+      dados.variacoes = null;
+    }
     if (!dados.Nome) { mostrarToast('Digite o nome do produto!', 'vermelho'); return; }
     if (!dados.Preço) { mostrarToast('Digite o preço do produto!', 'vermelho'); return; }
 
@@ -847,7 +903,7 @@
       if (!res.ok) error = await res.json();
     }
 
-    if (error) { mostrarToast('Erro ao salvar: ' + error.message, 'vermelho'); return; }
+    if (error) { mostrarToast(/variacoes/.test(error.message || '') ? 'Rode o SQL de variações no Supabase antes (produtos_variacoes.sql)' : 'Erro ao salvar: ' + error.message, 'vermelho'); return; }
     mostrarToast(editandoId ? 'Produto atualizado!' : 'Produto cadastrado!', 'verde');
     fecharModal();
     carregarProdutos();
