@@ -72,7 +72,31 @@ function hojeBR() { return new Date(Date.now() - 3 * 3600 * 1000).toISOString().
 
 function normalizarCupom(c) { return String(c == null ? '' : c).trim().toUpperCase(); }
 
+// Variacoes do produto (ex.: 1, 2 e 3 unidades), cada uma com id, nome, preco e unidades.
+function variacoesDe(p) {
+  let v = p && p.variacoes;
+  if (typeof v === 'string') { try { v = JSON.parse(v); } catch (e) { v = null; } }
+  if (!Array.isArray(v)) return [];
+  return v.filter(function (x) {
+    return x && /^[A-Za-z0-9_-]{1,40}$/.test(String(x.id)) && String(x.nome || '').trim() && Number(x.preco) > 0;
+  }).map(function (x) {
+    let un = Math.floor(Number(x.unidades));
+    if (!(un >= 1)) un = 1;
+    return { id: String(x.id), nome: String(x.nome).trim().substring(0, 60), preco: Number(x.preco), unidades: Math.min(un, 99) };
+  });
+}
+
+// Sem variacao escolhida (ou escolha invalida) vale a primeira opcao.
+function variacaoEscolhida(p, id) {
+  const lista = variacoesDe(p);
+  if (!lista.length) return null;
+  const achada = lista.find(function (v) { return v.id === String(id == null ? '' : id); });
+  return achada || lista[0];
+}
+
 function precoProduto(p) {
+  const vars = variacoesDe(p);
+  if (vars.length) return vars[0].preco;
   const v = Number(p && p['Preço']);
   return isFinite(v) && v > 0 ? v : 0;
 }
@@ -130,7 +154,9 @@ async function calcularPedido(entrada) {
 
     if (!oferta && p.Ativo === false) throw new Error('Produto indisponivel: ' + id);
 
-    const base = precoProduto(p);
+    // Produto com variacoes (1, 2, 3 unidades...): o preco vem da opcao escolhida.
+    const variacao = oferta ? null : variacaoEscolhida(p, it.variacao);
+    const base = variacao ? variacao.preco : precoProduto(p);
     if (!(base > 0)) throw new Error('Preco invalido no cadastro do produto ' + id);
 
     let preco = base;
@@ -149,21 +175,22 @@ async function calcularPedido(entrada) {
       voltagem = String(p.voltagem);
     }
 
-    const chave = [id, voltagem, oferta ? oferta.id : ''].join('|');
+    const chave = [id, voltagem, oferta ? oferta.id : '', variacao ? variacao.id : ''].join('|');
     if (chaves[chave] !== undefined) {
       const l = linhas[chaves[chave]];
       l.qtd = Math.min(l.qtd + qtd, oferta ? 1 : QTD_MAXIMA);
       return;
     }
     chaves[chave] = linhas.length;
-    const linha = { id: id, nome: String(p.Nome || 'Produto'), preco: preco, preco_original: base, qtd: qtd, foto: fotoProduto(p), tipo: tipo };
+    const linha = { id: id, nome: String(p.Nome || 'Produto') + (variacao ? ' - ' + variacao.nome : ''), preco: preco, preco_original: base, qtd: qtd, foto: fotoProduto(p), tipo: tipo };
+    if (variacao) { linha.variacao = variacao.id; linha.unidades = variacao.unidades; }
     if (voltagem) linha.voltagem = voltagem;
     if (oferta) linha.oferta_id = oferta.id;
     linhas.push(linha);
   });
 
   // ---- brindes (por quantidade de produtos no carrinho) ----
-  const unidadesPagas = linhas.reduce(function (s, l) { return s + l.qtd; }, 0);
+  const unidadesPagas = linhas.reduce(function (s, l) { return s + l.qtd * (l.unidades || 1); }, 0);
   const brindes = ofertas.filter(function (o) { return o.tipo === 'brinde' && o.produto_id && Number(o.qtd_minima) > 0; });
   const brindesGanhos = [];
   let brindeProgresso = null;
@@ -184,7 +211,7 @@ async function calcularPedido(entrada) {
   const restante = {};
   const precoUnit = {};
   linhas.forEach(function (l) {
-    if (l.tipo === 'brinde') return;
+    if (l.tipo === 'brinde' || l.unidades > 1) return; // kits de varias unidades nao entram em combos
     restante[l.id] = (restante[l.id] || 0) + l.qtd;
     if (precoUnit[l.id] === undefined) precoUnit[l.id] = l.preco;
   });

@@ -55,6 +55,21 @@ function buscar(endereco, key) {
   });
 }
 
+// Variacoes do produto (1, 2, 3 unidades...). Sem escolha valida vale a primeira.
+function variacaoDoProduto(p, id) {
+  let v = p && p.variacoes;
+  if (typeof v === 'string') { try { v = JSON.parse(v); } catch (e) { v = null; } }
+  if (!Array.isArray(v)) return null;
+  const lista = v.filter(function (x) {
+    return x && /^[A-Za-z0-9_-]{1,40}$/.test(String(x.id)) && String(x.nome || '').trim() && Number(x.preco) > 0;
+  });
+  if (!lista.length) return null;
+  const achada = lista.find(function (x) { return String(x.id) === String(id == null ? '' : id); }) || lista[0];
+  let un = Math.floor(Number(achada.unidades));
+  if (!(un >= 1)) un = 1;
+  return { id: String(achada.id), nome: String(achada.nome).trim().substring(0, 60), preco: Number(achada.preco), unidades: Math.min(un, 99) };
+}
+
 // Recebe o carrinho do navegador e devolve as linhas confiaveis do pedido.
 // Lanca erro se algum produto nao existir ou se a quantidade for invalida.
 async function itensConfiaveis(itensCliente) {
@@ -88,7 +103,8 @@ async function itensConfiaveis(itensCliente) {
       throw new Error('Quantidade invalida para o produto ' + i.id);
     }
 
-    const preco = Number(p['Preço']);
+    const variacao = variacaoDoProduto(p, i && i.variacao);
+    const preco = variacao ? variacao.preco : Number(p['Preço']);
     if (!isFinite(preco) || preco <= 0) {
       throw new Error('Preco invalido no cadastro do produto ' + i.id);
     }
@@ -97,10 +113,11 @@ async function itensConfiaveis(itensCliente) {
     // escolheu (saneado), e so quando o produto de fato permite escolha.
     const item = {
       id: String(p.id),
-      nome: String(p.Nome || 'Produto'),
+      nome: String(p.Nome || 'Produto') + (variacao ? ' - ' + variacao.nome : ''),
       preco: preco,
       qtd: qtd
     };
+    if (variacao) { item.variacao = variacao.id; item.unidades = variacao.unidades; }
     if (p.voltagem === '127V/220V') {
       const escolha = String((i && i.voltagem) || '').trim();
       if (escolha === '127V' || escolha === '220V') item.voltagem = escolha;
