@@ -4,7 +4,7 @@
 //   ASAAS_ENV     -> 'production' ou 'sandbox' (padrao: sandbox)
 
 const https = require('https');
-const { itensConfiaveis, freteConfiavel } = require('../lib/precos');
+const { calcularPedido, registrarUsoCupom, resumoDescontos } = require('../lib/ofertas');
 const { salvarPedido, atualizarPorReferencia, enderecoDe } = require('../lib/pedidos');
 
 function apiHost() {
@@ -75,12 +75,6 @@ async function criarCliente(sender, token) {
   return r.body.id;
 }
 
-function montarTotal(items, frete) {
-  const totalItens = items.reduce(function(s, i) { return s + (i.preco * i.qtd); }, 0);
-  const valorFrete = Math.max(0, Number(frete && frete.preco) || 0);
-  return Math.round((totalItens + valorFrete) * 100) / 100;
-}
-
 exports.handler = async function(event) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -103,15 +97,25 @@ exports.handler = async function(event) {
     const sender = body.sender;
     if (!sender) throw new Error('Dados do comprador ausentes');
 
-    // Nome e preco vem do Supabase; do navegador so aproveitamos id e quantidade.
-    const items = await itensConfiaveis(body.items);
-    const frete = { preco: freteConfiavel(body.frete), id: (body.frete && body.frete.id) || null, nome: (body.frete && body.frete.nome) || null };
-    const total = montarTotal(items, frete);
+    // Preco, cupom, combo, brinde e desconto do Pix: tudo calculado aqui a partir do banco.
+    // Do navegador so aproveitamos ids, quantidades, cupom e forma de pagamento.
+    const calc = await calcularPedido({ items: body.items, cupom: body.cupom, forma: acao === 'pix' ? 'pix' : 'cartao', frete: body.frete });
+    if (body.cupom && calc.cupom && !calc.cupom.valido) throw new Error(calc.cupom.erro || 'Cupom invalido');
+    const items = calc.linhas.map(function(l) {
+      const it = { id: l.id, nome: l.nome, preco: l.preco, qtd: l.qtd };
+      if (l.voltagem) it.voltagem = l.voltagem;
+      if (l.tipo !== 'normal') it.tipo = l.tipo;
+      return it;
+    });
+    const frete = { preco: calc.frete, id: (body.frete && body.frete.id) || null, nome: (body.frete && body.frete.nome) || null };
+    const total = calc.total;
     // referencia: preferimos a gerada no navegador (mesma do rascunho de carrinho abandonado),
     // assim o pedido vira uma atualizacao da mesma linha em vez de criar duplicado.
     const referencia = String(body.referencia || ('pedido_' + Date.now()));
-    const descricao = ('Compra Tech Life Store - ' + items.map(function(i) { return i.nome; }).join(', ')).substring(0, 180);
-    const subtotal = items.reduce(function(s, i) { return s + (i.preco * i.qtd); }, 0);
+    const descricao = ('Compra Tech Life Store - ' + items.filter(function(i) { return i.tipo !== 'brinde'; }).map(function(i) { return i.nome; }).join(', ')).substring(0, 180);
+    const subtotal = calc.subtotal;
+    const observacoes = resumoDescontos(calc) || null;
+    const usouCupom = calc.cupom && calc.cupom.valido ? calc.cupom.codigo : null;
 
     const customerId = await criarCliente(sender, token);
 
@@ -140,9 +144,10 @@ exports.handler = async function(event) {
           cliente_telefone: sender.telefone, cliente_cpf: sender.cpf,
           endereco: enderecoDe(sender), itens: items,
           subtotal: subtotal, frete: frete.preco, frete_servico_id: frete.id, frete_nome: frete.nome,
-          total: total, gateway_id: r.body.id
+          total: total, gateway_id: r.body.id, observacoes: observacoes
         });
       } catch (e) { /* nao bloqueia o pagamento se o registro de vendas falhar */ }
+      if (usouCupom) await registrarUsoCupom(usouCupom);
 
       return {
         statusCode: 200,
@@ -213,10 +218,11 @@ exports.handler = async function(event) {
           cliente_telefone: sender.telefone, cliente_cpf: sender.cpf,
           endereco: enderecoDe(sender), itens: items,
           subtotal: subtotal, frete: frete.preco, frete_servico_id: frete.id, frete_nome: frete.nome,
-          total: total, gateway_id: r.body.id,
+          total: total, gateway_id: r.body.id, observacoes: observacoes,
           pago_em: aprovado ? new Date().toISOString() : null
         });
       } catch (e) { /* nao bloqueia o pagamento se o registro de vendas falhar */ }
+      if (usouCupom && (aprovado || emAnalise)) await registrarUsoCupom(usouCupom);
 
       return {
         statusCode: 200,

@@ -1,5 +1,5 @@
 const https = require('https');
-const { itensConfiaveis, freteConfiavel } = require('../lib/precos');
+const { calcularPedido, registrarUsoCupom, resumoDescontos } = require('../lib/ofertas');
 const { salvarPedido, atualizarPorReferencia, enderecoDe } = require('../lib/pedidos');
 
 async function getPayPalToken(clientId, secret) {
@@ -47,14 +47,25 @@ exports.handler = async function(event, context) {
     const sender = body.sender;
     if (!sender) throw new Error('Dados do comprador ausentes');
 
-    // Nome e preco vem do Supabase; do navegador so aproveitamos id e quantidade.
-    const items = await itensConfiaveis(body.items);
-    const frete = { preco: freteConfiavel(body.frete) };
+    // Preco, cupom, combo e brinde: calculados no servidor a partir do banco.
+    // (O desconto do Pix nao vale no PayPal.)
+    const calc = await calcularPedido({ items: body.items, cupom: body.cupom, forma: 'paypal', frete: body.frete });
+    if (body.cupom && calc.cupom && !calc.cupom.valido) throw new Error(calc.cupom.erro || 'Cupom invalido');
+    const items = calc.linhas.map(function(l) {
+      const it = { id: l.id, nome: l.nome, preco: l.preco, qtd: l.qtd };
+      if (l.voltagem) it.voltagem = l.voltagem;
+      if (l.tipo !== 'normal') it.tipo = l.tipo;
+      return it;
+    });
+    const frete = { preco: calc.frete };
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const secret = process.env.PAYPAL_SECRET;
-    const itemTotal = items.reduce((sum, item) => sum + (Number(item.preco) * item.qtd), 0);
-    const valorFrete = Math.max(0, Number(frete && frete.preco) || 0);
-    const total = (itemTotal + valorFrete).toFixed(2);
+    const itensPagos = items.filter(function(i) { return Number(i.preco) > 0; });
+    const itemTotal = itensPagos.reduce((sum, item) => sum + (Number(item.preco) * item.qtd), 0);
+    const valorFrete = calc.frete;
+    const descontoTotal = Math.round((calc.descontos.combo + calc.descontos.cupom) * 100) / 100;
+    const total = calc.total.toFixed(2);
+    const observacoes = resumoDescontos(calc) || null;
     const accessToken = await getPayPalToken(clientId, secret);
     // referencia: preferimos a gerada no navegador (mesma do rascunho de carrinho abandonado),
     // assim o pedido vira uma atualizacao da mesma linha em vez de criar duplicado.
@@ -70,10 +81,11 @@ exports.handler = async function(event, context) {
           value: total,
           breakdown: {
             item_total: { currency_code: 'BRL', value: itemTotal.toFixed(2) },
-            shipping: { currency_code: 'BRL', value: valorFrete.toFixed(2) }
+            shipping: { currency_code: 'BRL', value: valorFrete.toFixed(2) },
+            discount: { currency_code: 'BRL', value: descontoTotal.toFixed(2) }
           }
         },
-        items: items.map(item => ({
+        items: itensPagos.map(item => ({
           name: (item.nome || '').substring(0, 127),
           quantity: String(item.qtd),
           unit_amount: { currency_code: 'BRL', value: Number(item.preco).toFixed(2) }
@@ -139,8 +151,9 @@ exports.handler = async function(event, context) {
           cliente_telefone: sender.telefone, cliente_cpf: sender.cpf,
           endereco: enderecoDe(sender), itens: items,
           subtotal: itemTotal, frete: valorFrete, frete_servico_id: (body.frete && body.frete.id) || null, frete_nome: (body.frete && body.frete.nome) || null,
-          total: Number(total), gateway_id: result.body.id
+          total: Number(total), gateway_id: result.body.id, observacoes: observacoes
         });
+        if (calc.cupom && calc.cupom.valido) await registrarUsoCupom(calc.cupom.codigo);
       } catch (e) { /* nao bloqueia o checkout se o registro de vendas falhar */ }
 
       return { statusCode: 200, headers, body: JSON.stringify({ url: approveLink.href, id: result.body.id }) };
