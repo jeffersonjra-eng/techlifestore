@@ -19,3 +19,5 @@ a.selo:hover{background:rgba(255,255,255,.12)}
   .selos{grid-template-columns:1fr}
   .selos-linha{grid-template-columns:1fr}
 }
+.selo-ra{margin:0 0 20px}
+.selo-ra-claro{margin:12px 0 0;text-align:center}
