@@ -7,7 +7,12 @@
 a.selo:hover{background:rgba(255,255,255,.12)}
 .selos-pag{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 20px}
 .selos-pag span.rot{font-size:12px;color:rgba(255,255,255,.65);margin-right:2px}
-.selos-pag .pg{background:#fff;color:#1f2937;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;letter-spacing:.2px}
+.selos-pag .pg{background:#fff;border-radius:8px;height:36px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center}
+.selos-pag .pg img{display:block;width:auto;height:20px}
+.selos-pag .pg-visa img{height:16px}
+.selos-pag .pg-paypal img{height:18px}
+.selos-pag .pg-mastercard img{height:30px}
+.selos-pag .pg-elo img{height:18px}
 /* variante clara (carrinho / produto) */
 .selos-claro{grid-template-columns:1fr;gap:8px;margin:14px 0 0}
 .selos-claro .selo{background:#f3f4f6;border-color:#e5e7eb;color:#111827;padding:10px 12px}
