@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
+  <script src="/cookies.js"></script>
   <!-- Google tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z1H8LWTK8P"></script>
   <script>
@@ -20,6 +21,7 @@
   t.src=v;s=b.getElementsByTagName(e)[0];
   s.parentNode.insertBefore(t,s)}(window, document,'script',
   'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('consent', window.tlConsentimento === 'aceito' ? 'grant' : 'revoke');
   fbq('init', '211642158119561');
   fbq('track', 'PageView');
   </script>
