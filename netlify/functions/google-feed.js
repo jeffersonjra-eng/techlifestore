@@ -64,7 +64,28 @@ function formatarPreco(valor) {
   return n.toFixed(2) + ' BRL';
 }
 
+// Marcas conhecidas do catalogo. Ordem importa: a primeira que aparecer no
+// titulo (ou em "Marca: X" na descricao) vence. Para marca nova, basta
+// adicionar aqui; ou criar uma coluna "marca" na tabela Produtos (tem prioridade).
+const MARCAS = ['GA.MA Italy', 'Startools', 'B-TEK', 'Mondial', 'Onex', 'Tramontina', 'Cadence', 'IT-BLUE', 'Made Basics'];
+const MARCA_PADRAO = 'Tech Life Store';
+
+function detectarMarca(p) {
+  const coluna = String(p.marca || p.Marca || '').trim();
+  if (coluna) return coluna;
+  const titulo = String(p.Nome || '').toLowerCase();
+  const desc = String(p['Descrição'] || '').toLowerCase();
+  for (const m of MARCAS) {
+    if (titulo.indexOf(m.toLowerCase()) !== -1) return m;
+  }
+  for (const m of MARCAS) {
+    if (desc.indexOf('marca: ' + m.toLowerCase()) !== -1) return m;
+  }
+  return MARCA_PADRAO;
+}
+
 function itemParaXml(p) {
+  const marca = detectarMarca(p);
   const id = escapeXml(p.id);
   const titulo = escapeXml(p.Nome || '');
   const descricao = escapeXml((p['Descrição'] || p.Nome || '').toString().replace(/\s+/g, ' ').trim());
@@ -98,7 +119,7 @@ function itemParaXml(p) {
     '      <g:availability>in_stock</g:availability>',
     precoTag,
     '      <g:condition>new</g:condition>',
-    '      <g:brand>Tech Life Store</g:brand>',
+    '      <g:brand>' + escapeXml(marca) + '</g:brand>',
     '      <g:identifier_exists>no</g:identifier_exists>',
     categoria ? '      <g:product_type>' + categoria + '</g:product_type>' : '',
     '    </item>'
