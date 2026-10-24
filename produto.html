@@ -537,7 +537,7 @@
       // Filtrar avaliações do produto pelo nome
       const filtradas = avals.filter(a =>
         !a.produto_nome || a.produto_nome === '' ||
-        (nomeProduto && a.produto_nome.toLowerCase().includes(nomeProduto.toLowerCase().substring(0,10)))
+        (nomeProduto && a.produto_nome.toLowerCase().includes(nomeProduto.toLowerCase().substring(0,20)))
       );
 
       const lista = filtradas.length > 0 ? filtradas : avals.slice(0,3);
