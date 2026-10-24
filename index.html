@@ -82,9 +82,11 @@
     .secao-titulo a { color:var(--verde); font-size:14px; font-weight:500; }
 
     .categorias-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:12px; }
-    .categoria-card { background:var(--cinza-claro); border:1.5px solid transparent; border-radius:14px; padding:18px 10px; text-align:center; cursor:pointer; transition:all .2s; }
+    .categoria-card { background:var(--cinza-claro); border:1.5px solid transparent; border-radius:14px; padding:14px 8px 12px; text-align:center; cursor:pointer; transition:all .2s; }
     .categoria-card:hover { border-color:var(--verde); background:#e6f7f4; transform:translateY(-2px); }
     .categoria-card .cat-emoji { font-size:26px; margin-bottom:6px; }
+    .categoria-card .cat-img { width:72px; height:72px; object-fit:contain; display:block; margin:0 auto 6px; transition:transform .2s; }
+    .categoria-card:hover .cat-img { transform:scale(1.06); }
     .categoria-card p { font-size:12px; font-weight:500; }
 
     .produtos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:16px; }
@@ -208,15 +210,15 @@
   <section class="secao" id="categorias">
     <div class="secao-titulo"><h2>Categorias</h2><a href="#">Ver todas →</a></div>
     <div class="categorias-grid">
-      <div class="categoria-card" onclick="filtrarCategoria('Cafeteiras')"><div class="cat-emoji">☕</div><p>Cafeteiras</p></div>
-      <div class="categoria-card" onclick="filtrarCategoria('Higiene')"><div class="cat-emoji">🪥</div><p>Higiene</p></div>
-      <div class="categoria-card" onclick="filtrarCategoria('Cozinha')"><div class="cat-emoji">🍳</div><p>Cozinha</p></div>
-      <div class="categoria-card" onclick="filtrarCategoria('Casa inteligente')"><div class="cat-emoji">💡</div><p>Casa inteligente</p></div>
-      <div class="categoria-card" onclick="filtrarCategoria('Eletrônicos')"><div class="cat-emoji">🔌</div><p>Eletrônicos</p></div>
-      <div class="categoria-card" onclick="filtrarCategoria('Limpeza')"><div class="cat-emoji">🧹</div><p>Limpeza</p></div>
-      <div class="categoria-card" onclick="filtrarCategoria('Climatização')"><div class="cat-emoji">❄️</div><p>Climatização</p></div>
-      <div class="categoria-card" onclick="filtrarCategoria('Ferramentas')"><div class="cat-emoji">🛠️</div><p>Ferramentas</p></div>
-      <div class="categoria-card" onclick="filtrarCategoria('')"><div class="cat-emoji">🛍️</div><p>Todos</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Cafeteiras')"><img class="cat-img" src="categorias/cat-cafeteiras.webp" alt="" width="72" height="72" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="cat-emoji" style="display:none">☕</div><p>Cafeteiras</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Higiene')"><img class="cat-img" src="categorias/cat-higiene.webp" alt="" width="72" height="72" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="cat-emoji" style="display:none">🪥</div><p>Higiene</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Cozinha')"><img class="cat-img" src="categorias/cat-cozinha.webp" alt="" width="72" height="72" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="cat-emoji" style="display:none">🍳</div><p>Cozinha</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Casa inteligente')"><img class="cat-img" src="categorias/cat-casa-inteligente.webp" alt="" width="72" height="72" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="cat-emoji" style="display:none">💡</div><p>Casa inteligente</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Eletrônicos')"><img class="cat-img" src="categorias/cat-eletronicos.webp" alt="" width="72" height="72" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="cat-emoji" style="display:none">🔌</div><p>Eletrônicos</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Limpeza')"><img class="cat-img" src="categorias/cat-limpeza.webp" alt="" width="72" height="72" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="cat-emoji" style="display:none">🧹</div><p>Limpeza</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Climatização')"><img class="cat-img" src="categorias/cat-climatizacao.webp" alt="" width="72" height="72" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="cat-emoji" style="display:none">❄️</div><p>Climatização</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('Ferramentas')"><img class="cat-img" src="categorias/cat-ferramentas.webp" alt="" width="72" height="72" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="cat-emoji" style="display:none">🛠️</div><p>Ferramentas</p></div>
+      <div class="categoria-card" onclick="filtrarCategoria('')"><img class="cat-img" src="categorias/cat-todos.webp" alt="" width="72" height="72" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="cat-emoji" style="display:none">🛍️</div><p>Todos</p></div>
     </div>
   </section>
 
