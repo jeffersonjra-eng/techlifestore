@@ -149,7 +149,8 @@
       .nav-links { gap:10px; }
       .nav-links a { white-space:nowrap; }
       .nav-carrinho { padding:7px 10px; }
-      .produto-grid { grid-template-columns:1fr; gap:24px; }
+      .produto-grid { grid-template-columns:minmax(0,1fr); gap:24px; padding:20px; }
+      .produto-grid > * { min-width:0; }
       .foto-slide { aspect-ratio:1/1; }
       .prod-titulo { font-size:20px; }
       .prod-preco { font-size:26px; }
