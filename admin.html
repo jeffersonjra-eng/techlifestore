@@ -256,6 +256,7 @@
       <button class="aba" data-aba="vendas" onclick="mudarAba('vendas')">💰 Vendas</button>
       <button class="aba" data-aba="abandonados" onclick="mudarAba('abandonados')">🛒 Carrinhos abandonados</button>
       <button class="aba" data-aba="envios" onclick="mudarAba('envios')">📮 Envios</button>
+      <button class="aba" data-aba="ofertas" onclick="mudarAba('ofertas')">🎁 Ofertas</button>
     </div>
 
     <!-- ABA PRODUTOS -->
@@ -337,6 +338,42 @@
         <div id="tabela-abandonados">
           <div class="loading">Carregando...</div>
         </div>
+      </div>
+    </div>
+
+    <!-- ABA OFERTAS -->
+    <div id="aba-ofertas" style="display:none">
+      <div class="admin-header">
+        <h1>Ofertas do checkout</h1>
+      </div>
+      <div id="of-aviso" style="display:none;background:#fef3c7;color:#92400e;border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;line-height:1.5"></div>
+
+      <div class="tabela-wrap" style="margin-bottom:24px">
+        <div class="tabela-header"><h3>⚡ Desconto no Pix</h3></div>
+        <div style="padding:18px 20px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+          <div class="form-grupo" style="width:160px">
+            <label>Desconto (%)</label>
+            <input type="number" id="of-pix-pct" min="0" max="50" step="0.5" placeholder="4">
+          </div>
+          <button class="btn-salvar" onclick="salvarPixPct()">Salvar</button>
+          <div style="font-size:12px;color:#6b7280;max-width:420px">Aplicado de verdade sobre os produtos quando o cliente paga no Pix (cartão e PayPal pagam preço cheio). Use 0 para desligar.</div>
+        </div>
+      </div>
+
+      <div class="tabela-wrap" style="margin-bottom:24px">
+        <div class="tabela-header">
+          <h3>🏷️ Cupons de desconto</h3>
+          <button class="btn-novo" style="padding:8px 16px;font-size:13px" onclick="abrirCupom()">+ Novo cupom</button>
+        </div>
+        <div id="lista-cupons"><div class="loading">Carregando...</div></div>
+      </div>
+
+      <div class="tabela-wrap">
+        <div class="tabela-header">
+          <h3>🎁 Order bump, upsell, combo e brinde</h3>
+          <button class="btn-novo" style="padding:8px 16px;font-size:13px" onclick="abrirOferta()">+ Nova oferta</button>
+        </div>
+        <div id="lista-ofertas"><div class="loading">Carregando...</div></div>
       </div>
     </div>
 
@@ -444,6 +481,116 @@
     <div class="form-btns">
       <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
       <button class="btn-salvar" onclick="salvarProduto()">Salvar produto</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CUPOM -->
+<div class="modal-bg" id="modal-cupom">
+  <div class="modal">
+    <h2 id="modal-cupom-titulo">Novo cupom</h2>
+    <div class="form-grid">
+      <div class="form-grupo">
+        <label>Código *</label>
+        <input type="text" id="cp-codigo" maxlength="30" placeholder="BEMVINDO10" style="text-transform:uppercase">
+      </div>
+      <div class="form-grupo">
+        <label>Tipo de desconto</label>
+        <select id="cp-tipo"><option value="percentual">Percentual (%)</option><option value="valor">Valor fixo (R$)</option></select>
+      </div>
+      <div class="form-grupo">
+        <label>Valor *</label>
+        <input type="number" id="cp-valor" min="0" step="0.01" placeholder="10">
+      </div>
+      <div class="form-grupo">
+        <label>Pedido mínimo (R$)</label>
+        <input type="number" id="cp-minimo" min="0" step="0.01" placeholder="0">
+      </div>
+      <div class="form-grupo">
+        <label>Limite de usos</label>
+        <input type="number" id="cp-limite" min="1" step="1" placeholder="Em branco = ilimitado">
+      </div>
+      <div class="form-grupo">
+        <label>Válido até</label>
+        <input type="date" id="cp-validade">
+      </div>
+      <div class="form-grupo full">
+        <label>Descrição (só para você)</label>
+        <input type="text" id="cp-descricao" placeholder="Ex.: campanha de Black Friday">
+      </div>
+      <div class="form-grupo full">
+        <label><input type="checkbox" id="cp-ativo" checked style="width:auto;margin-right:6px"> Cupom ativo</label>
+      </div>
+    </div>
+    <div class="form-btns">
+      <button class="btn-cancelar" onclick="fecharModalAdmin('modal-cupom')">Cancelar</button>
+      <button class="btn-salvar" onclick="salvarCupom()">Salvar cupom</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OFERTA -->
+<div class="modal-bg" id="modal-oferta">
+  <div class="modal">
+    <h2 id="modal-oferta-titulo">Nova oferta</h2>
+    <div class="form-grid">
+      <div class="form-grupo">
+        <label>Tipo *</label>
+        <select id="of-tipo" onchange="ofAjustarCampos()">
+          <option value="order_bump">Order bump (oferta extra antes de pagar)</option>
+          <option value="upsell">Upsell (trocar por um modelo melhor)</option>
+          <option value="combo">Combo (kit com preço fechado)</option>
+          <option value="brinde">Brinde (por quantidade de itens)</option>
+        </select>
+      </div>
+      <div class="form-grupo">
+        <label>Nome interno *</label>
+        <input type="text" id="of-nome" placeholder="Ex.: Bump chaleira">
+      </div>
+      <div class="form-grupo full" id="of-g-titulo">
+        <label>Título no checkout</label>
+        <input type="text" id="of-titulo" placeholder="Ex.: Leve junto com desconto!">
+      </div>
+      <div class="form-grupo full" id="of-g-descricao">
+        <label>Texto de apoio</label>
+        <input type="text" id="of-descricao" placeholder="Opcional">
+      </div>
+      <div class="form-grupo full" id="of-g-produto">
+        <label id="of-l-produto">Produto ofertado</label>
+        <select id="of-produto"></select>
+      </div>
+      <div class="form-grupo full" id="of-g-gatilho">
+        <label id="of-l-gatilho">Aparece quando este produto estiver no carrinho</label>
+        <select id="of-gatilho"></select>
+      </div>
+      <div class="form-grupo" id="of-g-desconto">
+        <label>Desconto na oferta (%)</label>
+        <input type="number" id="of-desconto" min="0" max="90" step="0.5" placeholder="0">
+      </div>
+      <div class="form-grupo full" id="of-g-combo">
+        <label>Produtos do kit (marque 2 ou mais)</label>
+        <div id="of-combo-itens" style="max-height:180px;overflow:auto;border:1.5px solid var(--cinza2);border-radius:8px;padding:8px 12px"></div>
+      </div>
+      <div class="form-grupo" id="of-g-preco">
+        <label>Preço do kit completo (R$)</label>
+        <input type="number" id="of-preco-fechado" min="0" step="0.01">
+        <div id="of-soma-combo" style="font-size:11px;color:#6b7280"></div>
+      </div>
+      <div class="form-grupo" id="of-g-qtd">
+        <label>Itens no carrinho para ganhar</label>
+        <input type="number" id="of-qtd-min" min="1" step="1" placeholder="3">
+      </div>
+      <div class="form-grupo">
+        <label>Ordem de exibição</label>
+        <input type="number" id="of-ordem" step="1" value="0">
+      </div>
+      <div class="form-grupo full">
+        <label><input type="checkbox" id="of-ativo" checked style="width:auto;margin-right:6px"> Oferta ativa</label>
+      </div>
+    </div>
+    <div class="form-btns">
+      <button class="btn-cancelar" onclick="fecharModalAdmin('modal-oferta')">Cancelar</button>
+      <button class="btn-salvar" onclick="salvarOferta()">Salvar oferta</button>
     </div>
   </div>
 </div>
@@ -716,6 +863,297 @@
     carregarProdutos();
   }
 
+  // ── OFERTAS: cupons, order bump, upsell, combo, brinde, desconto Pix ──
+  let cuponsLista = [];
+  let ofertasLista = [];
+  let editandoCupomId = null;
+  let editandoOfertaId = null;
+  const TIPOS_OFERTA = {
+    order_bump: { nome: 'Order bump', cor: '#d1fae5;color:#065f46' },
+    upsell:     { nome: 'Upsell',     cor: '#dbeafe;color:#1e40af' },
+    combo:      { nome: 'Combo',      cor: '#ede9fe;color:#5b21b6' },
+    brinde:     { nome: 'Brinde',     cor: '#fef3c7;color:#92400e' }
+  };
+
+  function ofHeaders(extra) {
+    return Object.assign({ 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${tokenAtual()}`, 'Content-Type': 'application/json' }, extra || {});
+  }
+  function fecharModalAdmin(id) { document.getElementById(id).classList.remove('aberto'); }
+  function brl(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+  function nomeProduto(id) {
+    const p = produtos.find(x => String(x.id) === String(id));
+    return p ? p.Nome : (id ? `#${id}` : '—');
+  }
+  function precoProduto(id) {
+    const p = produtos.find(x => String(x.id) === String(id));
+    return p ? Number(p.Preço || 0) : 0;
+  }
+
+  async function carregarOfertasAdmin() {
+    const aviso = document.getElementById('of-aviso');
+    aviso.style.display = 'none';
+    if (!produtos.length) await carregarProdutos();
+    try {
+      const [rc, ro, rf] = await Promise.all([
+        fetch(`${SUPABASE_REST}/Cupons?select=*&order=id.desc`, { headers: ofHeaders() }),
+        fetch(`${SUPABASE_REST}/Ofertas?select=*&order=ordem.asc,id.asc`, { headers: ofHeaders() }),
+        fetch(`${SUPABASE_REST}/Configuracoes?select=*&chave=eq.pix_desconto_pct`, { headers: ofHeaders() })
+      ]);
+      const cj = await rc.json(), oj = await ro.json(), fj = await rf.json();
+      if (!rc.ok || !ro.ok) {
+        aviso.style.display = 'block';
+        aviso.innerHTML = '⚠️ As tabelas de ofertas ainda não existem no banco. Rode o arquivo <b>scripts/sql/ofertas.sql</b> no SQL Editor do Supabase (uma vez) e recarregue esta aba. Enquanto isso o checkout funciona normal, só que sem cupons e ofertas.';
+        cuponsLista = []; ofertasLista = [];
+      } else {
+        cuponsLista = cj; ofertasLista = oj;
+      }
+      const pct = Array.isArray(fj) && fj[0] ? fj[0].valor : '4';
+      document.getElementById('of-pix-pct').value = pct;
+    } catch (e) {
+      mostrarToast('Erro ao carregar ofertas: ' + e.message, 'vermelho');
+    }
+    renderCupons();
+    renderOfertas();
+  }
+
+  async function salvarPixPct() {
+    const v = Number(document.getElementById('of-pix-pct').value);
+    if (!(v >= 0 && v <= 50)) { mostrarToast('Informe um percentual entre 0 e 50', 'vermelho'); return; }
+    const r = await fetch(`${SUPABASE_REST}/Configuracoes?on_conflict=chave`, {
+      method: 'POST',
+      headers: ofHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+      body: JSON.stringify({ chave: 'pix_desconto_pct', valor: String(v) })
+    });
+    if (r.ok) mostrarToast('Desconto do Pix salvo: ' + v + '%', 'verde');
+    else mostrarToast('Erro ao salvar (rodou o ofertas.sql?)', 'vermelho');
+  }
+
+  // ---- Cupons ----
+  function renderCupons() {
+    const el = document.getElementById('lista-cupons');
+    if (!cuponsLista.length) { el.innerHTML = '<div class="vazio"><p>Nenhum cupom criado ainda.</p></div>'; return; }
+    el.innerHTML = '<table><thead><tr><th>Código</th><th>Desconto</th><th>Mínimo</th><th>Usos</th><th>Validade</th><th>Status</th><th></th></tr></thead><tbody>' +
+      cuponsLista.map(c => {
+        const desc = c.tipo === 'percentual' ? `${Number(c.valor)}%` : brl(c.valor);
+        const usos = c.limite_usos ? `${c.usos || 0} / ${c.limite_usos}` : `${c.usos || 0}`;
+        const val = c.validade ? c.validade.split('-').reverse().join('/') : 'Sem validade';
+        return `<tr>
+          <td><b>${esc(c.codigo)}</b>${c.descricao ? `<div class="prod-cat">${esc(c.descricao)}</div>` : ''}</td>
+          <td>${esc(desc)}</td>
+          <td>${Number(c.minimo) > 0 ? brl(c.minimo) : '—'}</td>
+          <td>${esc(usos)}</td>
+          <td>${esc(val)}</td>
+          <td><span class="${c.ativo ? 'badge-ativo' : 'badge-inativo'}">${c.ativo ? 'Ativo' : 'Inativo'}</span></td>
+          <td><div class="acoes">
+            <button class="btn-editar" onclick="abrirCupom(${Number(c.id)})">Editar</button>
+            <button class="btn-excluir" onclick="excluirCupom(${Number(c.id)})">Excluir</button>
+          </div></td></tr>`;
+      }).join('') + '</tbody></table>';
+  }
+
+  function abrirCupom(id) {
+    const c = id ? cuponsLista.find(x => x.id === id) : null;
+    editandoCupomId = c ? c.id : null;
+    document.getElementById('modal-cupom-titulo').textContent = c ? 'Editar cupom' : 'Novo cupom';
+    document.getElementById('cp-codigo').value = c ? c.codigo : '';
+    document.getElementById('cp-tipo').value = c ? c.tipo : 'percentual';
+    document.getElementById('cp-valor').value = c ? c.valor : '';
+    document.getElementById('cp-minimo').value = c && Number(c.minimo) ? c.minimo : '';
+    document.getElementById('cp-limite').value = c && c.limite_usos ? c.limite_usos : '';
+    document.getElementById('cp-validade').value = c && c.validade ? c.validade : '';
+    document.getElementById('cp-descricao').value = c ? (c.descricao || '') : '';
+    document.getElementById('cp-ativo').checked = c ? !!c.ativo : true;
+    document.getElementById('modal-cupom').classList.add('aberto');
+  }
+
+  async function salvarCupom() {
+    const codigo = document.getElementById('cp-codigo').value.trim().toUpperCase();
+    const tipo = document.getElementById('cp-tipo').value;
+    const valor = Number(document.getElementById('cp-valor').value);
+    if (!/^[A-Z0-9_-]{2,30}$/.test(codigo)) { mostrarToast('Código: 2 a 30 letras, números, - ou _ (sem espaço)', 'vermelho'); return; }
+    if (!(valor > 0)) { mostrarToast('Informe o valor do desconto', 'vermelho'); return; }
+    if (tipo === 'percentual' && valor > 100) { mostrarToast('Percentual máximo é 100', 'vermelho'); return; }
+    const limite = document.getElementById('cp-limite').value;
+    const dados = {
+      codigo, tipo, valor,
+      minimo: Number(document.getElementById('cp-minimo').value) || 0,
+      limite_usos: limite ? parseInt(limite, 10) : null,
+      validade: document.getElementById('cp-validade').value || null,
+      descricao: document.getElementById('cp-descricao').value.trim() || null,
+      ativo: document.getElementById('cp-ativo').checked
+    };
+    const url = editandoCupomId ? `${SUPABASE_REST}/Cupons?id=eq.${editandoCupomId}` : `${SUPABASE_REST}/Cupons`;
+    const r = await fetch(url, { method: editandoCupomId ? 'PATCH' : 'POST', headers: ofHeaders({ 'Prefer': 'return=minimal' }), body: JSON.stringify(dados) });
+    if (!r.ok) {
+      const t = await r.text();
+      mostrarToast(/duplicate|unique/i.test(t) ? 'Já existe um cupom com esse código' : 'Erro ao salvar cupom', 'vermelho');
+      return;
+    }
+    fecharModalAdmin('modal-cupom');
+    mostrarToast('Cupom salvo!', 'verde');
+    carregarOfertasAdmin();
+  }
+
+  async function excluirCupom(id) {
+    const c = cuponsLista.find(x => x.id === id);
+    if (!c || !confirm(`Excluir o cupom ${c.codigo}?`)) return;
+    const r = await fetch(`${SUPABASE_REST}/Cupons?id=eq.${id}`, { method: 'DELETE', headers: ofHeaders({ 'Prefer': 'return=minimal' }) });
+    if (r.ok) { mostrarToast('Cupom excluído', 'verde'); carregarOfertasAdmin(); }
+    else mostrarToast('Erro ao excluir', 'vermelho');
+  }
+
+  // ---- Ofertas ----
+  function resumoOferta(o) {
+    if (o.tipo === 'order_bump') {
+      return `Oferece <b>${esc(nomeProduto(o.produto_id))}</b>${Number(o.desconto_pct) ? ` com ${Number(o.desconto_pct)}% OFF` : ''}` +
+        (o.gatilho_id ? ` quando tem <b>${esc(nomeProduto(o.gatilho_id))}</b> no carrinho` : ' em qualquer carrinho');
+    }
+    if (o.tipo === 'upsell') {
+      return `Troca <b>${esc(nomeProduto(o.gatilho_id))}</b> por <b>${esc(nomeProduto(o.produto_id))}</b>${Number(o.desconto_pct) ? ` com ${Number(o.desconto_pct)}% OFF` : ''}`;
+    }
+    if (o.tipo === 'combo') {
+      const ids = Array.isArray(o.itens_combo) ? o.itens_combo : [];
+      return `Kit: ${ids.map(i => esc(nomeProduto(i))).join(' + ')} por <b>${brl(o.preco_fechado)}</b>`;
+    }
+    if (o.tipo === 'brinde') {
+      return `Ganha <b>${esc(nomeProduto(o.produto_id))}</b> com <b>${Number(o.qtd_minima) || 0}</b> itens no carrinho`;
+    }
+    return '';
+  }
+
+  function renderOfertas() {
+    const el = document.getElementById('lista-ofertas');
+    if (!ofertasLista.length) { el.innerHTML = '<div class="vazio"><p>Nenhuma oferta criada ainda. Clique em "+ Nova oferta".</p></div>'; return; }
+    el.innerHTML = '<table><thead><tr><th>Tipo</th><th>Oferta</th><th>Status</th><th></th></tr></thead><tbody>' +
+      ofertasLista.map(o => {
+        const t = TIPOS_OFERTA[o.tipo] || { nome: o.tipo, cor: '#f3f4f6;color:#374151' };
+        return `<tr>
+          <td><span style="background:${t.cor};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap">${esc(t.nome)}</span></td>
+          <td><div class="prod-nome">${esc(o.nome)}</div><div class="prod-cat" style="font-size:12px">${resumoOferta(o)}</div></td>
+          <td><span class="${o.ativo ? 'badge-ativo' : 'badge-inativo'}">${o.ativo ? 'Ativa' : 'Inativa'}</span></td>
+          <td><div class="acoes">
+            <button class="btn-mini" onclick="alternarOferta(${Number(o.id)}, ${o.ativo ? 'false' : 'true'})">${o.ativo ? 'Pausar' : 'Ativar'}</button>
+            <button class="btn-editar" onclick="abrirOferta(${Number(o.id)})">Editar</button>
+            <button class="btn-excluir" onclick="excluirOferta(${Number(o.id)})">Excluir</button>
+          </div></td></tr>`;
+      }).join('') + '</tbody></table>';
+  }
+
+  function ofOpcoesProdutos(selecionado, vazioTexto) {
+    const ord = produtos.slice().sort((a, b) => String(a.Nome || '').localeCompare(String(b.Nome || '')));
+    return (vazioTexto ? `<option value="">${esc(vazioTexto)}</option>` : '') +
+      ord.map(p => `<option value="${esc(p.id)}"${String(p.id) === String(selecionado) ? ' selected' : ''}>${esc(p.Nome)} — ${brl(p.Preço)}${p.Ativo === false ? ' (oculto)' : ''}</option>`).join('');
+  }
+
+  function ofAjustarCampos() {
+    const t = document.getElementById('of-tipo').value;
+    const show = (id, on) => { document.getElementById(id).style.display = on ? '' : 'none'; };
+    show('of-g-titulo', t !== 'brinde');
+    show('of-g-descricao', t !== 'brinde');
+    show('of-g-produto', t !== 'combo');
+    show('of-g-gatilho', t === 'order_bump' || t === 'upsell');
+    show('of-g-desconto', t === 'order_bump' || t === 'upsell');
+    show('of-g-combo', t === 'combo');
+    show('of-g-preco', t === 'combo');
+    show('of-g-qtd', t === 'brinde');
+    document.getElementById('of-l-produto').textContent =
+      t === 'upsell' ? 'Produto melhor (o que o cliente leva no lugar)' : t === 'brinde' ? 'Produto que vira brinde (pode ser um produto oculto)' : 'Produto ofertado';
+    document.getElementById('of-l-gatilho').textContent =
+      t === 'upsell' ? 'Produto do carrinho que será trocado *' : 'Aparece quando este produto estiver no carrinho';
+    const gSel = document.getElementById('of-gatilho');
+    const atual = gSel.value;
+    gSel.innerHTML = ofOpcoesProdutos(atual, t === 'order_bump' ? 'Qualquer carrinho' : 'Selecione...');
+  }
+
+  function ofSomaCombo() {
+    const ids = Array.from(document.querySelectorAll('#of-combo-itens input:checked')).map(i => i.value);
+    const soma = ids.reduce((s, id) => s + precoProduto(id), 0);
+    document.getElementById('of-soma-combo').textContent = ids.length ? `Soma dos preços avulsos: ${brl(soma)}` : '';
+  }
+
+  function abrirOferta(id) {
+    const o = id ? ofertasLista.find(x => x.id === id) : null;
+    editandoOfertaId = o ? o.id : null;
+    document.getElementById('modal-oferta-titulo').textContent = o ? 'Editar oferta' : 'Nova oferta';
+    document.getElementById('of-tipo').value = o ? o.tipo : 'order_bump';
+    document.getElementById('of-tipo').disabled = !!o;
+    document.getElementById('of-nome').value = o ? o.nome : '';
+    document.getElementById('of-titulo').value = o ? (o.titulo || '') : '';
+    document.getElementById('of-descricao').value = o ? (o.descricao || '') : '';
+    document.getElementById('of-produto').innerHTML = ofOpcoesProdutos(o ? o.produto_id : '', 'Selecione...');
+    document.getElementById('of-gatilho').innerHTML = ofOpcoesProdutos(o ? o.gatilho_id : '', 'Selecione...');
+    document.getElementById('of-desconto').value = o && Number(o.desconto_pct) ? o.desconto_pct : '';
+    const marcados = o && Array.isArray(o.itens_combo) ? o.itens_combo.map(String) : [];
+    document.getElementById('of-combo-itens').innerHTML = produtos.slice().sort((a, b) => String(a.Nome || '').localeCompare(String(b.Nome || ''))).map(p =>
+      `<label style="display:flex;gap:8px;align-items:center;font-size:13px;padding:4px 0;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" value="${esc(p.id)}" style="width:auto" onchange="ofSomaCombo()"${marcados.includes(String(p.id)) ? ' checked' : ''}> ${esc(p.Nome)} — ${brl(p.Preço)}</label>`).join('');
+    document.getElementById('of-preco-fechado').value = o && o.preco_fechado ? o.preco_fechado : '';
+    document.getElementById('of-qtd-min').value = o && o.qtd_minima ? o.qtd_minima : '';
+    document.getElementById('of-ordem').value = o ? (o.ordem || 0) : 0;
+    document.getElementById('of-ativo').checked = o ? !!o.ativo : true;
+    ofAjustarCampos();
+    // ofAjustarCampos recria o gatilho; reaplica o valor salvo
+    document.getElementById('of-gatilho').innerHTML = ofOpcoesProdutos(o ? o.gatilho_id : '', document.getElementById('of-tipo').value === 'order_bump' ? 'Qualquer carrinho' : 'Selecione...');
+    ofSomaCombo();
+    document.getElementById('modal-oferta').classList.add('aberto');
+  }
+
+  async function salvarOferta() {
+    const tipo = document.getElementById('of-tipo').value;
+    const nome = document.getElementById('of-nome').value.trim();
+    if (!nome) { mostrarToast('Dê um nome interno para a oferta', 'vermelho'); return; }
+    const produto = document.getElementById('of-produto').value;
+    const gatilho = document.getElementById('of-gatilho').value;
+    const dados = {
+      tipo, nome,
+      ativo: document.getElementById('of-ativo').checked,
+      ordem: parseInt(document.getElementById('of-ordem').value, 10) || 0,
+      titulo: null, descricao: null, produto_id: null, gatilho_id: null,
+      desconto_pct: 0, itens_combo: null, preco_fechado: null, qtd_minima: null
+    };
+    if (tipo !== 'brinde') {
+      dados.titulo = document.getElementById('of-titulo').value.trim() || null;
+      dados.descricao = document.getElementById('of-descricao').value.trim() || null;
+    }
+    if (tipo === 'order_bump' || tipo === 'upsell') {
+      const pct = Number(document.getElementById('of-desconto').value) || 0;
+      if (pct < 0 || pct > 90) { mostrarToast('Desconto entre 0 e 90%', 'vermelho'); return; }
+      if (!produto) { mostrarToast('Escolha o produto ofertado', 'vermelho'); return; }
+      if (tipo === 'upsell' && !gatilho) { mostrarToast('Escolha o produto que será trocado', 'vermelho'); return; }
+      if (tipo === 'upsell' && gatilho === produto) { mostrarToast('O produto melhor precisa ser diferente do trocado', 'vermelho'); return; }
+      dados.produto_id = produto; dados.gatilho_id = gatilho || null; dados.desconto_pct = pct;
+    } else if (tipo === 'combo') {
+      const ids = Array.from(document.querySelectorAll('#of-combo-itens input:checked')).map(i => i.value);
+      const preco = Number(document.getElementById('of-preco-fechado').value);
+      if (ids.length < 2) { mostrarToast('Marque pelo menos 2 produtos no kit', 'vermelho'); return; }
+      if (!(preco > 0)) { mostrarToast('Informe o preço do kit', 'vermelho'); return; }
+      dados.itens_combo = ids; dados.preco_fechado = preco;
+    } else if (tipo === 'brinde') {
+      const q = parseInt(document.getElementById('of-qtd-min').value, 10);
+      if (!produto) { mostrarToast('Escolha o produto do brinde', 'vermelho'); return; }
+      if (!(q >= 1)) { mostrarToast('Informe quantos itens liberam o brinde', 'vermelho'); return; }
+      dados.produto_id = produto; dados.qtd_minima = q;
+    }
+    const url = editandoOfertaId ? `${SUPABASE_REST}/Ofertas?id=eq.${editandoOfertaId}` : `${SUPABASE_REST}/Ofertas`;
+    const r = await fetch(url, { method: editandoOfertaId ? 'PATCH' : 'POST', headers: ofHeaders({ 'Prefer': 'return=minimal' }), body: JSON.stringify(dados) });
+    if (!r.ok) { mostrarToast('Erro ao salvar oferta (rodou o ofertas.sql?)', 'vermelho'); return; }
+    fecharModalAdmin('modal-oferta');
+    mostrarToast('Oferta salva!', 'verde');
+    carregarOfertasAdmin();
+  }
+
+  async function alternarOferta(id, ativo) {
+    const r = await fetch(`${SUPABASE_REST}/Ofertas?id=eq.${id}`, { method: 'PATCH', headers: ofHeaders({ 'Prefer': 'return=minimal' }), body: JSON.stringify({ ativo }) });
+    if (r.ok) carregarOfertasAdmin(); else mostrarToast('Erro ao atualizar', 'vermelho');
+  }
+
+  async function excluirOferta(id) {
+    const o = ofertasLista.find(x => x.id === id);
+    if (!o || !confirm(`Excluir a oferta "${o.nome}"?`)) return;
+    const r = await fetch(`${SUPABASE_REST}/Ofertas?id=eq.${id}`, { method: 'DELETE', headers: ofHeaders({ 'Prefer': 'return=minimal' }) });
+    if (r.ok) { mostrarToast('Oferta excluída', 'verde'); carregarOfertasAdmin(); }
+    else mostrarToast('Erro ao excluir', 'vermelho');
+  }
+
   // ── TOAST ──
   function mostrarToast(msg, tipo = '') {
     const t = document.getElementById('toast');
@@ -823,7 +1261,7 @@
   }
 
   // ── ABAS ──
-  const TODAS_ABAS = ['produtos','avaliacoes','vendas','abandonados','envios'];
+  const TODAS_ABAS = ['produtos','avaliacoes','vendas','abandonados','envios','ofertas'];
   function mudarAba(aba) {
     TODAS_ABAS.forEach(a => {
       const el = document.getElementById('aba-' + a);
@@ -834,6 +1272,7 @@
     if (aba === 'vendas') carregarVendas();
     if (aba === 'abandonados') carregarAbandonados();
     if (aba === 'envios') carregarEnvios();
+    if (aba === 'ofertas') carregarOfertasAdmin();
   }
 
   // ── AVALIAÇÕES ──

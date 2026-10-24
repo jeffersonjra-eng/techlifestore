@@ -29,198 +29,262 @@
   <!-- End Meta Pixel Code -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carrinho — Tech Life Store</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>Finalizar compra — Tech Life Store</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --verde:#16a085; --verde-claro:#1abc9c; --verde-escuro:#0e6655;
+      --verde:#16a085; --verde-claro:#1abc9c; --verde-escuro:#0e6655; --verde-bg:#effaf6;
       --vermelho:#c0392b; --branco:#ffffff; --cinza:#f4f6fa;
-      --cinza2:#e5e7eb; --texto:#374151; --escuro:#0d1f1b;
+      --cinza2:#e5e7eb; --texto:#374151; --escuro:#0d1f1b; --laranja:#f59e0b;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'DM Sans',sans-serif; background:var(--cinza); color:var(--texto); }
     h1,h2,h3 { font-family:'Syne',sans-serif; }
     a { text-decoration:none; color:inherit; }
+    button { font-family:inherit; }
 
-    header { background:var(--escuro); padding:0 20px; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+    header { background:var(--escuro); padding:0 20px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
     .logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:#fff; }
     .logo span { color:var(--verde); }
+    .seguro { color:rgba(255,255,255,.8); font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px; }
 
-    .wrap { max-width:1000px; margin:0 auto; padding:32px 20px; display:grid; grid-template-columns:1fr 360px; gap:24px; }
+    .faixa-cupom { background:var(--laranja); color:#1f2937; text-align:center; font-size:12px; font-weight:700; padding:7px 12px; letter-spacing:.02em; display:none; }
 
-    .card { background:#fff; border-radius:16px; border:1px solid var(--cinza2); padding:24px; }
-    .card h2 { font-size:18px; font-weight:700; margin-bottom:20px; color:var(--escuro); }
+    .wrap { max-width:1040px; margin:0 auto; padding:20px 16px 40px; display:grid; grid-template-columns:1fr 390px; gap:20px; align-items:start;
+      grid-template-areas:"principal resumo"; }
+    #coluna-principal { grid-area:principal; display:flex; flex-direction:column; gap:14px; min-width:0; }
+    #coluna-resumo { grid-area:resumo; position:sticky; top:76px; min-width:0; }
 
-    /* ITENS */
-    .item { display:flex; gap:14px; align-items:center; padding:14px 0; border-bottom:1px solid #f3f4f6; }
+    .card { background:#fff; border-radius:16px; border:1px solid var(--cinza2); padding:20px; }
+    .sec-titulo { font-family:'Syne',sans-serif; font-size:17px; font-weight:800; color:var(--escuro); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .sec-titulo .num { background:var(--verde); color:#fff; width:24px; height:24px; border-radius:50%; font-size:13px; display:inline-flex; align-items:center; justify-content:center; }
+    .sec-sub { font-size:12px; color:#6b7280; margin:-8px 0 12px; }
+
+    /* Resumo (toggle no celular) */
+    .resumo-toggle { display:none; width:100%; background:#fff; border:1px solid var(--cinza2); border-radius:14px; padding:14px 16px; align-items:center; justify-content:space-between; font-size:14px; font-weight:600; color:var(--verde-escuro); cursor:pointer; }
+    .resumo-toggle .tt { display:flex; align-items:center; gap:8px; }
+    .resumo-toggle .seta { transition:transform .2s; }
+    .resumo-toggle.aberto .seta { transform:rotate(180deg); }
+    .resumo-toggle .tot { color:var(--escuro); font-weight:800; font-family:'Syne',sans-serif; }
+
+    /* Brinde */
+    .brinde-box { background:var(--verde-bg); border:1px solid #bfe9dc; border-radius:12px; padding:12px 14px; margin-bottom:14px; }
+    .brinde-txt { font-size:13px; font-weight:600; color:var(--verde-escuro); margin-bottom:8px; }
+    .brinde-barra { height:8px; background:#d7efe7; border-radius:99px; overflow:hidden; }
+    .brinde-barra i { display:block; height:100%; background:var(--verde); border-radius:99px; transition:width .35s; }
+
+    /* Itens */
+    .item { display:flex; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid #f3f4f6; }
     .item:last-child { border-bottom:none; }
-    .item-foto { width:60px; height:60px; border-radius:10px; background:var(--cinza); display:flex; align-items:center; justify-content:center; font-size:28px; overflow:hidden; flex-shrink:0; }
-    .item-foto img { width:100%;height:100%;object-fit:contain; }
-    .item-info { flex:1; }
-    .item-nome { font-size:14px; font-weight:500; color:var(--escuro); margin-bottom:4px; }
-    .item-preco { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:var(--verde); }
-    .item-qtd { display:flex; align-items:center; gap:8px; margin-top:8px; }
-    .btn-qtd { width:28px; height:28px; border-radius:6px; border:1px solid var(--cinza2); background:#fff; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:background .2s; }
+    .item-foto { width:56px; height:56px; border-radius:10px; background:var(--cinza); display:flex; align-items:center; justify-content:center; font-size:26px; overflow:hidden; flex-shrink:0; position:relative; }
+    .item-foto img { width:100%; height:100%; object-fit:contain; }
+    .item-info { flex:1; min-width:0; }
+    .item-nome { font-size:13px; font-weight:600; color:var(--escuro); line-height:1.3; }
+    .tag { display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:99px; margin-left:4px; vertical-align:middle; }
+    .tag.brinde { background:#fef3c7; color:#92400e; }
+    .tag.oferta { background:var(--verde-bg); color:var(--verde-escuro); }
+    .item-linha2 { display:flex; align-items:center; gap:10px; margin-top:6px; }
+    .item-qtd { display:flex; align-items:center; gap:8px; }
+    .btn-qtd { width:26px; height:26px; border-radius:6px; border:1px solid var(--cinza2); background:#fff; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; }
     .btn-qtd:hover { background:var(--cinza); }
-    .qtd-val { font-size:14px; font-weight:600; min-width:20px; text-align:center; }
-    .btn-remover { background:none; border:none; color:#9ca3af; cursor:pointer; font-size:18px; margin-left:auto; }
+    .qtd-val { font-size:13px; font-weight:700; min-width:18px; text-align:center; }
+    .item-preco { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; color:var(--escuro); text-align:right; white-space:nowrap; }
+    .item-preco .de { display:block; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:400; color:#9ca3af; text-decoration:line-through; }
+    .item-preco .gratis { color:var(--verde); }
+    .btn-remover { background:none; border:none; color:#9ca3af; cursor:pointer; font-size:12px; text-decoration:underline; }
     .btn-remover:hover { color:var(--vermelho); }
 
-    /* FORMULÁRIO */
-    .form-grupo { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
-    .form-grupo label { font-size:12px; font-weight:600; color:var(--texto); text-transform:uppercase; letter-spacing:.05em; }
+    /* Totais */
+    .tot-linha { display:flex; justify-content:space-between; font-size:14px; padding:6px 0; }
+    .tot-linha.desc { color:var(--verde-escuro); font-weight:600; }
+    .tot-linha.final { border-top:2px solid var(--cinza2); margin-top:6px; padding-top:12px; font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:var(--escuro); }
+    .tot-sub { font-size:12px; color:var(--verde); font-weight:600; text-align:right; margin-top:-2px; }
+
+    /* Formulario */
+    .form-grupo { display:flex; flex-direction:column; gap:5px; margin-bottom:12px; min-width:0; }
+    .form-grupo label { font-size:12px; font-weight:600; color:var(--texto); }
     .form-grupo input, .form-grupo select {
-      padding:10px 14px; border:1.5px solid var(--cinza2);
-      border-radius:8px; font-size:14px; font-family:'DM Sans',sans-serif;
-      outline:none; transition:border .2s;
+      padding:12px 14px; border:1.5px solid var(--cinza2); border-radius:10px; font-size:16px; font-family:'DM Sans',sans-serif; outline:none; transition:border .2s; background:#fff; width:100%; min-width:0;
     }
     .form-grupo input:focus, .form-grupo select:focus { border-color:var(--verde); }
     .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .form-grid3 { display:grid; grid-template-columns:2fr 1fr; gap:12px; }
 
-    /* RESUMO */
-    .resumo-linha { display:flex; justify-content:space-between; font-size:14px; padding:8px 0; border-bottom:1px solid #f3f4f6; }
-    .resumo-linha:last-child { border-bottom:none; }
-    .frete-bloco { margin-top:14px; padding-top:14px; border-top:1px dashed var(--cinza2); }
+    /* Frete */
     .btn-frete { width:100%; background:var(--escuro); color:#fff; border:none; border-radius:10px; padding:11px 14px; font-family:'Syne',sans-serif; font-weight:700; font-size:13px; cursor:pointer; }
     .btn-frete:disabled { opacity:.6; cursor:not-allowed; }
-    .frete-opcao { display:flex; align-items:center; gap:10px; padding:10px; border:2px solid var(--cinza2); border-radius:10px; margin-top:8px; cursor:pointer; font-size:13px; }
-    .frete-opcao.ativa { border-color:var(--verde); background:#f0fdf4; }
+    .frete-opcao { display:flex; align-items:center; gap:10px; padding:12px; border:2px solid var(--cinza2); border-radius:12px; margin-top:8px; cursor:pointer; font-size:13px; }
+    .frete-opcao.ativa { border-color:var(--verde); background:var(--verde-bg); }
     .frete-opcao .fo-nome { flex:1; font-weight:600; }
     .frete-opcao .fo-prazo { display:block; font-weight:400; font-size:11px; color:#6b7280; }
-    .frete-opcao .fo-preco { font-weight:700; color:var(--verde); }
+    .frete-opcao .fo-preco { font-weight:800; color:var(--verde); }
     .frete-aviso { font-size:12px; color:#6b7280; margin-top:8px; }
-    .resumo-total { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--escuro); }
-    .resumo-pix { font-size:13px; color:var(--verde); font-weight:600; margin-top:4px; }
+
+    /* Ofertas (order bump / upsell / combo) */
+    .oferta-card { border:2px dashed var(--verde); background:var(--verde-bg); border-radius:14px; padding:14px; margin-bottom:12px; }
+    .oferta-topo { font-size:11px; font-weight:800; color:#fff; background:var(--verde); display:inline-block; padding:3px 10px; border-radius:99px; margin-bottom:10px; letter-spacing:.04em; text-transform:uppercase; }
+    .oferta-corpo { display:flex; gap:12px; align-items:center; }
+    .oferta-foto { width:64px; height:64px; border-radius:10px; background:#fff; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:28px; }
+    .oferta-foto img { width:100%; height:100%; object-fit:contain; }
+    .oferta-txt { flex:1; min-width:0; }
+    .oferta-titulo { font-size:14px; font-weight:700; color:var(--escuro); line-height:1.3; }
+    .oferta-desc { font-size:12px; color:#4b5563; margin-top:3px; }
+    .oferta-preco { margin-top:6px; font-size:13px; }
+    .oferta-preco b { font-family:'Syne',sans-serif; font-size:16px; color:var(--verde-escuro); }
+    .oferta-preco s { color:#9ca3af; font-size:12px; margin-left:6px; }
+    .btn-oferta { width:100%; margin-top:12px; background:var(--verde); color:#fff; border:none; border-radius:10px; padding:12px; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .btn-oferta:hover { background:var(--verde-escuro); }
+
+    /* Cupom */
+    .cupom-linha { display:flex; gap:8px; }
+    .cupom-linha input { flex:1; padding:12px 14px; border:1.5px solid var(--cinza2); border-radius:10px; font-size:16px; text-transform:uppercase; outline:none; min-width:0; font-family:'DM Sans',sans-serif; }
+    .cupom-linha input:focus { border-color:var(--verde); }
+    .btn-cupom { background:var(--escuro); color:#fff; border:none; border-radius:10px; padding:0 18px; font-weight:700; font-size:14px; cursor:pointer; }
+    .cupom-ok { display:flex; align-items:center; justify-content:space-between; background:var(--verde-bg); border:1px solid #bfe9dc; color:var(--verde-escuro); padding:10px 12px; border-radius:10px; font-size:13px; font-weight:700; }
+    .cupom-ok button { background:none; border:none; color:#6b7280; font-size:12px; text-decoration:underline; cursor:pointer; }
+    .cupom-erro { color:var(--vermelho); font-size:12px; margin-top:6px; font-weight:600; }
+
+    /* Pagamento */
+    .pag-opcao { border:2px solid var(--cinza2); border-radius:12px; margin-bottom:10px; background:#fff; overflow:hidden; }
+    .pag-opcao.ativa { border-color:var(--verde); }
+    .pag-cab { display:flex; align-items:center; gap:10px; padding:14px; cursor:pointer; width:100%; background:none; border:none; text-align:left; font-size:14px; font-weight:600; color:var(--escuro); }
+    .pag-radio { width:18px; height:18px; border-radius:50%; border:2px solid #cbd5e1; flex-shrink:0; position:relative; }
+    .pag-opcao.ativa .pag-radio { border-color:var(--verde); }
+    .pag-opcao.ativa .pag-radio::after { content:''; position:absolute; inset:3px; border-radius:50%; background:var(--verde); }
+    .pag-nome { flex:1; }
+    .pag-selo { background:var(--laranja); color:#1f2937; font-size:10px; font-weight:800; padding:2px 7px; border-radius:6px; margin-left:6px; }
+    .pag-valor { text-align:right; font-family:'Syne',sans-serif; font-weight:800; color:var(--verde); font-size:15px; line-height:1.1; }
+    .pag-valor s { display:block; font-family:'DM Sans',sans-serif; font-weight:400; font-size:11px; color:#9ca3af; }
+    .pag-corpo { display:none; padding:0 14px 14px; }
+    .pag-opcao.ativa .pag-corpo { display:block; }
+    .pag-info { font-size:12px; color:#6b7280; line-height:1.5; }
+    .pix-box { margin-top:12px; text-align:center; }
+    .pix-box img { width:190px; max-width:70%; margin:0 auto; display:block; }
+    .pix-codigo { width:100%; font-size:11px; padding:8px; border:1px solid var(--cinza2); border-radius:8px; resize:none; height:70px; margin-top:8px; font-family:'DM Sans',sans-serif; }
 
     .btn-finalizar {
-      width:100%; background:var(--verde); color:#fff; border:none;
-      padding:16px; border-radius:12px; font-size:16px; font-weight:700;
-      font-family:'Syne',sans-serif; cursor:pointer; margin-top:16px;
-      transition:background .2s; display:flex; align-items:center; justify-content:center; gap:8px;
+      width:100%; background:var(--verde); color:#fff; border:none; padding:17px; border-radius:12px; font-size:16px; font-weight:800;
+      font-family:'Syne',sans-serif; cursor:pointer; transition:background .2s; display:flex; align-items:center; justify-content:center; gap:8px;
     }
     .btn-finalizar:hover { background:var(--verde-claro); }
     .btn-finalizar:disabled { background:#9ca3af; cursor:not-allowed; }
-
-    .btn-wpp {
-      width:100%; background:#25d366; color:#fff; border:none;
-      padding:13px; border-radius:12px; font-size:14px; font-weight:600;
-      font-family:'Syne',sans-serif; cursor:pointer; margin-top:10px;
-      display:flex; align-items:center; justify-content:center; gap:8px;
-    }
+    .btn-wpp { width:100%; background:#25d366; color:#fff; border:none; padding:13px; border-radius:12px; font-size:14px; font-weight:600; font-family:'Syne',sans-serif; cursor:pointer; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; }
     .btn-wpp:hover { background:#00b37e; }
+    .rodape-seguro { font-size:11px; color:#9ca3af; text-align:center; margin-top:12px; }
 
     .carrinho-vazio { text-align:center; padding:60px 20px; }
     .carrinho-vazio p { color:#9ca3af; font-size:15px; margin:12px 0 20px; }
 
-    .loading-overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,0.5);
-      display:none; align-items:center; justify-content:center;
-      z-index:200; flex-direction:column; gap:16px;
-    }
+    .loading-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:200; flex-direction:column; gap:16px; }
     .loading-overlay.show { display:flex; }
     .loading-overlay p { color:#fff; font-size:16px; font-weight:500; }
     .spinner { width:48px; height:48px; border:4px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
-
-    .toast { position:fixed; bottom:24px; right:24px; background:var(--escuro); color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; transform:translateY(80px); opacity:0; transition:all .3s; z-index:300; }
-    .toast.show { transform:translateY(0); opacity:1; }
+    .toast { position:fixed; bottom:24px; left:50%; transform:translate(-50%,80px); background:var(--escuro); color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; opacity:0; transition:all .3s; z-index:300; max-width:90vw; text-align:center; }
+    .toast.show { transform:translate(-50%,0); opacity:1; }
     .toast.verde { background:var(--verde); }
     .toast.vermelho { background:var(--vermelho); }
 
-    @media (max-width:768px) {
-      .wrap { grid-template-columns:1fr; }
+    #totais-pagar { display:none; }
+
+    @media (max-width:860px) {
+      .wrap { grid-template-columns:1fr; grid-template-areas:"resumo" "principal"; padding:12px 12px 40px; gap:12px; }
+      #coluna-resumo { position:static; }
+      .resumo-toggle { display:flex; }
+      #resumo-conteudo { display:none; margin-top:8px; }
+      #resumo-conteudo.aberto { display:block; }
+      #totais-pagar { display:block; margin-bottom:12px; }
+      .card { padding:16px; }
+      .seguro span.txt { display:none; }
+    }
+    @media (max-width:420px) {
       .form-grid2 { grid-template-columns:1fr; }
     }
-      /* Pagamento (Asaas checkout transparente) */
-    .pag-bloco { margin-top:16px; padding-top:16px; border-top:2px solid var(--cinza2); }
-    .pag-titulo { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; margin-bottom:8px; }
-    .pag-opcoes { display:flex; gap:8px; }
-    .pag-opcao { flex:1; background:#fff; border:2px solid var(--cinza2); border-radius:10px; padding:9px 6px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
-    .pag-opcao.ativa { border-color:var(--verde); background:#f0fdf4; color:var(--verde); }
-    .pix-box { margin-top:14px; text-align:center; }
-    .pix-box img { width:190px; margin:0 auto; }
-    .pix-codigo { width:100%; font-size:11px; padding:8px; border:1px solid var(--cinza2); border-radius:8px; resize:none; height:70px; margin-top:8px; font-family:'DM Sans',sans-serif; }
-</style>
+  </style>
 </head>
 <body>
 
 <header>
   <a href="index.html" class="logo">Tech<span>Life</span> Store</a>
-  <a href="rastreio.html" style="color:rgba(255,255,255,0.7);font-size:13px">Rastrear pedido</a>
+  <div class="seguro">🔒 <span class="txt">PAGAMENTO 100% SEGURO</span></div>
   <a href="index.html" style="color:rgba(255,255,255,0.7);font-size:13px">← Continuar comprando</a>
 </header>
 
-<div class="wrap">
-  <!-- ITENS DO CARRINHO -->
-  <div>
-    <div class="card" id="card-itens">
-      <h2>🛒 Meu carrinho</h2>
-      <div id="lista-itens">
-        <div class="carrinho-vazio">
-          <div style="font-size:48px">🛒</div>
-          <p>Seu carrinho está vazio.</p>
-          <a href="index.html" style="background:var(--verde);color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;font-family:Syne,sans-serif;display:inline-block">Ver produtos</a>
+<div class="wrap" id="wrap" style="display:none">
+
+  <!-- RESUMO DO PEDIDO -->
+  <aside id="coluna-resumo">
+    <button type="button" class="resumo-toggle" id="resumo-toggle" onclick="alternarResumo()">
+      <span class="tt">🛒 <span id="toggle-txt">Mostrar resumo do pedido</span> <span class="seta">⌄</span></span>
+      <span class="tot" id="toggle-total">R$ 0,00</span>
+    </button>
+    <div class="card" id="resumo-conteudo">
+      <div class="sec-titulo">🛒 Resumo do pedido</div>
+      <div id="brinde-area"></div>
+      <div id="lista-itens"></div>
+      <div id="totais-resumo" style="margin-top:8px"></div>
+    </div>
+  </aside>
+
+  <!-- FORMULARIO -->
+  <main id="coluna-principal">
+    <div class="card">
+      <div class="sec-titulo"><span class="num">1</span> Contato</div>
+      <div class="form-grupo">
+        <label for="c-nome">Nome completo *</label>
+        <input type="text" id="c-nome" placeholder="Nome completo" autocomplete="name">
+      </div>
+      <div class="form-grupo">
+        <label for="c-email">E-mail *</label>
+        <input type="email" id="c-email" placeholder="seu@email.com" autocomplete="email" inputmode="email">
+      </div>
+      <div class="form-grid2">
+        <div class="form-grupo">
+          <label for="c-tel">Celular / WhatsApp *</label>
+          <input type="text" id="c-tel" placeholder="(13) 99999-9999" maxlength="15" oninput="mascaraTel(this)" autocomplete="tel" inputmode="tel">
+        </div>
+        <div class="form-grupo">
+          <label for="c-cpf">CPF *</label>
+          <input type="text" id="c-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascaraCpf(this)" inputmode="numeric">
         </div>
       </div>
     </div>
 
-    <!-- DADOS DO CLIENTE -->
-    <div class="card" id="card-dados" style="margin-top:16px;display:none">
-      <h2>📋 Seus dados</h2>
+    <div class="card">
+      <div class="sec-titulo"><span class="num">2</span> Entrega</div>
       <div class="form-grid2">
         <div class="form-grupo">
-          <label>Nome completo</label>
-          <input type="text" id="c-nome" placeholder="João Silva">
+          <label for="c-cep">CEP *</label>
+          <input type="text" id="c-cep" placeholder="00000-000" maxlength="9" oninput="mascaraCep(this)" onblur="buscarCep(this.value)" autocomplete="postal-code" inputmode="numeric">
         </div>
         <div class="form-grupo">
-          <label>E-mail</label>
-          <input type="email" id="c-email" placeholder="joao@email.com">
-        </div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-grupo">
-          <label>CPF</label>
-          <input type="text" id="c-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascaraCpf(this)">
-        </div>
-        <div class="form-grupo">
-          <label>Telefone</label>
-          <input type="text" id="c-tel" placeholder="(13) 99999-9999" maxlength="15" oninput="mascaraTel(this)">
-        </div>
-      </div>
-      <h3 style="font-size:15px;font-weight:600;margin:8px 0 14px;color:var(--escuro)">📍 Endereço de entrega</h3>
-      <div class="form-grid2">
-        <div class="form-grupo">
-          <label>CEP</label>
-          <input type="text" id="c-cep" placeholder="00000-000" maxlength="9" oninput="mascaraCep(this)" onblur="buscarCep(this.value)">
-        </div>
-        <div class="form-grupo">
-          <label>Número</label>
-          <input type="text" id="c-numero" placeholder="123">
+          <label for="c-numero">Número *</label>
+          <input type="text" id="c-numero" placeholder="123" inputmode="numeric">
         </div>
       </div>
       <div class="form-grupo">
-        <label>Rua</label>
-        <input type="text" id="c-rua" placeholder="Rua das Flores">
+        <label for="c-rua">Endereço *</label>
+        <input type="text" id="c-rua" placeholder="Rua das Flores" autocomplete="address-line1">
       </div>
       <div class="form-grid2">
         <div class="form-grupo">
-          <label>Bairro</label>
+          <label for="c-comp">Complemento</label>
+          <input type="text" id="c-comp" placeholder="Apto, bloco (opcional)">
+        </div>
+        <div class="form-grupo">
+          <label for="c-bairro">Bairro *</label>
           <input type="text" id="c-bairro" placeholder="Centro">
         </div>
-        <div class="form-grupo">
-          <label>Complemento</label>
-          <input type="text" id="c-comp" placeholder="Apto 12 (opcional)">
-        </div>
       </div>
-      <div class="form-grid2">
+      <div class="form-grid3">
         <div class="form-grupo">
-          <label>Cidade</label>
+          <label for="c-cidade">Cidade *</label>
           <input type="text" id="c-cidade" placeholder="Guarujá">
         </div>
         <div class="form-grupo">
-          <label>Estado</label>
+          <label for="c-estado">Estado *</label>
           <select id="c-estado">
-            <option value="">Selecione...</option>
+            <option value="">UF</option>
             <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
             <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
             <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
@@ -233,79 +297,103 @@
           </select>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- RESUMO E PAGAMENTO -->
-  <div>
-    <div class="card" id="card-resumo" style="display:none">
-      <h2>💰 Resumo</h2>
-      <div id="resumo-itens"></div>
-      <div class="frete-bloco">
+      <div style="margin-top:4px">
         <button type="button" class="btn-frete" id="btn-frete" onclick="calcularFrete()">🚚 Calcular frete</button>
         <div id="frete-opcoes"></div>
       </div>
-      <div style="margin-top:16px;padding-top:16px;border-top:2px solid var(--cinza2)">
-        <div class="resumo-total" id="resumo-total">R$ 0,00</div>
-        <div class="resumo-pix" id="resumo-pix"></div>
-      </div>
-      <!-- FORMA DE PAGAMENTO -->
-      <div class="pag-bloco">
-        <p class="pag-titulo">Forma de pagamento</p>
-        <div class="pag-opcoes">
-          <button type="button" class="pag-opcao ativa" id="pag-paypal" onclick="escolherPagamento('paypal')">PayPal</button>
-          <button type="button" class="pag-opcao" id="pag-cartao" onclick="escolherPagamento('cartao')">Cartao</button>
-          <button type="button" class="pag-opcao" id="pag-pix" onclick="escolherPagamento('pix')">Pix</button>
-        </div>
+    </div>
 
-        <div id="form-cartao" style="display:none;margin-top:14px">
+    <!-- ORDER BUMP / UPSELL / COMBO -->
+    <div id="ofertas-area"></div>
+
+    <div class="card">
+      <div class="sec-titulo">🏷️ Cupom de desconto</div>
+      <div id="cupom-area"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-titulo"><span class="num">3</span> Pagamento</div>
+      <p class="sec-sub">Todas as transações são seguras e criptografadas.</p>
+
+      <div class="pag-opcao ativa" id="pag-pix">
+        <button type="button" class="pag-cab" onclick="escolherPagamento('pix')">
+          <span class="pag-radio"></span>
+          <span class="pag-nome">Pix <span class="pag-selo" id="pix-selo" style="display:none"></span></span>
+          <span class="pag-valor" id="pix-valor"></span>
+        </button>
+        <div class="pag-corpo">
+          <p class="pag-info">O código Pix é gerado na hora, depois de clicar em <b>Finalizar compra</b>. O pedido é confirmado assim que o pagamento cair.</p>
+          <div class="pix-box" id="box-pix" style="display:none">
+            <p style="font-size:12px;color:#6b7280">Escaneie o QR Code no app do seu banco ou copie o código abaixo.</p>
+            <img id="pix-img" alt="QR Code Pix">
+            <textarea class="pix-codigo" id="pix-codigo" readonly></textarea>
+            <button type="button" class="btn-frete" style="margin-top:8px" onclick="copiarPix()">Copiar código Pix</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pag-opcao" id="pag-cartao">
+        <button type="button" class="pag-cab" onclick="escolherPagamento('cartao')">
+          <span class="pag-radio"></span>
+          <span class="pag-nome">Cartão de crédito</span>
+          <span class="pag-valor" id="cartao-valor"></span>
+        </button>
+        <div class="pag-corpo" id="form-cartao">
           <div class="form-grupo">
-            <label>Numero do cartao</label>
+            <label for="cc-numero">Número do cartão</label>
             <input type="text" id="cc-numero" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" oninput="mascaraCartao(this)">
           </div>
           <div class="form-grupo">
-            <label>Nome impresso no cartao</label>
-            <input type="text" id="cc-nome" autocomplete="cc-name" placeholder="Como esta no cartao">
+            <label for="cc-nome">Nome impresso no cartão</label>
+            <input type="text" id="cc-nome" autocomplete="cc-name" placeholder="Como está no cartão">
           </div>
           <div class="form-grid2">
             <div class="form-grupo">
-              <label>Validade</label>
+              <label for="cc-validade">Validade</label>
               <input type="text" id="cc-validade" inputmode="numeric" placeholder="MM/AAAA" oninput="mascaraValidade(this)">
             </div>
             <div class="form-grupo">
-              <label>CVV</label>
+              <label for="cc-cvv">CVV</label>
               <input type="text" id="cc-cvv" inputmode="numeric" maxlength="4" autocomplete="cc-csc" placeholder="123">
             </div>
           </div>
           <div class="form-grid2">
             <div class="form-grupo">
-              <label>CPF do titular</label>
+              <label for="cc-cpf">CPF do titular</label>
               <input type="text" id="cc-cpf" inputmode="numeric" placeholder="000.000.000-00" oninput="mascaraCpf(this)">
             </div>
             <div class="form-grupo">
-              <label>Parcelas</label>
+              <label for="cc-parcelas">Parcelas</label>
               <select id="cc-parcelas"></select>
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="pix-box" id="box-pix" style="display:none">
-          <p style="font-size:12px;color:#6b7280">Escaneie o QR Code no app do seu banco ou copie o codigo abaixo. O pedido e confirmado assim que o Pix cair.</p>
-          <img id="pix-img" alt="QR Code Pix">
-          <textarea class="pix-codigo" id="pix-codigo" readonly></textarea>
-          <button type="button" class="btn-frete" style="margin-top:8px" onclick="copiarPix()">Copiar codigo Pix</button>
+      <div class="pag-opcao" id="pag-paypal">
+        <button type="button" class="pag-cab" onclick="escolherPagamento('paypal')">
+          <span class="pag-radio"></span>
+          <span class="pag-nome">PayPal</span>
+          <span class="pag-valor" id="paypal-valor"></span>
+        </button>
+        <div class="pag-corpo">
+          <p class="pag-info">Você será levado ao PayPal para concluir o pagamento com segurança.</p>
         </div>
       </div>
 
-      <button class="btn-finalizar" onclick="pagarAgora()" id="btn-finalizar">
-        💳 Pagar com PayPal
-      </button>
-      <button class="btn-wpp" onclick="finalizarWpp()">
-        💬 Finalizar pelo WhatsApp
-      </button>
-      <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">🔒 Pagamento 100% seguro via PayPal ou Asaas</p>
+      <div id="totais-pagar"></div>
+      <button class="btn-finalizar" onclick="pagarAgora()" id="btn-finalizar">Finalizar compra</button>
+      <button class="btn-wpp" onclick="finalizarWpp()">💬 Finalizar pelo WhatsApp</button>
+      <p class="rodape-seguro">🔒 Pagamento 100% seguro via Pix, cartão (Asaas) ou PayPal</p>
     </div>
-  </div>
+  </main>
+</div>
+
+<!-- CARRINHO VAZIO -->
+<div id="vazio" class="carrinho-vazio" style="display:none">
+  <div style="font-size:48px">🛒</div>
+  <p>Seu carrinho está vazio.</p>
+  <a href="index.html" style="background:var(--verde);color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;font-family:Syne,sans-serif;display:inline-block">Ver produtos</a>
 </div>
 
 <!-- LOADING -->
@@ -328,9 +416,21 @@
     return /^https?:\/\//i.test(t) ? esc(t) : '';
   }
 
-  let carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
-  let frete = null;
-  let opcoesFrete = [];
+  var carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+  var frete = null;
+  var opcoesFrete = [];
+  var cotacao = null;          // resposta do servidor (precos, descontos, ofertas)
+  var cotacaoSeq = 0;
+  var cupomAplicado = '';
+  var formaPagamento = 'pix';
+
+  // Cupom por link: techlifestore.com.br/carrinho.html?cupom=BEMVINDO10
+  try {
+    var qs = new URLSearchParams(location.search);
+    var cupomUrl = (qs.get('cupom') || '').trim().toUpperCase();
+    if (cupomUrl) localStorage.setItem('cupom_carrinho', cupomUrl);
+    cupomAplicado = localStorage.getItem('cupom_carrinho') || '';
+  } catch (e) {}
 
   // Referencia unica desse carrinho/pedido: gerada uma vez ao carregar a
   // pagina e reaproveitada em todas as chamadas (rascunho de carrinho
@@ -349,7 +449,7 @@
     } catch (e) {}
   }
 
-  let rascunhoTimer = null;
+  var rascunhoTimer = null;
   function agendarRascunho() {
     var email = (document.getElementById('c-email') || {}).value || '';
     if (!/\S+@\S+\.\S+/.test(email.trim())) return;
@@ -365,93 +465,319 @@
     return 'R$ ' + Number(v).toFixed(2).replace('.', ',');
   }
 
-  // --- Google Analytics (GA4) e-commerce ---
+  // --- Google Analytics (GA4) / Meta: usam os valores confirmados pelo servidor ---
+  function linhasPagas() {
+    var ls = (cotacao && cotacao.linhas) ? cotacao.linhas : carrinho.map(function(i) { return { id: i.id, nome: i.nome, preco: Number(i.preco), qtd: Number(i.qtd), tipo: 'normal' }; });
+    return ls.filter(function(l) { return l.tipo !== 'brinde'; });
+  }
   function gaItens() {
-    return carrinho.map(i => ({ item_id: String(i.id), item_name: i.nome, price: Number(i.preco), quantity: Number(i.qtd) }));
+    return linhasPagas().map(function(i) { return { item_id: String(i.id), item_name: i.nome, price: Number(i.preco), quantity: Number(i.qtd) }; });
   }
   function gaValor() {
-    return carrinho.reduce((s,i) => s + (Number(i.preco) * Number(i.qtd)), 0);
+    return cotacao ? (cotacao.subtotal - cotacao.descontos.combo - cotacao.descontos.cupom) : linhasPagas().reduce(function(s, i) { return s + i.preco * i.qtd; }, 0);
   }
 
-  function renderCarrinho() {
-    const lista = document.getElementById('lista-itens');
-    const cardDados = document.getElementById('card-dados');
-    const cardResumo = document.getElementById('card-resumo');
-    const resumoItens = document.getElementById('resumo-itens');
+  // ---------- Cotacao no servidor ----------
+  function itensParaServidor() {
+    return carrinho.map(function(i) {
+      var o = { id: String(i.id), qtd: Number(i.qtd) };
+      if (i.voltagem) o.voltagem = i.voltagem;
+      if (i.oferta) o.oferta = i.oferta;
+      return o;
+    });
+  }
 
-    if (carrinho.length === 0) {
-      lista.innerHTML = `<div class="carrinho-vazio"><div style="font-size:48px">🛒</div><p>Seu carrinho está vazio.</p><a href="index.html" style="background:var(--verde);color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;font-family:Syne,sans-serif;display:inline-block">Ver produtos</a></div>`;
-      cardDados.style.display = 'none';
-      cardResumo.style.display = 'none';
+  function cotacaoLocal() {
+    var sub = carrinho.reduce(function(s, i) { return s + Number(i.preco) * Number(i.qtd); }, 0);
+    var f = frete ? Number(frete.preco) : 0;
+    return {
+      linhas: carrinho.map(function(i) { return { id: String(i.id), nome: i.nome, preco: Number(i.preco), qtd: Number(i.qtd), foto: i.foto || '', voltagem: i.voltagem || '', tipo: i.oferta ? 'bump' : 'normal', oferta_id: i.oferta || null }; }),
+      subtotal: sub, descontos: { combo: 0, cupom: 0, pix: 0 }, combos_aplicados: [], cupom: null, frete: f, pix_pct: 0,
+      total: sub + f, total_pix: sub + f, total_sem_pix: sub + f,
+      brinde: { ganhos: [], progresso: null, unidades: 0 }, sugestoes: { bump: [], upsell: [], combo: [] }, offline: true
+    };
+  }
+
+  async function cotar() {
+    if (!carrinho.length) { cotacao = null; renderTudo(); return; }
+    var seq = ++cotacaoSeq;
+    try {
+      var res = await fetch('/.netlify/functions/carrinho-calcular', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: itensParaServidor(), cupom: cupomAplicado, forma: formaPagamento, frete: frete ? { id: frete.id, nome: frete.nome, preco: frete.preco } : null })
+      });
+      var data = await res.json();
+      if (seq !== cotacaoSeq) return;
+      if (!res.ok || data.error) throw new Error(data.error || 'Erro ao calcular');
+      cotacao = data;
+    } catch (e) {
+      if (seq !== cotacaoSeq) return;
+      cotacao = cotacaoLocal();
+    }
+    renderTudo();
+  }
+
+  // ---------- Render ----------
+  function chaveLinha(l) { return [String(l.id), l.voltagem || '', l.oferta_id && l.tipo !== 'brinde' ? l.oferta_id : ''].join('|'); }
+  function indiceNoCarrinho(l) {
+    for (var i = 0; i < carrinho.length; i++) {
+      var c = carrinho[i];
+      if (chaveLinha({ id: c.id, voltagem: c.voltagem, oferta_id: c.oferta || '', tipo: c.oferta ? 'bump' : 'normal' }) === chaveLinha(l)) return i;
+    }
+    return -1;
+  }
+
+  function renderTudo() {
+    var vazio = carrinho.length === 0;
+    document.getElementById('wrap').style.display = vazio ? 'none' : 'grid';
+    document.getElementById('vazio').style.display = vazio ? 'block' : 'none';
+    if (vazio || !cotacao) return;
+    renderBrinde();
+    renderItens();
+    renderTotais();
+    renderOfertas();
+    renderCupom();
+    renderPagamentoValores();
+    atualizarBotao();
+    if (formaPagamento === 'cartao') montarParcelas();
+  }
+
+  function renderBrinde() {
+    var b = cotacao.brinde || {};
+    var el = document.getElementById('brinde-area');
+    if (b.progresso) {
+      var pct = Math.max(6, Math.min(100, Math.round(b.unidades / b.progresso.minimo * 100)));
+      el.innerHTML = '<div class="brinde-box"><div class="brinde-txt">🎁 Adicione ' + esc(b.progresso.faltam) + (b.progresso.faltam === 1 ? ' produto' : ' produtos') + ' e ganhe ' + esc(b.progresso.nome) + ' de brinde!</div><div class="brinde-barra"><i style="width:' + pct + '%"></i></div></div>';
+    } else if (b.ganhos && b.ganhos.length) {
+      el.innerHTML = '<div class="brinde-box"><div class="brinde-txt">🎉 Parabéns! Você ganhou: ' + esc(b.ganhos.map(function(g) { return g.nome; }).join(', ')) + '</div><div class="brinde-barra"><i style="width:100%"></i></div></div>';
+    } else {
+      el.innerHTML = '';
+    }
+  }
+
+  function renderItens() {
+    document.getElementById('lista-itens').innerHTML = cotacao.linhas.map(function(l) {
+      var idx = l.tipo === 'brinde' ? -1 : indiceNoCarrinho(l);
+      var tag = l.tipo === 'brinde' ? '<span class="tag brinde">BRINDE</span>' : (l.tipo === 'bump' || l.tipo === 'upsell' ? '<span class="tag oferta">OFERTA</span>' : '');
+      var ctrl = '';
+      if (l.tipo === 'normal' && idx >= 0) {
+        ctrl = '<div class="item-qtd"><button class="btn-qtd" onclick="mudarQtd(' + idx + ', -1)">−</button><span class="qtd-val">' + esc(l.qtd) + '</span><button class="btn-qtd" onclick="mudarQtd(' + idx + ', 1)">+</button></div>';
+      } else {
+        ctrl = '<span class="qtd-val" style="min-width:0">x' + esc(l.qtd) + '</span>';
+      }
+      var rem = (l.tipo !== 'brinde' && idx >= 0) ? '<button class="btn-remover" onclick="remover(' + idx + ')">remover</button>' : '';
+      var precoHtml = l.tipo === 'brinde'
+        ? '<span class="gratis">GRÁTIS</span>' + (l.preco_original ? '<span class="de">' + formatarPreco(l.preco_original) + '</span>' : '')
+        : formatarPreco(l.preco * l.qtd) + ((l.preco_original && l.preco_original > l.preco) ? '<span class="de">' + formatarPreco(l.preco_original * l.qtd) + '</span>' : '');
+      return '<div class="item">' +
+        '<div class="item-foto">' + (urlOk(l.foto) ? '<img src="' + urlOk(l.foto) + '" alt="' + esc(l.nome) + '">' : '📦') + '</div>' +
+        '<div class="item-info"><div class="item-nome">' + esc(l.nome) + (l.voltagem ? ' <span style="color:#16a085;font-weight:700">⚡ ' + esc(l.voltagem) + '</span>' : '') + tag + '</div>' +
+        '<div class="item-linha2">' + ctrl + rem + '</div></div>' +
+        '<div class="item-preco">' + precoHtml + '</div></div>';
+    }).join('');
+  }
+
+  function htmlTotais() {
+    var c = cotacao;
+    var h = '<div class="tot-linha"><span>Subtotal</span><span>' + formatarPreco(c.subtotal) + '</span></div>';
+    (c.combos_aplicados || []).forEach(function(cb) {
+      h += '<div class="tot-linha desc"><span>🧩 ' + esc(cb.nome) + (cb.vezes > 1 ? ' x' + cb.vezes : '') + '</span><span>− ' + formatarPreco(cb.economia) + '</span></div>';
+    });
+    if (c.cupom && c.cupom.valido) h += '<div class="tot-linha desc"><span>🏷️ Cupom ' + esc(c.cupom.codigo) + '</span><span>− ' + formatarPreco(c.descontos.cupom) + '</span></div>';
+    if (formaPagamento === 'pix' && c.descontos.pix > 0) h += '<div class="tot-linha desc"><span>⚡ Pix (' + esc(c.pix_pct) + '% OFF)</span><span>− ' + formatarPreco(c.descontos.pix) + '</span></div>';
+    h += '<div class="tot-linha"><span>Frete' + (frete ? ' - ' + esc(frete.nome) : '') + '</span><span>' + (frete ? (Number(c.frete) > 0 ? formatarPreco(c.frete) : 'Grátis') : 'a calcular') + '</span></div>';
+    h += '<div class="tot-linha final"><span>Total</span><span>' + formatarPreco(totalAtual()) + '</span></div>';
+    if (formaPagamento !== 'pix' && c.pix_pct > 0 && c.total_pix < c.total_sem_pix) h += '<div class="tot-sub">ou ' + formatarPreco(c.total_pix) + ' no Pix (' + esc(c.pix_pct) + '% OFF)</div>';
+    return h;
+  }
+
+  function totalAtual() { return formaPagamento === 'pix' ? cotacao.total_pix : cotacao.total_sem_pix; }
+
+  function renderTotais() {
+    var h = htmlTotais();
+    document.getElementById('totais-resumo').innerHTML = h;
+    document.getElementById('totais-pagar').innerHTML = h;
+    document.getElementById('toggle-total').textContent = formatarPreco(totalAtual());
+  }
+
+  function alternarResumo() {
+    var box = document.getElementById('resumo-conteudo');
+    var btn = document.getElementById('resumo-toggle');
+    var aberto = box.classList.toggle('aberto');
+    btn.classList.toggle('aberto', aberto);
+    document.getElementById('toggle-txt').textContent = aberto ? 'Ocultar resumo do pedido' : 'Mostrar resumo do pedido';
+  }
+
+  function cartaoOferta(o, tipo) {
+    var p = o.produto;
+    var preco = '<div class="oferta-preco"><b>' + formatarPreco(p.preco_oferta) + '</b>' + (p.preco_oferta < p.preco ? '<s>' + formatarPreco(p.preco) + '</s>' : '') + '</div>';
+    var rotulo = tipo === 'upsell' ? '⬆ Melhore seu pedido' : '🔥 Oferta única';
+    var btn = tipo === 'upsell'
+      ? '<button type="button" class="btn-oferta" onclick="aceitarUpsell(' + Number(o.oferta_id) + ')">Sim, quero trocar!</button>'
+      : '<button type="button" class="btn-oferta" onclick="aceitarBump(' + Number(o.oferta_id) + ')">✔ Sim, quero adicionar!</button>';
+    var titulo = o.titulo || (tipo === 'upsell' ? 'Troque ' + (o.troca_de_nome || 'seu item') + ' por ' + p.nome : 'Adicione ' + p.nome + ' ao seu pedido');
+    return '<div class="oferta-card"><span class="oferta-topo">' + rotulo + '</span><div class="oferta-corpo">' +
+      '<div class="oferta-foto">' + (urlOk(p.foto) ? '<img src="' + urlOk(p.foto) + '" alt="' + esc(p.nome) + '">' : '📦') + '</div>' +
+      '<div class="oferta-txt"><div class="oferta-titulo">' + esc(titulo) + '</div>' +
+      (o.descricao ? '<div class="oferta-desc">' + esc(o.descricao) + '</div>' : '') +
+      (o.titulo ? '<div class="oferta-desc"><b>' + esc(p.nome) + '</b></div>' : '') + preco + '</div></div>' + btn + '</div>';
+  }
+
+  function renderOfertas() {
+    var s = cotacao.sugestoes || { bump: [], upsell: [], combo: [] };
+    var h = '';
+    (s.combo || []).forEach(function(cb) {
+      var nomes = cb.faltam.map(function(p) { return p.nome; }).join(' + ');
+      h += '<div class="oferta-card"><span class="oferta-topo">🧩 Monte o combo</span><div class="oferta-corpo">' +
+        '<div class="oferta-foto">' + (cb.faltam[0] && urlOk(cb.faltam[0].foto) ? '<img src="' + urlOk(cb.faltam[0].foto) + '" alt="">' : '🧩') + '</div>' +
+        '<div class="oferta-txt"><div class="oferta-titulo">' + esc(cb.titulo || ('Complete o combo ' + cb.nome)) + '</div>' +
+        '<div class="oferta-desc">' + (cb.descricao ? esc(cb.descricao) + ' · ' : '') + 'Adicione <b>' + esc(nomes) + '</b> e leve o kit completo por ' + formatarPreco(cb.preco_fechado) + (cb.economia > 0 ? ' (economize ' + formatarPreco(cb.economia) + ')' : '') + '.</div></div></div>' +
+        '<button type="button" class="btn-oferta" onclick="aceitarCombo(' + Number(cb.oferta_id) + ')">Adicionar e completar o combo</button></div>';
+    });
+    (s.bump || []).forEach(function(o) { h += cartaoOferta(o, 'bump'); });
+    (s.upsell || []).forEach(function(o) { h += cartaoOferta(o, 'upsell'); });
+    document.getElementById('ofertas-area').innerHTML = h;
+  }
+
+  function renderCupom() {
+    var el = document.getElementById('cupom-area');
+    var c = cotacao.cupom;
+    if (cupomAplicado && c && c.valido) {
+      el.innerHTML = '<div class="cupom-ok"><span>✓ Cupom ' + esc(c.codigo) + ' aplicado (− ' + formatarPreco(c.desconto) + ')</span><button type="button" onclick="removerCupom()">remover</button></div>';
       return;
     }
+    var foco = document.activeElement && document.activeElement.id === 'cupom-input';
+    var valor = cupomAplicado || (document.getElementById('cupom-input') || {}).value || '';
+    el.innerHTML = '<div class="cupom-linha"><input type="text" id="cupom-input" placeholder="Digite seu cupom" value="' + esc(valor) + '" maxlength="30" autocapitalize="characters" onkeydown="if(event.key===\'Enter\'){event.preventDefault();aplicarCupom();}"><button type="button" class="btn-cupom" onclick="aplicarCupom()">Aplicar</button></div>' +
+      (cupomAplicado && c && !c.valido ? '<div class="cupom-erro">' + esc(c.erro || 'Cupom inválido') + '</div>' : '');
+    if (foco) { var i = document.getElementById('cupom-input'); if (i) i.focus(); }
+  }
 
-    cardDados.style.display = 'block';
-    cardResumo.style.display = 'block';
+  function aplicarCupom() {
+    var v = (document.getElementById('cupom-input').value || '').trim().toUpperCase();
+    if (!v) return mostrarToast('Digite o código do cupom', 'vermelho');
+    cupomAplicado = v;
+    try { localStorage.setItem('cupom_carrinho', v); } catch (e) {}
+    cotar().then(function() {
+      if (cotacao && cotacao.cupom && cotacao.cupom.valido) mostrarToast('Cupom aplicado!', 'verde');
+    });
+  }
+  function removerCupom() {
+    cupomAplicado = '';
+    try { localStorage.removeItem('cupom_carrinho'); } catch (e) {}
+    cotar();
+  }
 
-    lista.innerHTML = carrinho.map((item, i) => `
-      <div class="item">
-        <div class="item-foto">${urlOk(item.foto) ? `<img src="${urlOk(item.foto)}" alt="${esc(item.nome)}">` : esc(item.emoji || '📦')}</div>
-        <div class="item-info">
-          <div class="item-nome">${esc(item.nome)}${item.voltagem ? ` <span style="color:#16a085;font-weight:700">⚡ ${esc(item.voltagem)}</span>` : ''}</div>
-          <div class="item-preco">${formatarPreco(item.preco)}</div>
-          <div class="item-qtd">
-            <button class="btn-qtd" onclick="mudarQtd(${i}, -1)">−</button>
-            <span class="qtd-val">${item.qtd}</span>
-            <button class="btn-qtd" onclick="mudarQtd(${i}, 1)">+</button>
-          </div>
-        </div>
-        <button class="btn-remover" onclick="remover(${i})">×</button>
-      </div>`).join('');
+  function renderPagamentoValores() {
+    var c = cotacao;
+    var selo = document.getElementById('pix-selo');
+    if (c.pix_pct > 0) { selo.style.display = 'inline-block'; selo.textContent = c.pix_pct + '% OFF'; } else { selo.style.display = 'none'; }
+    var pixHtml = formatarPreco(c.total_pix);
+    if (c.total_pix < c.total_sem_pix) pixHtml += '<s>' + formatarPreco(c.total_sem_pix) + '</s>';
+    document.getElementById('pix-valor').innerHTML = pixHtml;
+    document.getElementById('cartao-valor').textContent = formatarPreco(c.total_sem_pix);
+    document.getElementById('paypal-valor').textContent = formatarPreco(c.total_sem_pix);
+  }
 
-    const subtotal = carrinho.reduce((s, i) => s + (i.preco * i.qtd), 0);
-    const valorFrete = frete ? Number(frete.preco) : 0;
-    const total = subtotal + valorFrete;
-    const pix = total * 0.95;
+  function atualizarBotao() {
+    var btn = document.getElementById('btn-finalizar');
+    var t = cotacao ? ' • ' + formatarPreco(totalAtual()) : '';
+    if (formaPagamento === 'pix') btn.innerHTML = '⚡ Gerar código Pix' + t;
+    else if (formaPagamento === 'cartao') btn.innerHTML = '💳 Pagar com cartão' + t;
+    else btn.innerHTML = '💳 Pagar com PayPal' + t;
+  }
 
-    resumoItens.innerHTML = carrinho.map(i =>
-      `<div class="resumo-linha"><span>${esc(i.nome)}${i.voltagem ? ' (' + esc(i.voltagem) + ')' : ''} x${esc(i.qtd)}</span><span>${formatarPreco(i.preco * i.qtd)}</span></div>`
-    ).join('') +
-      `<div class="resumo-linha"><span>Subtotal</span><span>${formatarPreco(subtotal)}</span></div>` +
-      `<div class="resumo-linha"><span>Frete${frete ? ' - ' + esc(frete.nome) : ''}</span><span>${frete ? (valorFrete > 0 ? formatarPreco(valorFrete) : 'Gratis') : 'a calcular'}</span></div>`;
-
-    document.getElementById('resumo-total').textContent = formatarPreco(total);
-    document.getElementById('resumo-pix').textContent = `✓ No Pix: ${formatarPreco(pix)}`;
+  // ---------- Carrinho: quantidade / remover / ofertas ----------
+  function aoMudarCarrinho() {
+    salvarCarrinho();
+    cotar().then(function() {
+      var cep = document.getElementById('c-cep').value.replace(/\D/g, '');
+      if (frete && cep.length === 8) calcularFrete(true);
+    });
   }
 
   function mudarQtd(i, dir) {
+    if (!carrinho[i]) return;
     carrinho[i].qtd = Math.max(1, carrinho[i].qtd + dir);
-    salvarCarrinho();
-    renderCarrinho();
+    aoMudarCarrinho();
   }
 
   function remover(i) {
-    const itemGA = carrinho[i];
+    var itemGA = carrinho[i];
     if (typeof gtag === 'function' && itemGA) gtag('event', 'remove_from_cart', {
       currency: 'BRL',
       value: Number(itemGA.preco) * Number(itemGA.qtd),
       items: [{ item_id: String(itemGA.id), item_name: itemGA.nome, price: Number(itemGA.preco), quantity: Number(itemGA.qtd) }]
     });
     carrinho.splice(i, 1);
-    salvarCarrinho();
-    renderCarrinho();
+    aoMudarCarrinho();
     mostrarToast('Produto removido!');
   }
 
+  function rastrearAdd(p, preco) {
+    if (typeof gtag === 'function') gtag('event', 'add_to_cart', { currency: 'BRL', value: Number(preco), items: [{ item_id: String(p.id), item_name: p.nome, price: Number(preco), quantity: 1 }] });
+    if (typeof fbq === 'function') fbq('track', 'AddToCart', { content_ids: [String(p.id)], content_type: 'product', content_name: p.nome, currency: 'BRL', value: Number(preco) });
+  }
+
+  function ofertaPorId(lista, id) {
+    for (var i = 0; i < lista.length; i++) if (Number(lista[i].oferta_id) === Number(id)) return lista[i];
+    return null;
+  }
+
+  function aceitarBump(id) {
+    var o = ofertaPorId(cotacao.sugestoes.bump, id);
+    if (!o) return;
+    carrinho.push({ id: o.produto.id, nome: o.produto.nome, preco: o.produto.preco_oferta, qtd: 1, foto: o.produto.foto || '', oferta: o.oferta_id });
+    rastrearAdd(o.produto, o.produto.preco_oferta);
+    aoMudarCarrinho();
+    mostrarToast('Oferta adicionada ao pedido!', 'verde');
+  }
+
+  function aceitarUpsell(id) {
+    var o = ofertaPorId(cotacao.sugestoes.upsell, id);
+    if (!o) return;
+    // troca 1 unidade do produto original pelo produto melhor
+    for (var i = 0; i < carrinho.length; i++) {
+      if (String(carrinho[i].id) === String(o.troca_de) && !carrinho[i].oferta) {
+        carrinho[i].qtd -= 1;
+        if (carrinho[i].qtd <= 0) carrinho.splice(i, 1);
+        break;
+      }
+    }
+    carrinho.push({ id: o.produto.id, nome: o.produto.nome, preco: o.produto.preco_oferta, qtd: 1, foto: o.produto.foto || '', oferta: o.oferta_id });
+    rastrearAdd(o.produto, o.produto.preco_oferta);
+    aoMudarCarrinho();
+    mostrarToast('Pedido atualizado!', 'verde');
+  }
+
+  function aceitarCombo(id) {
+    var o = ofertaPorId(cotacao.sugestoes.combo, id);
+    if (!o) return;
+    o.faltam.forEach(function(p) {
+      carrinho.push({ id: p.id, nome: p.nome, preco: p.preco, qtd: 1, foto: p.foto || '' });
+      rastrearAdd(p, p.preco);
+    });
+    aoMudarCarrinho();
+    mostrarToast('Combo montado!', 'verde');
+  }
+
+  // ---------- Validacao / checkout ----------
   function validar() {
-    const campos = [
+    var campos = [
       { id:'c-nome', msg:'Digite seu nome completo' },
       { id:'c-email', msg:'Digite seu e-mail' },
+      { id:'c-tel', msg:'Digite seu celular' },
       { id:'c-cpf', msg:'Digite seu CPF' },
-      { id:'c-tel', msg:'Digite seu telefone' },
       { id:'c-cep', msg:'Digite seu CEP' },
-      { id:'c-rua', msg:'Digite sua rua' },
+      { id:'c-rua', msg:'Digite seu endereço' },
       { id:'c-numero', msg:'Digite o número' },
       { id:'c-bairro', msg:'Digite seu bairro' },
       { id:'c-cidade', msg:'Digite sua cidade' },
-      { id:'c-estado', msg:'Selecione seu estado' },
+      { id:'c-estado', msg:'Selecione seu estado' }
     ];
-    for (const c of campos) {
+    for (var k = 0; k < campos.length; k++) {
+      var c = campos[k];
       if (!document.getElementById(c.id).value.trim()) {
         mostrarToast(c.msg, 'vermelho');
         document.getElementById(c.id).focus();
@@ -459,239 +785,34 @@
       }
     }
     if (!frete) {
-      mostrarToast('Calcule e escolha uma opcao de frete', 'vermelho');
+      mostrarToast('Calcule e escolha uma opção de frete', 'vermelho');
       document.getElementById('btn-frete').focus();
+      return false;
+    }
+    if (cupomAplicado && cotacao && cotacao.cupom && !cotacao.cupom.valido) {
+      mostrarToast('O cupom informado é inválido: remova ou corrija antes de pagar', 'vermelho');
       return false;
     }
     return true;
   }
 
-  async function finalizar() {
-    if (!validar()) return;
-    if (typeof gtag === 'function') gtag('event', 'begin_checkout', {
-      currency: 'BRL',
-      value: gaValor() + (frete ? Number(frete.preco) : 0),
-      items: gaItens()
-    });
+  function cupomParaEnvio() {
+    return (cotacao && cotacao.cupom && cotacao.cupom.valido) ? cotacao.cupom.codigo : '';
+  }
+
+  function totalComFrete() { return cotacao ? totalAtual() : 0; }
+
+  function freteParaEnvio() { return frete ? { id: frete.id, nome: frete.nome, preco: frete.preco } : null; }
+
+  function dispararIniciarCheckout() {
+    if (typeof gtag === 'function') gtag('event', 'begin_checkout', { currency: 'BRL', value: totalComFrete(), items: gaItens() });
     if (typeof fbq === 'function') fbq('track', 'InitiateCheckout', {
       content_ids: gaItens().map(function(i){ return i.item_id; }),
       content_type: 'product',
       currency: 'BRL',
-      value: gaValor() + (frete ? Number(frete.preco) : 0),
+      value: totalComFrete(),
       num_items: gaItens().reduce(function(s,i){ return s + i.quantity; }, 0)
     });
-    document.getElementById('loading').classList.add('show');
-    document.getElementById('btn-finalizar').disabled = true;
-
-    try {
-      const sender = {
-        nome: document.getElementById('c-nome').value,
-        email: document.getElementById('c-email').value,
-        cpf: document.getElementById('c-cpf').value.replace(/\D/g,''),
-        telefone: document.getElementById('c-tel').value.replace(/\D/g,''),
-        cep: document.getElementById('c-cep').value,
-        rua: document.getElementById('c-rua').value,
-        numero: document.getElementById('c-numero').value,
-        complemento: document.getElementById('c-comp').value,
-        bairro: document.getElementById('c-bairro').value,
-        cidade: document.getElementById('c-cidade').value,
-        estado: document.getElementById('c-estado').value,
-      };
-
-      const res = await fetch('/.netlify/functions/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: carrinho, sender, frete, referencia: referenciaPedido })
-      });
-
-      const data = await res.json();
-
-      if (data.url) {
-        try {
-          localStorage.setItem('ga_pedido', JSON.stringify({
-            currency: 'BRL',
-            value: gaValor() + (frete ? Number(frete.preco) : 0),
-            shipping: frete ? Number(frete.preco) : 0,
-            items: gaItens()
-          }));
-        } catch(e) {}
-        carrinho = [];
-        salvarCarrinho();
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.error || 'Erro ao processar pagamento');
-      }
-    } catch(e) {
-      mostrarToast('Erro: ' + e.message, 'vermelho');
-      document.getElementById('btn-finalizar').disabled = false;
-    } finally {
-      document.getElementById('loading').classList.remove('show');
-    }
-  }
-
-  function finalizarWpp() {
-    if (carrinho.length === 0) return;
-    const subtotal = carrinho.reduce((s,i) => s + (i.preco * i.qtd), 0);
-    const valorFrete = frete ? Number(frete.preco) : 0;
-    const total = subtotal + valorFrete;
-    const nome = document.getElementById('c-nome').value || 'Cliente';
-    let msg = `Olá! Gostaria de finalizar meu pedido na *Tech Life Store*:\n\n`;
-    carrinho.forEach(i => { msg += `📦 ${i.nome}${i.voltagem ? ' (' + i.voltagem + ')' : ''} x${i.qtd} — ${formatarPreco(i.preco * i.qtd)}\n`; });
-    if (frete) msg += `\n🚚 Frete (${frete.nome}): ${valorFrete > 0 ? formatarPreco(valorFrete) : 'Gratis'}\n`;
-    msg += `\n💰 *Total: ${formatarPreco(total)}*\n`;
-    if (nome) msg += `\n👤 Nome: ${nome}`;
-    const cep = document.getElementById('c-cep').value;
-    if (cep) msg += `\n📍 CEP: ${cep}`;
-    // Registra como pedido "combinado no WhatsApp" pra aparecer no painel de Vendas
-    // (nao ha cobranca no site nesse fluxo - o admin marca como pago manualmente).
-    salvarRascunho('combinado_whatsapp');
-    window.open(`https://wa.me/5513978253993?text=${encodeURIComponent(msg)}`, '_blank');
-  }
-
-  // Máscaras
-  function mascaraCpf(el) {
-    let v = el.value.replace(/\D/g,'').substring(0,11);
-    v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    el.value = v;
-  }
-  function mascaraTel(el) {
-    let v = el.value.replace(/\D/g,'').substring(0,11);
-    v = v.replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2');
-    el.value = v;
-  }
-  function mascaraCep(el) {
-    let v = el.value.replace(/\D/g,'').substring(0,8);
-    v = v.replace(/(\d{5})(\d)/, '$1-$2');
-    el.value = v;
-  }
-
-  async function buscarCep(cep) {
-    cep = cep.replace(/\D/g,'');
-    if (cep.length !== 8) return;
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-      const d = await res.json();
-      if (!d.erro) {
-        document.getElementById('c-rua').value = d.logradouro || '';
-        document.getElementById('c-bairro').value = d.bairro || '';
-        document.getElementById('c-cidade').value = d.localidade || '';
-        document.getElementById('c-estado').value = d.uf || '';
-        document.getElementById('c-numero').focus();
-        calcularFrete();
-        agendarRascunho();
-      }
-    } catch(e) {}
-  }
-
-  async function calcularFrete() {
-    const cep = document.getElementById('c-cep').value.replace(/\D/g, '');
-    const btn = document.getElementById('btn-frete');
-    const box = document.getElementById('frete-opcoes');
-    if (carrinho.length === 0) return;
-    if (cep.length !== 8) {
-      mostrarToast('Digite um CEP valido para calcular o frete', 'vermelho');
-      document.getElementById('c-cep').focus();
-      return;
-    }
-    frete = null;
-    opcoesFrete = [];
-    box.innerHTML = '';
-    btn.disabled = true;
-    btn.textContent = 'Calculando...';
-    try {
-      const res = await fetch('/.netlify/functions/frete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cep, itens: carrinho.map(i => ({ preco: i.preco, qtd: i.qtd })) })
-      });
-      const d = await res.json();
-      if (d.erro) throw new Error(d.erro);
-      opcoesFrete = d.opcoes || [];
-      if (opcoesFrete.length === 0) {
-        box.innerHTML = `<p class="frete-aviso">${esc(d.aviso || 'Nenhuma opcao de entrega para esse CEP.')}</p>`;
-      } else {
-        frete = opcoesFrete[0];
-        renderFrete();
-        if (!d.gratis && d.falta_para_gratis > 0) {
-          box.innerHTML += `<p class="frete-aviso">Faltam ${formatarPreco(d.falta_para_gratis)} para ganhar frete gratis!</p>`;
-        }
-      }
-      renderCarrinho();
-    } catch (e) {
-      box.innerHTML = `<p class="frete-aviso">${esc(e.message)}</p>`;
-      renderCarrinho();
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '🚚 Calcular frete';
-    }
-  }
-
-  function renderFrete() {
-    document.getElementById('frete-opcoes').innerHTML = opcoesFrete.map((o, i) =>
-      `<div class="frete-opcao ${frete && frete.id === o.id ? 'ativa' : ''}" onclick="escolherFrete(${i})">
-        <span class="fo-nome">${o.empresa ? esc(o.empresa) + ' - ' : ''}${esc(o.nome)}<span class="fo-prazo">${o.prazo ? 'ate ' + esc(o.prazo) + ' dias uteis' : 'prazo a confirmar'}</span></span>
-        <span class="fo-preco">${o.preco > 0 ? formatarPreco(o.preco) : 'Gratis'}</span>
-      </div>`
-    ).join('');
-  }
-
-  function escolherFrete(i) {
-    frete = opcoesFrete[i];
-    if (typeof gtag === 'function') gtag('event', 'add_shipping_info', {
-      currency: 'BRL',
-      value: gaValor() + (frete ? Number(frete.preco) : 0),
-      shipping_tier: String((frete && (frete.nome || frete.name)) || 'padrao'),
-      items: gaItens()
-    });
-    renderFrete();
-    renderCarrinho();
-    if (formaPagamento === 'cartao') montarParcelas();
-  }
-
-  // --- Pagamento: PayPal, cartao (Asaas transparente) e Pix ---
-  var formaPagamento = 'paypal';
-
-  function escolherPagamento(forma) {
-    formaPagamento = forma;
-    ['paypal','cartao','pix'].forEach(function(f) {
-      var b = document.getElementById('pag-' + f);
-      if (b) b.classList.toggle('ativa', f === forma);
-    });
-    document.getElementById('form-cartao').style.display = forma === 'cartao' ? 'block' : 'none';
-    document.getElementById('box-pix').style.display = 'none';
-    var btn = document.getElementById('btn-finalizar');
-    if (forma === 'paypal') btn.innerHTML = '&#128179; Pagar com PayPal';
-    if (forma === 'cartao') { btn.innerHTML = '&#128179; Pagar com cartao'; montarParcelas(); }
-    if (forma === 'pix') btn.innerHTML = '&#9889; Gerar codigo Pix';
-  }
-
-  function mascaraCartao(el) {
-    el.value = el.value.replace(/\D/g,'').substring(0,16).replace(/(\d{4})(?=\d)/g, '$1 ');
-  }
-
-  function mascaraValidade(el) {
-    var v = el.value.replace(/\D/g,'').substring(0,6);
-    if (v.length > 2) v = v.substring(0,2) + '/' + v.substring(2);
-    el.value = v;
-  }
-
-  function totalComFrete() {
-    return gaValor() + (frete ? Number(frete.preco) : 0);
-  }
-
-  function montarParcelas() {
-    var sel = document.getElementById('cc-parcelas');
-    if (!sel) return;
-    var total = totalComFrete();
-    sel.innerHTML = '';
-    for (var n = 1; n <= 12; n++) {
-      var valor = total / n;
-      if (n > 1 && valor < 5) break;
-      var op = document.createElement('option');
-      op.value = String(n);
-      op.textContent = n + 'x de ' + formatarPreco(valor) + (n === 1 ? ' (a vista)' : ' sem juros');
-      sel.appendChild(op);
-    }
   }
 
   function montarSender() {
@@ -716,12 +837,208 @@
         currency: 'BRL',
         value: totalComFrete(),
         shipping: frete ? Number(frete.preco) : 0,
+        coupon: cupomParaEnvio(),
         items: gaItens()
       }));
     } catch(e) {}
   }
 
+  function limparAposCompra() {
+    carrinho = [];
+    salvarCarrinho();
+    try { localStorage.removeItem('cupom_carrinho'); } catch (e) {}
+  }
+
+  // PayPal: o servidor cria a ordem e devolve o link de aprovacao
+  async function finalizar() {
+    if (!validar()) return;
+    dispararIniciarCheckout();
+    document.getElementById('loading').classList.add('show');
+    document.getElementById('btn-finalizar').disabled = true;
+    try {
+      var res = await fetch('/.netlify/functions/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: itensParaServidor(), sender: montarSender(), frete: freteParaEnvio(), cupom: cupomParaEnvio(), referencia: referenciaPedido })
+      });
+      var data = await res.json();
+      if (data.url) {
+        salvarPedidoGA();
+        limparAposCompra();
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Erro ao processar pagamento');
+      }
+    } catch(e) {
+      mostrarToast('Erro: ' + e.message, 'vermelho');
+      document.getElementById('btn-finalizar').disabled = false;
+    } finally {
+      document.getElementById('loading').classList.remove('show');
+    }
+  }
+
+  function finalizarWpp() {
+    if (carrinho.length === 0 || !cotacao) return;
+    var nome = document.getElementById('c-nome').value || 'Cliente';
+    var msg = 'Olá! Gostaria de finalizar meu pedido na *Tech Life Store*:\n\n';
+    cotacao.linhas.forEach(function(i) {
+      msg += '📦 ' + i.nome + (i.voltagem ? ' (' + i.voltagem + ')' : '') + ' x' + i.qtd + ' — ' + (i.tipo === 'brinde' ? 'BRINDE' : formatarPreco(i.preco * i.qtd)) + '\n';
+    });
+    (cotacao.combos_aplicados || []).forEach(function(cb) { msg += '🧩 ' + cb.nome + ': -' + formatarPreco(cb.economia) + '\n'; });
+    if (cotacao.cupom && cotacao.cupom.valido) msg += '🏷️ Cupom ' + cotacao.cupom.codigo + ': -' + formatarPreco(cotacao.descontos.cupom) + '\n';
+    if (frete) msg += '\n🚚 Frete (' + frete.nome + '): ' + (Number(cotacao.frete) > 0 ? formatarPreco(cotacao.frete) : 'Grátis') + '\n';
+    msg += '\n💰 *Total: ' + formatarPreco(cotacao.total_sem_pix) + '*' + (cotacao.pix_pct > 0 ? ' (ou ' + formatarPreco(cotacao.total_pix) + ' no Pix)' : '') + '\n';
+    if (nome) msg += '\n👤 Nome: ' + nome;
+    var cep = document.getElementById('c-cep').value;
+    if (cep) msg += '\n📍 CEP: ' + cep;
+    // Registra como pedido "combinado no WhatsApp" pra aparecer no painel de Vendas
+    // (nao ha cobranca no site nesse fluxo - o admin marca como pago manualmente).
+    salvarRascunho('combinado_whatsapp');
+    window.open('https://wa.me/5513978253993?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  // ---------- Mascaras ----------
+  function mascaraCpf(el) {
+    var v = el.value.replace(/\D/g,'').substring(0,11);
+    v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    el.value = v;
+  }
+  function mascaraTel(el) {
+    var v = el.value.replace(/\D/g,'').substring(0,11);
+    v = v.replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2');
+    el.value = v;
+  }
+  function mascaraCep(el) {
+    var v = el.value.replace(/\D/g,'').substring(0,8);
+    v = v.replace(/(\d{5})(\d)/, '$1-$2');
+    el.value = v;
+    if (v.replace(/\D/g,'').length === 8 && el.dataset.ultimo !== v) { el.dataset.ultimo = v; buscarCep(v); }
+  }
+  function mascaraCartao(el) {
+    el.value = el.value.replace(/\D/g,'').substring(0,16).replace(/(\d{4})(?=\d)/g, '$1 ');
+  }
+  function mascaraValidade(el) {
+    var v = el.value.replace(/\D/g,'').substring(0,6);
+    if (v.length > 2) v = v.substring(0,2) + '/' + v.substring(2);
+    el.value = v;
+  }
+
+  async function buscarCep(cep) {
+    cep = cep.replace(/\D/g,'');
+    if (cep.length !== 8) return;
+    try {
+      var res = await fetch('https://viacep.com.br/ws/' + cep + '/json/');
+      var d = await res.json();
+      if (!d.erro) {
+        document.getElementById('c-rua').value = d.logradouro || '';
+        document.getElementById('c-bairro').value = d.bairro || '';
+        document.getElementById('c-cidade').value = d.localidade || '';
+        document.getElementById('c-estado').value = d.uf || '';
+        document.getElementById('c-numero').focus();
+        calcularFrete();
+        agendarRascunho();
+      }
+    } catch(e) {}
+  }
+
+  // ---------- Frete ----------
+  async function calcularFrete(silencioso) {
+    var cep = document.getElementById('c-cep').value.replace(/\D/g, '');
+    var btn = document.getElementById('btn-frete');
+    var box = document.getElementById('frete-opcoes');
+    if (carrinho.length === 0) return;
+    if (cep.length !== 8) {
+      if (!silencioso) {
+        mostrarToast('Digite um CEP válido para calcular o frete', 'vermelho');
+        document.getElementById('c-cep').focus();
+      }
+      return;
+    }
+    var anterior = frete ? frete.id : null;
+    frete = null;
+    opcoesFrete = [];
+    box.innerHTML = '';
+    btn.disabled = true;
+    btn.textContent = 'Calculando...';
+    try {
+      var res = await fetch('/.netlify/functions/frete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cep: cep, itens: (cotacao ? cotacao.linhas : carrinho).map(function(i) { return { preco: i.preco, qtd: i.qtd }; }) })
+      });
+      var d = await res.json();
+      if (d.erro) throw new Error(d.erro);
+      opcoesFrete = d.opcoes || [];
+      if (opcoesFrete.length === 0) {
+        box.innerHTML = '<p class="frete-aviso">' + esc(d.aviso || 'Nenhuma opção de entrega para esse CEP.') + '</p>';
+      } else {
+        frete = opcoesFrete[0];
+        if (anterior) { for (var k = 0; k < opcoesFrete.length; k++) if (opcoesFrete[k].id === anterior) frete = opcoesFrete[k]; }
+        renderFrete();
+        if (!d.gratis && d.falta_para_gratis > 0) {
+          box.innerHTML += '<p class="frete-aviso">Faltam ' + formatarPreco(d.falta_para_gratis) + ' para ganhar frete grátis!</p>';
+        }
+      }
+    } catch (e) {
+      box.innerHTML = '<p class="frete-aviso">' + esc(e.message) + '</p>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🚚 Calcular frete';
+    }
+    await cotar();
+  }
+
+  function renderFrete() {
+    document.getElementById('frete-opcoes').innerHTML = opcoesFrete.map(function(o, i) {
+      return '<div class="frete-opcao ' + (frete && frete.id === o.id ? 'ativa' : '') + '" onclick="escolherFrete(' + i + ')">' +
+        '<span class="fo-nome">' + (o.empresa ? esc(o.empresa) + ' - ' : '') + esc(o.nome) + '<span class="fo-prazo">' + (o.prazo ? 'até ' + esc(o.prazo) + ' dias úteis' : 'prazo a confirmar') + '</span></span>' +
+        '<span class="fo-preco">' + (o.preco > 0 ? formatarPreco(o.preco) : 'Grátis') + '</span></div>';
+    }).join('');
+  }
+
+  function escolherFrete(i) {
+    frete = opcoesFrete[i];
+    if (typeof gtag === 'function') gtag('event', 'add_shipping_info', {
+      currency: 'BRL',
+      value: gaValor() + (frete ? Number(frete.preco) : 0),
+      shipping_tier: String((frete && (frete.nome || frete.name)) || 'padrao'),
+      items: gaItens()
+    });
+    renderFrete();
+    cotar();
+  }
+
+  // ---------- Pagamento: Pix, cartao (Asaas transparente) e PayPal ----------
+  function escolherPagamento(forma) {
+    formaPagamento = forma;
+    ['pix','cartao','paypal'].forEach(function(f) {
+      var b = document.getElementById('pag-' + f);
+      if (b) b.classList.toggle('ativa', f === forma);
+    });
+    document.getElementById('box-pix').style.display = document.getElementById('pix-codigo').value ? 'block' : 'none';
+    if (cotacao) { renderTotais(); atualizarBotao(); }
+    if (forma === 'cartao') montarParcelas();
+  }
+
+  function montarParcelas() {
+    var sel = document.getElementById('cc-parcelas');
+    if (!sel || !cotacao) return;
+    var total = cotacao.total_sem_pix;
+    var atual = sel.value;
+    sel.innerHTML = '';
+    for (var n = 1; n <= 12; n++) {
+      var valor = total / n;
+      if (n > 1 && valor < 5) break;
+      var op = document.createElement('option');
+      op.value = String(n);
+      op.textContent = n + 'x de ' + formatarPreco(valor) + (n === 1 ? ' (à vista)' : ' sem juros');
+      sel.appendChild(op);
+    }
+    if (atual && sel.querySelector('option[value="' + atual + '"]')) sel.value = atual;
+  }
+
   function pagarAgora() {
+    if (!cotacao) return;
     if (formaPagamento === 'cartao') return pagarCartao();
     if (formaPagamento === 'pix') return pagarPix();
     return finalizar();
@@ -736,37 +1053,29 @@
     var cpfTitular = document.getElementById('cc-cpf').value.replace(/\D/g,'');
     var parcelas = Number(document.getElementById('cc-parcelas').value || 1);
 
-    if (numero.length < 13) return mostrarToast('Confira o numero do cartao', 'vermelho');
-    if (!nomeCartao) return mostrarToast('Digite o nome impresso no cartao', 'vermelho');
+    if (numero.length < 13) return mostrarToast('Confira o número do cartão', 'vermelho');
+    if (!nomeCartao) return mostrarToast('Digite o nome impresso no cartão', 'vermelho');
     if (validade.length !== 2 || validade[1].length !== 4) return mostrarToast('Validade no formato MM/AAAA', 'vermelho');
     if (cvv.length < 3) return mostrarToast('Confira o CVV', 'vermelho');
     if (cpfTitular.length !== 11) return mostrarToast('Confira o CPF do titular', 'vermelho');
 
+    dispararIniciarCheckout();
     document.getElementById('loading').classList.add('show');
     document.getElementById('btn-finalizar').disabled = true;
 
     try {
-      if (typeof gtag === 'function') gtag('event', 'add_payment_info', {
-        currency: 'BRL',
-        value: totalComFrete(),
-        payment_type: 'Cartao de credito',
-        items: gaItens()
-      });
-      if (typeof fbq === 'function') fbq('track', 'AddPaymentInfo', {
-        content_ids: gaItens().map(function(i){ return i.item_id; }),
-        content_type: 'product',
-        currency: 'BRL',
-        value: totalComFrete()
-      });
+      if (typeof gtag === 'function') gtag('event', 'add_payment_info', { currency: 'BRL', value: totalComFrete(), payment_type: 'Cartao de credito', items: gaItens() });
+      if (typeof fbq === 'function') fbq('track', 'AddPaymentInfo', { content_ids: gaItens().map(function(i){ return i.item_id; }), content_type: 'product', currency: 'BRL', value: totalComFrete() });
 
       var res = await fetch('/.netlify/functions/checkout-asaas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           acao: 'cartao',
-          items: carrinho,
+          items: itensParaServidor(),
           sender: montarSender(),
-          frete: frete,
+          frete: freteParaEnvio(),
+          cupom: cupomParaEnvio(),
           referencia: referenciaPedido,
           cartao: {
             numero: numero,
@@ -785,13 +1094,12 @@
 
       if (data.aprovado) {
         salvarPedidoGA();
-        carrinho = [];
-        salvarCarrinho();
+        limparAposCompra();
         window.location.href = 'obrigado.html?transaction_id=' + encodeURIComponent(data.id || '');
       } else if (data.status === 'IN_ANALYSIS') {
-        mostrarToast('Pagamento em analise. Voce recebera a confirmacao por e-mail.');
+        mostrarToast('Pagamento em análise. Você receberá a confirmação por e-mail.');
       } else {
-        throw new Error(data.mensagem || 'Pagamento nao autorizado pelo emissor');
+        throw new Error(data.mensagem || 'Pagamento não autorizado pelo emissor');
       }
     } catch(e) {
       mostrarToast('Erro: ' + e.message, 'vermelho');
@@ -803,34 +1111,27 @@
 
   async function pagarPix() {
     if (!validar()) return;
+    dispararIniciarCheckout();
     document.getElementById('loading').classList.add('show');
     document.getElementById('btn-finalizar').disabled = true;
     try {
-      if (typeof gtag === 'function') gtag('event', 'add_payment_info', {
-        currency: 'BRL',
-        value: totalComFrete(),
-        payment_type: 'Pix',
-        items: gaItens()
-      });
-      if (typeof fbq === 'function') fbq('track', 'AddPaymentInfo', {
-        content_ids: gaItens().map(function(i){ return i.item_id; }),
-        content_type: 'product',
-        currency: 'BRL',
-        value: totalComFrete()
-      });
+      if (typeof gtag === 'function') gtag('event', 'add_payment_info', { currency: 'BRL', value: totalComFrete(), payment_type: 'Pix', items: gaItens() });
+      if (typeof fbq === 'function') fbq('track', 'AddPaymentInfo', { content_ids: gaItens().map(function(i){ return i.item_id; }), content_type: 'product', currency: 'BRL', value: totalComFrete() });
 
       var res = await fetch('/.netlify/functions/checkout-asaas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ acao: 'pix', items: carrinho, sender: montarSender(), frete: frete, referencia: referenciaPedido })
+        body: JSON.stringify({ acao: 'pix', items: itensParaServidor(), sender: montarSender(), frete: freteParaEnvio(), cupom: cupomParaEnvio(), referencia: referenciaPedido })
       });
       var data = await res.json();
       if (data.error) throw new Error(data.error);
 
+      salvarPedidoGA();
       document.getElementById('pix-img').src = data.imagem || '';
       document.getElementById('pix-codigo').value = data.texto || '';
       document.getElementById('box-pix').style.display = 'block';
-      mostrarToast('Codigo Pix gerado! O pedido e confirmado assim que o pagamento cair.');
+      mostrarToast('Código Pix gerado! O pedido é confirmado assim que o pagamento cair.');
+      document.getElementById('box-pix').scrollIntoView({ behavior: 'smooth', block: 'center' });
     } catch(e) {
       mostrarToast('Erro: ' + e.message, 'vermelho');
     } finally {
@@ -843,22 +1144,19 @@
     var el = document.getElementById('pix-codigo');
     el.select();
     document.execCommand('copy');
-    mostrarToast('Codigo Pix copiado!');
+    mostrarToast('Código Pix copiado!');
   }
 
-  function mostrarToast(msg, tipo='') {
-    const t = document.getElementById('toast');
+  function mostrarToast(msg, tipo) {
+    var t = document.getElementById('toast');
     t.textContent = msg;
-    t.className = 'toast show ' + tipo;
-    setTimeout(() => t.className = 'toast', 3000);
+    t.className = 'toast show ' + (tipo || '');
+    setTimeout(function() { t.className = 'toast'; }, 3200);
   }
 
-  renderCarrinho();
-
-  if (typeof gtag === 'function' && carrinho.length > 0) gtag('event', 'view_cart', {
-    currency: 'BRL',
-    value: gaValor(),
-    items: gaItens()
+  // ---------- Inicio ----------
+  cotar().then(function() {
+    if (typeof gtag === 'function' && carrinho.length > 0) gtag('event', 'view_cart', { currency: 'BRL', value: gaValor(), items: gaItens() });
   });
 
   // Rascunho de carrinho abandonado: dispara ao sair do campo de e-mail
