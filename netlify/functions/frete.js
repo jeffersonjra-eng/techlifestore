@@ -82,7 +82,8 @@ exports.handler = async function (event) {
       'User-Agent': process.env.MELHORENVIO_UA || 'Tech Life Store (suporte@techlifestore.com.br)'
     };
 
-    const volume = itens.reduce(function (s, i) { return s + (Number(i.qtd) || 1); }, 0);
+    // kits com variacao (ex.: 3 unidades) pesam e cubicam como N produtos
+    const volume = itens.reduce(function (s, i) { return s + (Number(i.qtd) || 1) * Math.min(Math.max(Math.floor(Number(i.unidades)) || 1, 1), 99); }, 0);
     const pacote = {
       height: Number(process.env.PACOTE_ALTURA || 4),
       width: Number(process.env.PACOTE_LARGURA || 16),

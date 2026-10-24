@@ -104,6 +104,7 @@ exports.handler = async function(event) {
     const items = calc.linhas.map(function(l) {
       const it = { id: l.id, nome: l.nome, preco: l.preco, qtd: l.qtd };
       if (l.voltagem) it.voltagem = l.voltagem;
+      if (l.variacao) { it.variacao = l.variacao; it.unidades = l.unidades; }
       if (l.tipo !== 'normal') it.tipo = l.tipo;
       return it;
     });
